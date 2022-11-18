@@ -1,0 +1,11 @@
+---
+type: dynamips
+name: "1760"
+config_script: embedded
+description: Cisco IOS 1760 (Dynamips)
+icon: Router.png
+idlepc: "0x80369ac4"
+nvram: 128
+ram: 96
+dynamips_options: -P 1700 -t 1760 -o 4 -c 0x2102 -X
+...

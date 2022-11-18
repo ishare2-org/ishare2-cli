@@ -1,0 +1,17 @@
+---
+type: qemu
+config_script: config_h3c.py
+description: H3C vLB1000
+name: H3CvLB
+cpulimit: 1
+icon: h3cvlb1k.png
+cpu: 1
+ram: 1024
+ethernet: 8
+eth_format: Gi{1}/{0-1}
+console: telnet
+shutdown: 1
+qemu_arch: x86_64
+qemu_version: 2.12.0
+qemu_options: -machine type=pc,accel=kvm -vga std  -rtc base=utc -cpu host
+...

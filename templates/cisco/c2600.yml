@@ -1,0 +1,45 @@
+---
+type: dynamips
+name: C2600
+config_script: embedded
+description: Cisco IOS C2600 (Dynamips)
+icon: Router.png
+idlepc: "0x6114a604"
+nvram: 112
+ram: 128
+slot1:
+    value: ""
+    type: list
+    width: 12
+    options:
+        "": Empty
+        "NM-1FE-TX": "NM-1FE-TX"
+        "NM-16ESW": "NM-16ESW"
+        "GT96100-FE": "GT96100-FE"
+        "NM-4T": "NM-4T"
+wic1:
+    value: ""
+    type: list
+    width: 4
+    options:
+        "": Empty
+        "WIC-1T": "WIC-1T"
+        "WIC-2T": "WIC-2T"
+wic2:
+    value: ""
+    type: list
+    width: 4
+    options:
+        "": Empty
+        "WIC-1T": "WIC-1T"
+        "WIC-2T": "WIC-2T"
+wic3:
+    value: ""
+    type: list
+    width: 4
+    options:
+        "": Empty
+        "WIC-1T": "WIC-1T"
+        "WIC-2T": "WIC-2T" 
+dynamips_options: -P 2600 -X
+...
