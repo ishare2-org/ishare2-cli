@@ -19,30 +19,32 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 ### How to use it
 
     Usage ishare2 [action] [param1] [param2]
-
+    
     action:
       search      : Search for images by type
       pull        : Download an image by type and number
       installed   : Show installed images on server
       labs        : Show labs on server and download images for those labs
+      ownlabs     : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
       upgrade     : Upgrade ishare2 code to the latest version
       help        : Show contact info
-
+      
     param1:
       type = all, bin, qemu, dynamips or name
-
+      
     param2:
       number = This number can be obtained using ishare2 search <type>
-
+      
     Examples:
-
+    
     - ishare2 search <type>
         - ishare2 search all
         - ishare2 search bin
         - ishare2 search qemu
         - ishare2 search dynamips
         - ishare2 search <name>
+            Examples:
             - ishare2 search vios
             - ishare2 search win-
             - ishare2 search winserver
@@ -53,24 +55,28 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
             - ishare2 search vmx
             - ishare2 search esxi
             - More <name> options using ishare2 search all
-
+            
     - ishare2 pull bin <number>
     - ishare2 pull qemu <number>
     - ishare2 pull dynamips <number>
-
+    
     - ishare2 pull bin all
     - ishare2 pull qemu all (Unavailable for qemu type)
     - ishare2 pull dynamips all
-
+    
     - ishare2 installed all
     - ishare2 installed bin
     - ishare2 installed qemu
     - ishare2 installed dynamips
-
+    
     - ishare2 labs
     - ishare2 labs <number>
     - ishare2 labs all
-
+    
+    - ishare2 ownlabs <path>
+    - ishare2 ownlabs <path> <number>
+    - ishare2 ownlabs <path> all
+    
     - ishare2 relicense
     - ishare2 upgrade
     - ishare2 help
