@@ -25,7 +25,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
       pull        : Download an image by type and number
       installed   : Show installed images on server
       labs        : Show labs on server and download images for those labs
-      ownlabs     : Same as labs command but using a customized path to labs
+      mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
       upgrade     : Upgrade ishare2 code to the latest version
       help        : Show contact info
@@ -73,9 +73,9 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     - ishare2 labs <number>
     - ishare2 labs all
     
-    - ishare2 ownlabs <path>
-    - ishare2 ownlabs <path> <number>
-    - ishare2 ownlabs <path> all
+    - ishare2 mylabs <path>
+    - ishare2 mylabs <path> <number>
+    - ishare2 mylabs <path> all
     
     - ishare2 relicense
     - ishare2 upgrade
