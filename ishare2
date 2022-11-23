@@ -40,50 +40,32 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
         exit 0
     fi
 
-    # Counting all the labs installed on LABS_DIR
     counter_all_labs_installed_on_server=0
-    #declare -A dict
     for file in "$LABS_DIR"*
     do
         if [[ -d $file ]] ; then continue ; fi # Avoiding folders
         counter_all_labs_installed_on_server=$((counter_all_labs_installed_on_server+1))
-        #echo "$counter_all_labs_installed_on_server - ${file##*/}"
-        #dict[$counter_all_labs_installed_on_server]=$file
     done
     
     echo -e "Labs inside $LABS_DIR folder in VM: $counter_all_labs_installed_on_server"
     
-    #counter=0
-    #declare -A dict
     declare -a readableLabsArray=()
     declare -a authorLabsArray=()
     
     for file in "$LABS_DIR"*
     do
         if [[ -d $file ]] ; then continue ; fi # Avoiding folders
-        #counter=$((counter+1))
-        #echo "$counter - ${file##*/}"
-        #dict[$counter]=$file
-        
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        #echo "$check"
         SUB="encoding"
         if [[ $check == *"$SUB"* ]]
         then
-            #echo "Readable"
-            #echo "$file"
-            #echo "${file##*/}"
-            #echo -e
             readableLabsArray+=("$file")
-            
             # Get Author name list
-            #echo -e "\nAuthor name"
             author_lab_name=$(grep -Pio '.*author="\K[^"]*' "$file" | sort -u)
             if [[ -z $author_lab_name ]] # Author name not specified
             then
                 author_lab_name=N/A
             fi
-            #echo "$author_lab_name"
             authorLabsArray+=("$author_lab_name")
         fi
     done
@@ -100,30 +82,12 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     echo -e "\nList\n"
     
     counter_for_readable_labs=0
-    #echo -e 'Number\tName\t\t\t\tAuthor'
-    #printf "%s\t%s\t%s\n" "Number" "Name" "Author"
-    
-    #LABS_DIR_NAME=/opt/unetlab/labs/"Your labs from PNETLab Store/"readable_labs.csv
-    #rm "$LABS_DIR_NAME" > /dev/null 2>&1
-    #printf "%s,%s,%s\n" "Number" "LabName" "Author" >> "$LABS_DIR_NAME"
-    
+   
     for f in "${readableLabsArray[@]}"
     do
         counter_for_readable_labs=$((counter_for_readable_labs+1))
-        #echo "$f"
         echo -e "$counter_for_readable_labs) ${f##*/} - ${authorLabsArray[$((counter_for_readable_labs-1))]}"
-        #echo -e "$counter_for_readable_labs\t${f##*/}\t${authorLabsArray[$((counter_for_readable_labs-1))]}"
-        #printf "%d\t%s\t%s\n" "$counter_for_readable_labs" "${f##*/}" "${authorLabsArray[$((counter_for_readable_labs-1))]}"
-        
-        # NUMBERS=$counter_for_readable_labs
-        # LAB_NAMES=${f##*/}
-        # AUTHOR_LIST=${authorLabsArray[$((counter_for_readable_labs-1))]}
-        
-        #printf "%d,%s,%s\n" "$counter_for_readable_labs" "${f##*/}" "${authorLabsArray[$((counter_for_readable_labs-1))]}" >> "$LABS_DIR_NAME"
     done
-    
-    #awk -F, '{print $1,$2,$3}' "$LABS_DIR_NAME" | column -t
-    #rm "$LABS_DIR_NAME" > /dev/null 2>&1
     
     STR1="ishare2 mylabs <path> <number>"
     STR2="ishare2 mylabs <path> all"
@@ -151,28 +115,15 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         echo "No labs found at $LABS_DIR folder in server"
         exit 0
     fi
-    
-    #echo "Recibido aca: $NUMBER"
-    
-    # Desde aca
-    
+       
     declare -a readableLabsArray=()
     for file in "$LABS_DIR"*
     do
-        if [[ -d $file ]] ; then continue ; fi # Avoiding folders
-        #counter=$((counter+1))
-        #echo "$counter - ${file##*/}"
-        #dict[$counter]=$file
-        
+        if [[ -d $file ]] ; then continue ; fi # Avoiding folders      
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        #echo "$check"
         SUB="encoding"
         if [[ $check == *"$SUB"* ]]
         then
-            #echo "Readable"
-            #echo "$file"
-            #echo "${file##*/}"
-            #echo -e
             readableLabsArray+=("$file")
         fi
     done
@@ -181,21 +132,14 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     for f in "${readableLabsArray[@]}"
     do
         counter_for_readable_labs=$((counter_for_readable_labs+1))
-        #echo "$f"
-        #echo "$counter_for_readable_labs - ${f##*/}"
     done
-    
-    # Hasta aca
-    
+       
     if [[ ${#readableLabsArray[@]} -eq 0 ]]
     then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
     fi
-    
-    #echo -e "\nEsto es readableLabsArray"
-    #echo "${readableLabsArray[@]}"
     
     if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]
     then
@@ -216,15 +160,10 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         mylabs_get_lab_list_just_for_only_readable_labs $1
         exit 0
     fi
-    
-    #echo -e "\nResultados"
-    #echo "${readableLabsArray[@]}"
-    
+        
     file=${readableLabsArray[$((NUMBER-1))]}
-    #echo "$file"
-    
     echo -e "File selected: $file"
-    
+
     #echo -e "\nIOL images"
     iol_images=$(grep -Pio 'type="iol".*image="\K[^"]*' "$file" | sort -u)
     #echo "$iol_images"
@@ -254,28 +193,24 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     if ! grep -q '[^[:space:]]' $filename1_iol_images
     then
         BIN_FLAG=1
-        #echo iol vacio
     fi
     
     DYNAMIPS_FLAG=0
     if ! grep -q '[^[:space:]]' $filename2_dynamips_images
     then
         DYNAMIPS_FLAG=1
-        #echo dynamips vacio
     fi
     
     QEMU_FLAG=0
     if ! grep -q '[^[:space:]]' $filename3_qemu_images
     then
         QEMU_FLAG=1
-        #echo qemu vacio
     fi
     
     DOCKER_FLAG=0
     if ! grep -q '[^[:space:]]' $filename4_docker_images
     then
         DOCKER_FLAG=1
-        #echo docker vacio
     fi
     
     echo -e "\nImages found on lab"
@@ -375,8 +310,6 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
 }
 
 function mylabs_install_lab_images_just_for_only_readable_labs_ALL() {
-    #echo "Path: $1"
-    #echo "Param: $2"
 
     LABS_DIR=$1
 
@@ -449,48 +382,29 @@ function get_lab_list_just_for_only_readable_labs() {
         exit 0
     fi
     
-    # Counting all the labs installed on LABS_DIR
     counter_all_labs_installed_on_server=0
-    #declare -A dict
     for file in "$LABS_DIR"*
     do
         counter_all_labs_installed_on_server=$((counter_all_labs_installed_on_server+1))
-        #echo "$counter_all_labs_installed_on_server - ${file##*/}"
-        #dict[$counter_all_labs_installed_on_server]=$file
     done
     
     echo -e "Labs inside PNETLab Store folder in VM: $counter_all_labs_installed_on_server"
     
-    #counter=0
-    #declare -A dict
     declare -a readableLabsArray=()
     declare -a authorLabsArray=()
     
     for file in "$LABS_DIR"*
-    do
-        #counter=$((counter+1))
-        #echo "$counter - ${file##*/}"
-        #dict[$counter]=$file
-        
+    do       
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        #echo "$check"
         SUB="encoding"
         if [[ $check == *"$SUB"* ]]
         then
-            #echo "Readable"
-            #echo "$file"
-            #echo "${file##*/}"
-            #echo -e
             readableLabsArray+=("$file")
-            
-            # Get Author name list
-            #echo -e "\nAuthor name"
             author_lab_name=$(grep -Pio '.*author="\K[^"]*' "$file" | sort -u)
             if [[ -z $author_lab_name ]] # Author name not specified
             then
                 author_lab_name=N/A
             fi
-            #echo "$author_lab_name"
             authorLabsArray+=("$author_lab_name")
         fi
     done
@@ -507,30 +421,12 @@ function get_lab_list_just_for_only_readable_labs() {
     echo -e "\nList\n"
     
     counter_for_readable_labs=0
-    #echo -e 'Number\tName\t\t\t\tAuthor'
-    #printf "%s\t%s\t%s\n" "Number" "Name" "Author"
-    
-    #LABS_DIR_NAME=/opt/unetlab/labs/"Your labs from PNETLab Store/"readable_labs.csv
-    #rm "$LABS_DIR_NAME" > /dev/null 2>&1
-    #printf "%s,%s,%s\n" "Number" "LabName" "Author" >> "$LABS_DIR_NAME"
     
     for f in "${readableLabsArray[@]}"
     do
         counter_for_readable_labs=$((counter_for_readable_labs+1))
-        #echo "$f"
         echo -e "$counter_for_readable_labs) ${f##*/} - ${authorLabsArray[$((counter_for_readable_labs-1))]}"
-        #echo -e "$counter_for_readable_labs\t${f##*/}\t${authorLabsArray[$((counter_for_readable_labs-1))]}"
-        #printf "%d\t%s\t%s\n" "$counter_for_readable_labs" "${f##*/}" "${authorLabsArray[$((counter_for_readable_labs-1))]}"
-        
-        # NUMBERS=$counter_for_readable_labs
-        # LAB_NAMES=${f##*/}
-        # AUTHOR_LIST=${authorLabsArray[$((counter_for_readable_labs-1))]}
-        
-        #printf "%d,%s,%s\n" "$counter_for_readable_labs" "${f##*/}" "${authorLabsArray[$((counter_for_readable_labs-1))]}" >> "$LABS_DIR_NAME"
     done
-    
-    #awk -F, '{print $1,$2,$3}' "$LABS_DIR_NAME" | column -t
-    #rm "$LABS_DIR_NAME" > /dev/null 2>&1
     
     echo -e "\nTo install images for a specific lab, use the following command:\n\033[32mishare2 labs <number>\033[0m"
     echo -e "\nTo install images for all of the labs, use the following command:\n\033[32mishare2 labs all\033[0m"
@@ -553,27 +449,14 @@ function install_lab_images_just_for_only_readable_labs() {
         echo "No labs found at PNETLab Store folder in server"
         exit 0
     fi
-    
-    #echo "Recibido aca: $NUMBER"
-    
-    # Desde aca
-    
+        
     declare -a readableLabsArray=()
     for file in "$LABS_DIR"*
-    do
-        #counter=$((counter+1))
-        #echo "$counter - ${file##*/}"
-        #dict[$counter]=$file
-        
+    do        
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        #echo "$check"
         SUB="encoding"
         if [[ $check == *"$SUB"* ]]
         then
-            #echo "Readable"
-            #echo "$file"
-            #echo "${file##*/}"
-            #echo -e
             readableLabsArray+=("$file")
         fi
     done
@@ -582,11 +465,7 @@ function install_lab_images_just_for_only_readable_labs() {
     for f in "${readableLabsArray[@]}"
     do
         counter_for_readable_labs=$((counter_for_readable_labs+1))
-        #echo "$f"
-        #echo "$counter_for_readable_labs - ${f##*/}"
     done
-    
-    # Hasta aca
     
     if [[ ${#readableLabsArray[@]} -eq 0 ]]
     then
@@ -594,9 +473,6 @@ function install_lab_images_just_for_only_readable_labs() {
         echo -e "\033[31m$STR\033[0m"
         exit 0
     fi
-    
-    #echo -e "\nEsto es readableLabsArray"
-    #echo "${readableLabsArray[@]}"
     
     if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]
     then
@@ -617,13 +493,8 @@ function install_lab_images_just_for_only_readable_labs() {
         get_lab_list_just_for_only_readable_labs
         exit 0
     fi
-    
-    #echo -e "\nResultados"
-    #echo "${readableLabsArray[@]}"
-    
+        
     file=${readableLabsArray[$((NUMBER-1))]}
-    #echo "$file"
-    
     echo -e "File selected: $file"
     
     #echo -e "\nIOL images"
@@ -655,28 +526,24 @@ function install_lab_images_just_for_only_readable_labs() {
     if ! grep -q '[^[:space:]]' $filename1_iol_images
     then
         BIN_FLAG=1
-        #echo iol vacio
     fi
     
     DYNAMIPS_FLAG=0
     if ! grep -q '[^[:space:]]' $filename2_dynamips_images
     then
         DYNAMIPS_FLAG=1
-        #echo dynamips vacio
     fi
     
     QEMU_FLAG=0
     if ! grep -q '[^[:space:]]' $filename3_qemu_images
     then
         QEMU_FLAG=1
-        #echo qemu vacio
     fi
     
     DOCKER_FLAG=0
     if ! grep -q '[^[:space:]]' $filename4_docker_images
     then
         DOCKER_FLAG=1
-        #echo docker vacio
     fi
     
     echo -e "\nImages found on lab"
@@ -874,7 +741,6 @@ function download_lab_iol_images() {
     filename1=/opt/unetlab/labs/iol_images.txt
     n=1
     while read -r line; do
-        #echo "Line No. $n : $line"
         n=$((n+1))
         
         BIN_NAME=$line
@@ -882,16 +748,12 @@ function download_lab_iol_images() {
         rm "$(pwd)"/$FILENAME > /dev/null 2>&1
         URL=$BIN_URL
         wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-        #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
         FLAG=0
         
         corrections_for_bin_images_in_lab_function "$BIN_NAME" "$LAB_PATH"
         
         while IFS=',' read -r col1 col2 col3 col4 col5
         do
-            #echo -e "\nGoogle sheets: $col2"
-            #echo "LAB: $BIN_NAME"
-            
             if [[ "$col2" == "$BIN_NAME" ]]
             then
                 FLAG=1
@@ -922,7 +784,6 @@ function download_lab_dynamips_images() {
     filename1=/opt/unetlab/labs/dynamips_images.txt
     n=1
     while read -r line; do
-        #echo "Line No. $n : $line"
         n=$((n+1))
         
         DYNAMIPS_NAME=$line
@@ -930,11 +791,9 @@ function download_lab_dynamips_images() {
         rm "$(pwd)"/$FILENAME > /dev/null 2>&1
         URL=$DYNAMIPS_URL
         wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-        #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
         FLAG=0
         while IFS=',' read -r col1 col2 col3 col4 col5
         do
-            #echo "$col2"
             if [[ "$col2" == "$DYNAMIPS_NAME" ]]
             then
                 FLAG=1
@@ -973,14 +832,12 @@ function download_lab_qemu_images() {
         rm "$(pwd)"/$FILENAME > /dev/null 2>&1
         URL=$QEMU_URL
         wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-        #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
         FLAG=0
         
         corrections_for_qemu_images_in_lab_function "$QEMU_NAME"
         
         while IFS=',' read -r col1 col2 col3 col4 col5
         do
-            #echo "$col2"
             if [[ "$col2" == "$QEMU_NAME" ]]
             then
                 FLAG=1
@@ -1011,9 +868,6 @@ function download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
     #n=1
     while read -r line; do
-        #echo "Line No. $n : $line"
-        #n=$((n+1))
-        
         DOCKER_NAME=$line
         
         STR="Docker requested: "
@@ -1080,13 +934,6 @@ function get_credentials_csv() {
     URL=$2
     
     echo -e "Not implemented yet"
-    
-    # echo -e
-    # rm "$(pwd)"/"$FILENAME" > /dev/null 2>&1
-    # wget --connect-timeout 5 -O "$FILENAME" "$URL" > /dev/null 2>&1
-    # awk -F, '{print $1,$2,$3,$4,$5,$6}' "$FILENAME" | column -t
-    # rm "$(pwd)"/"$FILENAME" > /dev/null 2>&1
-    # echo -e
 }
 
 function generate_a_new_license() {
@@ -1117,10 +964,7 @@ function download_1_file_bin_or_dynamips() {
     
     STR="\nFile requested:"
     echo -e "\033[33m$STR\033[0m $NAME"
-    #echo -e "\nFile requested: $NAME"
     echo -e "$SIZE $UNIT\n"
-    
-    #wget -q --show-progress -O "$NAME" "$LINK"
     
     if [[ $TYPE = "dynamips" ]]
     then
@@ -1168,10 +1012,6 @@ function download_multiple_files_qemu() {
 }
 
 function pull_all_iol_images() {
-    #GOOGLE_SHEETS_ID=2PACX-1vR-RCxKCkhzzW2ZDDQOUIAxq2QTPwcCJZXuFyGD0hvXDC60TMU0_Yx1fx02S1_H9h7ZU52X-hAVC37h
-    
-    #BIN_GID=0
-    
     URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
     URL_POSTFIX='&single=true&output=csv'
     
@@ -1201,10 +1041,6 @@ function pull_all_iol_images() {
 }
 
 function pull_all_dynamips_images() {
-    #GOOGLE_SHEETS_ID=2PACX-1vR-RCxKCkhzzW2ZDDQOUIAxq2QTPwcCJZXuFyGD0hvXDC60TMU0_Yx1fx02S1_H9h7ZU52X-hAVC37h
-    
-    #DYNAMIPS_GID=1118397071
-    
     URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
     URL_POSTFIX='&single=true&output=csv'
     
@@ -1243,14 +1079,11 @@ function pull_dynamips() {
     fi
     
     DYNAMIPS_NUMBER=$PARAMETER
-    
-    #echo -e "\nEsto es ishare2 pull dynamips $3"
     FILENAME=DYNAMIPS_URL.csv
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     URL=$DYNAMIPS_URL
     
     wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-    #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
     FLAG=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
@@ -1261,12 +1094,7 @@ function pull_dynamips() {
             LINK=$col3
             SIZE=$col4
             UNIT=$col5
-            # echo -e "\nDentro del IF\n"
-            # echo -e "NUMBER: $col1"
-            # echo -e "NAME: $col2"
-            # echo -e "LINK: $col3"
-            # echo -e "SIZE: $col4"
-            # echo -e "UNIT: $col5\n"
+
             corrections_for_dynamips_images "$NAME"
         fi
     done < $FILENAME
@@ -1277,12 +1105,7 @@ function pull_dynamips() {
         LINK=$col3
         SIZE=$col4
         UNIT=$col5
-        # echo -e "\nDentro del IF (Por fuera del WHILE)\n"
-        # echo -e "NUMBER: $col1"
-        # echo -e "NAME: $col2"
-        # echo -e "LINK: $col3"
-        # echo -e "SIZE: $col4"
-        # echo -e "UNIT: $col5\n"
+
         corrections_for_dynamips_images "$NAME"
     fi
     
@@ -1324,12 +1147,10 @@ function pull_bin() {
     
     BIN_NUMBER=$PARAMETER
     
-    #echo -e "\nestamos en ishare2 pull bin $3"
     FILENAME=BIN_URL.csv
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     URL=$BIN_URL
     wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-    #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
     FLAG=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
@@ -1340,12 +1161,7 @@ function pull_bin() {
             LINK=$col3
             SIZE=$col4
             UNIT=$col5
-            # echo -e "\nDentro del IF\n"
-            # echo -e "NUMBER: $col1"
-            # echo -e "NAME: $col2"
-            # echo -e "LINK: $col3"
-            # echo -e "SIZE: $col4"
-            # echo -e "UNIT: $col5\n"
+
             corrections_for_iol_images "$NAME"
         fi
     done < $FILENAME
@@ -1356,12 +1172,7 @@ function pull_bin() {
         LINK=$col3
         SIZE=$col4
         UNIT=$col5
-        # echo -e "\nDentro del IF (Por fuera del WHILE)\n"
-        # echo -e "NUMBER: $col1"
-        # echo -e "NAME: $col2"
-        # echo -e "LINK: $col3"
-        # echo -e "SIZE: $col4"
-        # echo -e "UNIT: $col5\n"
+
         corrections_for_iol_images "$NAME"
     fi
     
@@ -1871,7 +1682,6 @@ function corrections_for_qemu_images() {
         STR="${FILE6LINK: -4}"
         SUB="png"
         if [[ "$STR" == *"$SUB"* ]]; then
-            #echo "It's there."
             length="${#FILE6LINK}"
             FILE6LINK=${FILE6LINK: 0:length-1}
         fi
@@ -1933,15 +1743,11 @@ function pull_qemu() {
     
     QEMU_NUMBER=$PARAMETER
     
-    #echo -e "\nEstamos en ishare2 pull qemu $3\n"
     FILENAME=QEMU_URL.csv
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     URL=$QEMU_URL
     wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-    #awk -F, '{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' $FILENAME | column -t
-    #echo " "
     FLAG=0
-    #FILES_COUNTER=1
     declare -a myArray=()
     while IFS=',' read -r col1 col2 col3 col4 col5 col6 col7 col8 col9 col10 col11 col12 col13 col14 col15 col16
     do
@@ -2013,8 +1819,6 @@ function pull_qemu() {
         
         mkdir /opt/unetlab/addons/qemu/"$FOLDERNAME"/
         
-        #echo -e "\nCounter value: $FILES_COUNTER"
-        
         #1. Download file requested
         if [[ $FILES_COUNTER -eq 1 ]]
         then
@@ -2068,8 +1872,6 @@ function pull_qemu() {
 function filter_bin() {
     NAME_TO_SEARCH_FOR=$1
     
-    #echo -e "\nLooking for: $NAME_TO_SEARCH_FOR\n"
-    
     FILENAME=BIN_URL.csv
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     URL=$BIN_URL
@@ -2081,7 +1883,6 @@ function filter_bin() {
     do
         if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"
         then
-            #echo "COINCIDENCIA"
             CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
             FLAG_TO_SHOW_RESULTS_BIN=1
             break
@@ -2110,20 +1911,16 @@ function filter_bin() {
 function filter_dynamips() {
     NAME_TO_SEARCH_FOR=$1
     
-    #echo -e "\nLooking for: $NAME_TO_SEARCH_FOR\n"
-    
     FILENAME=DYNAMIPS_URL.csv
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     URL=$DYNAMIPS_URL
     wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-    #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
     
     FLAG_TO_SHOW_RESULTS_DYNAMIPS=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
         if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"
         then
-            #echo "COINCIDENCIA"
             CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
             FLAG_TO_SHOW_RESULTS_DYNAMIPS=1
             break
@@ -2152,20 +1949,16 @@ function filter_dynamips() {
 function filter_qemu() {
     NAME_TO_SEARCH_FOR=$1
     
-    #echo -e "\nLooking for: $NAME_TO_SEARCH_FOR\n"
-    
     FILENAME=QEMU_URL.csv
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     URL=$QEMU_URL
     wget --connect-timeout 5 -O $FILENAME "$URL" > /dev/null 2>&1
-    #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
     
     FLAG_TO_SHOW_RESULTS_QEMU=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
         if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"
         then
-            #echo "COINCIDENCIA"
             CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
             FLAG_TO_SHOW_RESULTS_QEMU=1
             break
@@ -2218,13 +2011,10 @@ then
     else # 1) ishare2 search 2) ishare2 search <number> 3) ishare2 search <string>
         if [[ $2 ]]
         then
-            #echo -e "Filtering bin"
             filter_bin "$2"
             
-            #echo -e "\nFiltering dynamips"
             filter_dynamips "$2"
             
-            #echo -e "\nFiltering qemu"
             filter_qemu "$2"
         else
             echo -e "Available options\n"
