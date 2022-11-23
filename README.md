@@ -2,16 +2,10 @@
 
 ### CLI-based tool written in Bash used to download and install images into a PNETLab server automatically and with minimal efforts
 
-### Installation (for version 4.2.10)
+### Installation
 Apply this command using the terminal
 ```linux
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/releases/4.2.10/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
-```
-
-### Installation (for version 5.0.1)
-Apply this command using the terminal
-```linux
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/releases/5.0.1/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 Note: There is no need to be in the same directory where *ishare2* file is installed in order to execute it
