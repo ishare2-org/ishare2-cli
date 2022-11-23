@@ -901,7 +901,7 @@ function upgrade_ishare2() {
     wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1
     chmod +x /usr/sbin/ishare2
 
-    echo "Upgraded to $REMOTE_VALUE"
+    echo "ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
     rm /usr/sbin/ishare2_version
     echo "$REMOTE_VALUE" >> /usr/sbin/ishare2_version
 }
