@@ -897,12 +897,8 @@ function upgrade_ishare2() {
     fi
     
     rm /usr/sbin/ishare2
-    
-    data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
-    pnetlab_info=($data)
-    PNETLAB_VERSION_UPGRADE=${pnetlab_info[1]}
-
-    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/releases/$PNETLAB_VERSION_UPGRADE/ishare2 > /dev/null 2>&1
+ 
+    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1
     chmod +x /usr/sbin/ishare2
 
     echo "Upgraded to $REMOTE_VALUE"
