@@ -213,7 +213,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         DOCKER_FLAG=1
     fi
     
-    echo -e "\nImages found on lab"
+    echo -e "\nImages found on lab\n"
     
     echo -e "--- bin images ---"
     if [[ BIN_FLAG -eq 1 ]]
@@ -864,17 +864,49 @@ function download_lab_qemu_images() {
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
 }
 
+function check_docker_service_status() {
+    RED='\033[31m'
+    GREEN='\033[32m'
+    NO_COLOR='\033[0m'
+
+    if service docker status | grep -q "active (running)"
+    then
+        return 0 # 0 means "no failures"
+    fi
+
+    if service docker status | grep -q "inactive (dead)"
+    then
+        echo -e "${RED}Detected: Docker service is down. Trying to restart it${NO_COLOR}"
+        service docker restart
+    fi
+
+    if service docker status | grep -q "active (running)"
+    then
+        echo -e "${GREEN}Docker service has been restarted successfully${NO_COLOR}"
+        return 0 # 0 means "no failures"
+    else
+        echo -e "${RED}There was a problem trying to start docker service${NO_COLOR}"
+        echo -e "Information about service docker status command:\n"
+        service docker status
+        #return 1 # 1 means failure
+    fi
+}
+
 function download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
-    #n=1
-    while read -r line; do
-        DOCKER_NAME=$line
-        
-        STR="Docker requested: "
-        echo -e "\033[33m$STR\033[0m $DOCKER_NAME"
-        
-        docker pull "$DOCKER_NAME"
-    done < $filename1
+
+    # Checking docker service status before pull any docker image
+    if check_docker_service_status $1 # When 0 is returned
+    then
+        while read -r line; do
+            DOCKER_NAME=$line
+            
+            STR="Docker requested: "
+            echo -e "\033[33m$STR\033[0m $DOCKER_NAME"
+            
+            docker pull "$DOCKER_NAME"
+        done < $filename1
+    fi
 }
 
 function check_version_file_exists() {
