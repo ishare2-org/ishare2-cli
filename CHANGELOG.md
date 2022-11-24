@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file. You can upg
  
 ## [v1.1] - 2022-Nov-24
   
-Added some code to check docker service status in order to avoid problems when trying to download docker images using
+Added some code to check docker service status in order to avoid problems when trying to pull docker images using
 
 * "ishare2 labs \<number\>"
 * "ishare2 labs all"
