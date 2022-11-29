@@ -892,6 +892,23 @@ function check_docker_service_status() {
     fi
 }
 
+function list_dockers(){
+    echo -e "\nDocker images in server"
+    docker images
+}
+
+function count_dockers(){
+    data=$(docker images | wc -l)
+    docker_count=$((data-1))
+
+    if [[ $docker_count -eq 1 ]]
+    then
+        echo -e "\n$docker_count docker image found in server"
+    else
+        echo -e "\n$docker_count docker images found in server"
+    fi
+}
+
 function download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
@@ -907,6 +924,9 @@ function download_lab_docker_images() {
             docker pull "$DOCKER_NAME"
         done < $filename1
     fi
+
+    list_dockers
+    count_dockers
 }
 
 function check_version_file_exists() {
