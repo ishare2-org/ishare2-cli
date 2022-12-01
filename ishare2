@@ -985,17 +985,18 @@ function get_credentials_csv() {
 }
 
 function generate_a_new_license() {
-    PYTHON_FILE=/opt/unetlab/addons/iol/bin/CiscoIOUKeygen.py
-    if ! [[ -e $PYTHON_FILE ]]
-    then
-        wget -O $PYTHON_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
-    fi
+    BIN_PATH="/opt/unetlab/addons/iol/bin/"
+
+    PYTHON_FILE=$BIN_PATH"CiscoIOUKeygen.py"
+    PERL_FILE=$BIN_PATH"keepalive.pl"
+
+    if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
+
+    wget -O $PYTHON_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
     python $PYTHON_FILE > /dev/null 2>&1
     
-    KEEPALIVE_FILE=/opt/unetlab/addons/iol/bin/keepalive.pl
-    if ! [[ -e $KEEPALIVE_FILE ]]
-    then
-        wget -O $KEEPALIVE_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
+    if ! [[ -e $PERL_FILE ]]; then
+        wget -O $PERL_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
     fi
     echo "Done"
 }
