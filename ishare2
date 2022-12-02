@@ -1299,7 +1299,7 @@ function show_ishare2_usage() {
       mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
       upgrade     : Upgrade ishare2 code to the latest version
-      help        : Show contact info
+      help        : Show useful information
 
     param1:
       type = all, bin, qemu, dynamips or name
