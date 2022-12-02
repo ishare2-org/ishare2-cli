@@ -30,7 +30,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     param2:
       number = This number can be obtained using ishare2 search <type>
    
-### Examples of usage:
+### Examples of usage
     
     - ishare2 search <type>
         - ishare2 search all
