@@ -944,7 +944,7 @@ function upgrade_ishare2() {
     
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
     then
-        echo "You have the latest available version: $REMOTE_VALUE"
+        echo "ishare2 $REMOTE_VALUE is currently the newest version available"
         exit 0
     fi
     
