@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. You can upg
 ## [v1.3.2] - 2022-Dic-02
 
 1) Modified text on ishare2: "Show contact info" changed to "Show useful information"
-2) Modified README.md: Now, there two sections when describing ishare2: Syntax and Examples of usage
+2) Modified README.md: Now, there are two sections when describing ishare2: Syntax and Examples of usage
 
 ## [v1.3.1] - 2022-Dic-02
 
