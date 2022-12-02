@@ -10,9 +10,9 @@ wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
 
 Note: There is no need to be in the same directory where *ishare2* file is installed in order to execute it
 
-### How to use it
-
-    Usage ishare2 [action] [param1] [param2]
+### Syntax
+    
+    ishare2 [action] [param1] [param2]
     
     action:
       search      : Search for images by type
@@ -22,15 +22,15 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
       mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
       upgrade     : Upgrade ishare2 code to the latest version
-      help        : Show contact info
+      help        : Show useful information
       
     param1:
       type = all, bin, qemu, dynamips or name
       
     param2:
       number = This number can be obtained using ishare2 search <type>
-      
-    Examples:
+   
+### Examples of usage:
     
     - ishare2 search <type>
         - ishare2 search all
