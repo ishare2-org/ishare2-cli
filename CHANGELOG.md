@@ -1,6 +1,20 @@
 # Change Log
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using "ishare2 upgrade"
 
+## [v1.3.1] - 2022-Dic-02
+
+1) Added a better description message when user tries to upgrade ishare2 and it already has the last version:
+
+    Before
+    
+        echo "You have the latest available version: $REMOTE_VALUE"
+
+    After
+    
+        echo "ishare2 $REMOTE_VALUE is currently the newest version available"
+
+2) Added some validation related to check if the user is root when executing ishare2. If not root, an error message will be prompt and the script will finish
+
 ## [v1.3] - 2022-Dic-01
 
 Fixed a bug when using "ishare2 relicense"
