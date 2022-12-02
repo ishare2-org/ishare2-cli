@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using "ishare2 upgrade"
 
+## [v1.3.2] - 2022-Dic-02
+
+1) Modified text on ishare2: "Show contact info" changed to "Show useful information"
+2) Modified README.md: Now, there two sections when describing ishare2: Syntax and Examples of usage
+
 ## [v1.3.1] - 2022-Dic-02
 
 1) Added a better description message when user tries to upgrade ishare2 and it already has the last version:
