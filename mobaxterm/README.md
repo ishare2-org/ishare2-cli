@@ -1,6 +1,6 @@
 ```batch
 This script, designed to be used in Windows, allows you to crack MobaXterm from Home Edition to the Professional Edition using Python3
-This code has been modified from its original version to this one
+This code has been modified from its original version
 ```
 
 # MobaXterm-Keygen-v2.py
