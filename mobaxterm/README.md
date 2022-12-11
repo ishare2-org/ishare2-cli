@@ -39,4 +39,4 @@ python MobaXterm-Keygen-v2.py admin 22.2
 ### Software used:
 
 1. Python 3.10.6
-2. MobaXterm Home Edition v22.2 (Installer Edtion): Green button at [MobaXterm Home Edition](https://mobaxterm.mobatek.net/download-home-edition.html)
+2. MobaXterm Home Edition v22.2 (Installer Edition): Green button at [MobaXterm Home Edition](https://mobaxterm.mobatek.net/download-home-edition.html)
