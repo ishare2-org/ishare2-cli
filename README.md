@@ -25,7 +25,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
       help        : Show useful information
       
     param1:
-      type = all, bin, qemu, dynamips or name
+      type = all, bin, qemu, dynamips, docker or name
       
     param2:
       number = This number can be obtained using ishare2 search <type>
@@ -62,6 +62,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     - ishare2 installed bin
     - ishare2 installed qemu
     - ishare2 installed dynamips
+    - ishare2 installed docker
     
     - ishare2 labs
     - ishare2 labs <number>
