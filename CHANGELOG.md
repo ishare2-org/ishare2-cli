@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.3.4] - 2022-Dic-13
+
+1) Modified function: corrections_for_docker_images_in_lab_function() using a for loop and an array
+
 ## [v1.3.3] - 2022-Dic-13
 
 1) Added a bin image to ishare2: "i86bi_LinuxL3-AdvEnterpriseK9-M2_157_3_May_2018.bin". This image was already available in ishare2 but the name was a little bit different (specifically it was: "i86bi_Linux-L3-AdvEnterpriseK9-M2_157_3_May_2018.bin"). So, this was made in order to be able to find and download this image in some labs that had this new name. So, it was decided to upload the same image but with a different name.
