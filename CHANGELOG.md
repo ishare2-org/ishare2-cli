@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using "ishare2 upgrade"
 
+## [v1.3.3] - 2022-Dic-13
+
+1) Added a bin image to ishare2: "i86bi_LinuxL3-AdvEnterpriseK9-M2_157_3_May_2018.bin". This image was already available in ishare2 but the name was a little bit different (specifically it was: "i86bi_Linux-L3-AdvEnterpriseK9-M2_157_3_May_2018.bin"). So, this was made in order to be able to find and download this image in some labs that had this new name. So, it was decided to upload the same image but with a different name.
+2) Added support to download dockers from eveng docker hub (https://hub.docker.com/u/eveng) when present in lab files
+3) Added "ishare2 installed docker" command. Also, available from "ishare2 installed all"
+4) Added green colors when using "ishare2 installed all" for better readabillity
+5) Added green colors when using "ishare2 labs" and "ishare2 mylabs" for better readabillity
+
 ## [v1.3.2] - 2022-Dic-02
 
 1) Modified text on ishare2: "Show contact info" changed to "Show useful information"
