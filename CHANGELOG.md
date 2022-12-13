@@ -1,5 +1,5 @@
 # Change Log
-All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using "ishare2 upgrade"
+All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
 ## [v1.3.3] - 2022-Dic-13
 
