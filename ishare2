@@ -194,7 +194,6 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     #echo -e "\nDocker images"
     docker_images=$(grep -Pio 'type="docker".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$docker_images"
     echo "$docker_images" > /opt/unetlab/labs/docker_images.txt
     
     filename1_iol_images=/opt/unetlab/labs/iol_images.txt
@@ -228,7 +227,10 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     echo -e "\nImages found on lab\n"
     
-    echo -e "--- bin images ---"
+    GREEN='\033[32m'
+    NO_COLOR='\033[0m'
+
+    echo -e "${GREEN}--- bin images ---${NO_COLOR}"
     if [[ BIN_FLAG -eq 1 ]]
     then
         echo No bin images found
@@ -240,7 +242,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         done < $filename1_iol_images
     fi
     
-    echo -e "\n--- dynamips images ---"
+    echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
     if [[ DYNAMIPS_FLAG -eq 1 ]]
     then
         echo No dynamips images found
@@ -252,7 +254,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         done < $filename2_dynamips_images
     fi
     
-    echo -e "\n--- qemu images ---"
+    echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
     if [[ QEMU_FLAG -eq 1 ]]
     then
         echo No qemu images found
@@ -264,7 +266,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         done < $filename3_qemu_images
     fi
     
-    echo -e "\n--- docker images ---"
+    echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
     if [[ DOCKER_FLAG -eq 1 ]]
     then
         echo No docker images found
@@ -527,7 +529,6 @@ function install_lab_images_just_for_only_readable_labs() {
     
     #echo -e "\nDocker images"
     docker_images=$(grep -Pio 'type="docker".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$docker_images"
     echo "$docker_images" > /opt/unetlab/labs/docker_images.txt
     
     filename1_iol_images=/opt/unetlab/labs/iol_images.txt
@@ -560,8 +561,11 @@ function install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\nImages found on lab"
+
+    GREEN='\033[32m'
+    NO_COLOR='\033[0m'
     
-    echo -e "--- bin images ---"
+    echo -e "${GREEN}--- bin images ---${NO_COLOR}"
     if [[ BIN_FLAG -eq 1 ]]
     then
         echo No bin images found
@@ -573,7 +577,7 @@ function install_lab_images_just_for_only_readable_labs() {
         done < $filename1_iol_images
     fi
     
-    echo -e "\n--- dynamips images ---"
+    echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
     if [[ DYNAMIPS_FLAG -eq 1 ]]
     then
         echo No dynamips images found
@@ -585,7 +589,7 @@ function install_lab_images_just_for_only_readable_labs() {
         done < $filename2_dynamips_images
     fi
     
-    echo -e "\n--- qemu images ---"
+    echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
     if [[ QEMU_FLAG -eq 1 ]]
     then
         echo No qemu images found
@@ -597,7 +601,7 @@ function install_lab_images_just_for_only_readable_labs() {
         done < $filename3_qemu_images
     fi
     
-    echo -e "\n--- docker images ---"
+    echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
     if [[ DOCKER_FLAG -eq 1 ]]
     then
         echo No docker images found
@@ -922,6 +926,443 @@ function count_dockers(){
     fi
 }
 
+function corrections_for_docker_images_in_lab_function() {
+    DOCKER_NAME=$1
+    LAB_PATH=$2
+
+    # 1
+    if [[ $DOCKER_NAME = "eve-ostinato" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 2
+    if [[ $DOCKER_NAME = "eve-ostinato-bionic" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 3
+    if [[ $DOCKER_NAME = "eve-ostinato-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 4
+    if [[ $DOCKER_NAME = "eve-dind" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 5
+    if [[ $DOCKER_NAME = "eve-dind-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 6
+    if [[ $DOCKER_NAME = "eve-chrome" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 7
+    if [[ $DOCKER_NAME = "eve-chrome-bionic" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 8
+    if [[ $DOCKER_NAME = "eve-chrome-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 9
+    if [[ $DOCKER_NAME = "eve-firefox" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 10
+    if [[ $DOCKER_NAME = "eve-firefox-bionic" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 11
+    if [[ $DOCKER_NAME = "eve-firefox-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 12
+    if [[ $DOCKER_NAME = "eve-desktop" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 13
+    if [[ $DOCKER_NAME = "eve-desktop-bionic" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 14
+    if [[ $DOCKER_NAME = "eve-desktop-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 15
+    if [[ $DOCKER_NAME = "eve-gui-server" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 16
+    if [[ $DOCKER_NAME = "eve-gui-server-bionic" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 17
+    if [[ $DOCKER_NAME = "eve-gui-server-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 18
+    if [[ $DOCKER_NAME = "eve-wireshark" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 19
+    if [[ $DOCKER_NAME = "eve-wireshark-bionic" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 20
+    if [[ $DOCKER_NAME = "eve-wireshark-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 21
+    if [[ $DOCKER_NAME = "eve-kali" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 22
+    if [[ $DOCKER_NAME = "eve-kali-large" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 23
+    if [[ $DOCKER_NAME = "eve-napalm-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 24
+    if [[ $DOCKER_NAME = "eve-ansible-focal" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 25
+    if [[ $DOCKER_NAME = "dockergui-rdp" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 26
+    if [[ $DOCKER_NAME = "eve-gui-server:latest" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+
+    # 27
+    if [[ $DOCKER_NAME = "eve-gui-server-bionic:latest" ]]
+    then
+        OLD_FILENAME=$DOCKER_NAME
+        NEW_FILENAME=eveng/$DOCKER_NAME
+
+        DOCKER_NAME=$NEW_FILENAME
+        echo -e "\nDocker image name changed from:\n$OLD_FILENAME"
+        echo -e "to\n$NEW_FILENAME\n"
+        
+        echo "Changing docker image name inside .unl lab file"
+        echo Lab file: "$LAB_PATH"
+        sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+        echo -e "Changing: OK\n"
+    fi
+}
+
 function download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
@@ -930,7 +1371,9 @@ function download_lab_docker_images() {
     then
         while read -r line; do
             DOCKER_NAME=$line
-            
+
+            corrections_for_docker_images_in_lab_function $DOCKER_NAME "$LAB_PATH"
+
             STR="Docker requested: "
             echo -e "\033[33m$STR\033[0m $DOCKER_NAME"
             
@@ -1339,6 +1782,7 @@ function show_ishare2_usage() {
     - ishare2 installed bin
     - ishare2 installed qemu
     - ishare2 installed dynamips
+    - ishare2 installed docker
 
     - ishare2 labs
     - ishare2 labs <number>
@@ -2161,12 +2605,17 @@ then
     then
         if [[ "$2" = "all" ]]
         then
-            echo -e "----- QEMU -----"
+            GREEN='\033[32m'
+            NO_COLOR='\033[0m'
+
+            echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
             ishare2 installed qemu
-            echo -e "----- DYNAMIPS -----"
+            echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
             ishare2 installed dynamips
-            echo -e "----- BIN -----"
+            echo -e "${GREEN}----- BIN -----${NO_COLOR}"
             ishare2 installed bin
+            echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
+            ishare2 installed docker
         elif [[ "$2" = "qemu" ]]
         then
             echo -e
@@ -2182,17 +2631,21 @@ then
             echo -e
             ls -lh -R /opt/unetlab/addons/iol/bin
             echo -e
+        elif [[ "$2" = "docker" ]]
+        then
+            list_dockers
+            count_dockers
         else
             YELLOW='\033[1;33m'
             NO_COLOR='\033[0m'
             echo -e "Syntax:\n\nishare2 installed <type>"
-            echo -e "${YELLOW}type: all, bin, qemu or dynamips${NO_COLOR}"
+            echo -e "${YELLOW}type: all, bin, qemu, dynamips or docker${NO_COLOR}"
         fi
     else
         YELLOW='\033[1;33m'
         NO_COLOR='\033[0m'
         echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
-        echo -e "type: all, bin, qemu or dynamips"
+        echo -e "type: all, bin, qemu, dynamips or docker"
     fi
 elif [[ "$1" = "labs" ]] # ishare2 labs
 then
