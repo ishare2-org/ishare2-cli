@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file. You can upg
 
     This code shows a message when a newer ishare2 upgrade is available when using `ishare2` command
     
-    Message is displayed in yellow and after ishare2 version: vX.Y.Z
+    Message is displayed in yellow and is located at the bottom part of this command output: This is, after ishare2 version: vX.Y.Z section
     
     Code looks more cleaner and organized in that function now
     
