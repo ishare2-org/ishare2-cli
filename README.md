@@ -5,7 +5,7 @@
 ### Installation
 Apply this command using the terminal
 ```linux
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 Note: There is no need to be in the same directory where *ishare2* file is installed in order to execute it
@@ -94,7 +94,7 @@ Only applicable for cases where your PNETLab version is 4.2.10:
 
 Copy and paste this command in your server
 ```linux
-wget -O upgrade.sh https://raw.githubusercontent.com/ishare2-org/ishare2/main/upgrades/to_5.0.1/upgrade.sh > /dev/null 2>&1 && chmod +x upgrade.sh && bash upgrade.sh
+wget -O upgrade.sh https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/to_5.0.1/upgrade.sh > /dev/null 2>&1 && chmod +x upgrade.sh && bash upgrade.sh
 ```
 After a few seconds, the upgrade will be done.
 
