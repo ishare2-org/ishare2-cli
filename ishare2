@@ -14,13 +14,13 @@ function check_user_is_root() {
 }
 
 function get_initial_info() {
-    ID_LIST="$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/id_list)"
+    ID_LIST="$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/id_list)"
     
     GOOGLE_SHEETS_ID=$( echo "$ID_LIST" | awk -F= '/^GOOGLE/ { print $2 }' )
     BIN_GID=$( echo "$ID_LIST" | awk -F= '/^BIN/ { print $2 }' )
     QEMU_GID=$( echo "$ID_LIST" | awk -F= '/^QEMU/ { print $2 }' )
     DYNAMIPS_GID=$( echo "$ID_LIST" | awk -F= '/^DYNAMIPS/ { print $2 }' )
-    CREDENTIALS_GID=$( echo "$ID_LIST" | awk -F= '/^CREDENTIALS/ { print $2 }' )
+    #CREDENTIALS_GID=$( echo "$ID_LIST" | awk -F= '/^CREDENTIALS/ { print $2 }' )
     
     URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
     URL_POSTFIX='&single=true&output=csv'
@@ -28,7 +28,7 @@ function get_initial_info() {
     BIN_URL=$URL_PREFIX$BIN_GID$URL_POSTFIX
     QEMU_URL=$URL_PREFIX$QEMU_GID$URL_POSTFIX
     DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS_GID$URL_POSTFIX
-    CREDENTIALS_URL=$URL_PREFIX$CREDENTIALS_GID$URL_POSTFIX
+    #CREDENTIALS_URL=$URL_PREFIX$CREDENTIALS_GID$URL_POSTFIX
 }
 
 check_user_is_root
@@ -1004,7 +1004,7 @@ function download_lab_docker_images() {
 function check_version_file_exists() {
     if ! [[ -e /usr/sbin/ishare2_version ]]
     then
-        echo -n "$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)" >> /usr/sbin/ishare2_version
+        echo -n "$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/version)" >> /usr/sbin/ishare2_version
     fi
 }
 
@@ -1012,7 +1012,7 @@ check_version_file_exists
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
-    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
+    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/version)
     
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
     then
@@ -1021,7 +1021,7 @@ function upgrade_ishare2() {
     fi
     
     rm /usr/sbin/ishare2
-    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1
+    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2/main/ishare2 > /dev/null 2>&1
     chmod +x /usr/sbin/ishare2
 
     echo "ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
@@ -1048,13 +1048,6 @@ function general_available_list() {
     echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
 }
 
-function get_credentials_csv() {
-    FILENAME=$1
-    URL=$2
-    
-    echo -e "Not implemented yet"
-}
-
 function generate_a_new_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
 
@@ -1063,11 +1056,11 @@ function generate_a_new_license() {
 
     if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
 
-    wget -O $PYTHON_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
+    wget -O $PYTHON_FILE https://raw.githubusercontent.com/ishare2-org/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
     python $PYTHON_FILE > /dev/null 2>&1
     
     if ! [[ -e $PERL_FILE ]]; then
-        wget -O $PERL_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
+        wget -O $PERL_FILE https://raw.githubusercontent.com/ishare2-org/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
     fi
     echo "Done"
 }
@@ -1339,14 +1332,28 @@ function show_help_info() {
 }
 
 function show_ishare2_usage() {
-    # credentials : Show device credentials (Not implemented yet)
-    # - ishare2 credentials (Not implemented yet)
+    # For ishare2
     ISHARE2_VERSION_USAGE=$(cat /usr/sbin/ishare2_version)
 
+    YELLOW='\033[1;33m'
+    NO_COLOR='\033[0m'
+
+    STR=""
+    LOCAL_VALUE=$ISHARE2_VERSION_USAGE
+    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/version)
+    
+    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
+    then
+        STR="New ishare2 version available: $REMOTE_VALUE"
+    fi
+    
+    NEW_VERSION_RESULT=$(echo -e ${YELLOW} $STR ${NO_COLOR})
+
+    # For PNETLAB
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     pnetlab_info=($data)
     PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
-    
+
     echo "
     Usage ishare2 [action] [param1] [param2]
 
@@ -1412,7 +1419,7 @@ function show_ishare2_usage() {
     - ishare2 upgrade
     - ishare2 help
 
-    ishare2: $ISHARE2_VERSION_USAGE
+    ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
     pnetlab: v$PNETLAB_VERSION_USAGE
     "
 }
@@ -1678,7 +1685,7 @@ function corrections_for_iol_images() {
         NAME="i86bi_linux_l2-L2-Adventerprisek9-ms.nov3_2015_high_iron.bin"
         if ! [[ -e /opt/unetlab/html/templates/i86bi_linux_l2.yml ]]
         then
-            wget -O /opt/unetlab/html/templates/i86bi_linux_l2.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
+            wget -O /opt/unetlab/html/templates/i86bi_linux_l2.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
         fi
     fi
     
@@ -1687,7 +1694,7 @@ function corrections_for_iol_images() {
         NAME="i86bi_linux_l3-L3-ADVENTERPRISEK9-M-15.4-2T.bin"
         if ! [[ -e /opt/unetlab/html/templates/i86bi_linux_l3.yml ]]
         then
-            wget -O /opt/unetlab/html/templates/i86bi_linux_l3.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
+            wget -O /opt/unetlab/html/templates/i86bi_linux_l3.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
         fi
     fi
 }
@@ -1844,12 +1851,12 @@ function corrections_for_dynamips_images() {
     
     SUBSTRING="c2600"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        wget -O /opt/unetlab/html/templates/c2600.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
+        wget -O /opt/unetlab/html/templates/c2600.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
     fi
     
     SUBSTRING="c1760"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        wget -O /opt/unetlab/html/templates/c1760.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
+        wget -O /opt/unetlab/html/templates/c1760.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
     fi
 }
 
@@ -2307,9 +2314,6 @@ then
         echo "ishare2 mylabs <path> <number>"
         echo -e "ishare2 mylabs <path> all"
     fi
-elif [[ "$1" = "credentials" ]] # ishare2 credentials
-then
-    get_credentials_csv credentials.csv "$CREDENTIALS_URL"
 elif [[ "$1" = "relicense" ]] # ishare2 relicense
 then
     generate_a_new_license
