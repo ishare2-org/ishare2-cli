@@ -1349,11 +1349,12 @@ function show_ishare2_usage() {
     
     NEW_VERSION_RESULT=$(echo -e ${YELLOW} $STR ${NO_COLOR})
 
-    # For PNETLAB
+    # For PNETLab
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     pnetlab_info=($data)
     PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
-
+    
+    # Message displayed when using ishare2 command
     echo "
     Usage ishare2 [action] [param1] [param2]
 
