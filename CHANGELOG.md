@@ -1,6 +1,16 @@
-# Change Log
+# Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.3.6] - 2022-Dic-19
+
+1) Added code in show_ishare2_usage() function: 
+
+    This code shows a message when a newer ishare2 upgrade is available when using `ishare2` command
+    
+    Message is displayed in yellow and after ishare2 version: vX.Y.Z
+    
+    Code looks more cleaner and organized in that function now
+    
 ## [v1.3.5] - 2022-Dic-13
 
 1) Added docker as an option of param1 (type) when using `ishare2`
