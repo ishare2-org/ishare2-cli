@@ -14,7 +14,7 @@ function check_user_is_root() {
 }
 
 function get_initial_info() {
-    ID_LIST="$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/id_list)"
+    ID_LIST="$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/id_list)"
     
     GOOGLE_SHEETS_ID=$( echo "$ID_LIST" | awk -F= '/^GOOGLE/ { print $2 }' )
     BIN_GID=$( echo "$ID_LIST" | awk -F= '/^BIN/ { print $2 }' )
@@ -1004,7 +1004,7 @@ function download_lab_docker_images() {
 function check_version_file_exists() {
     if ! [[ -e /usr/sbin/ishare2_version ]]
     then
-        echo -n "$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/version)" >> /usr/sbin/ishare2_version
+        echo -n "$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)" >> /usr/sbin/ishare2_version
     fi
 }
 
@@ -1012,7 +1012,7 @@ check_version_file_exists
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
-    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/version)
+    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
     
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
     then
@@ -1021,7 +1021,7 @@ function upgrade_ishare2() {
     fi
     
     rm /usr/sbin/ishare2
-    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2/main/ishare2 > /dev/null 2>&1
+    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1
     chmod +x /usr/sbin/ishare2
 
     echo "ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
@@ -1056,11 +1056,11 @@ function generate_a_new_license() {
 
     if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
 
-    wget -O $PYTHON_FILE https://raw.githubusercontent.com/ishare2-org/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
+    wget -O $PYTHON_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
     python $PYTHON_FILE > /dev/null 2>&1
     
     if ! [[ -e $PERL_FILE ]]; then
-        wget -O $PERL_FILE https://raw.githubusercontent.com/ishare2-org/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
+        wget -O $PERL_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
     fi
     echo "Done"
 }
@@ -1340,7 +1340,7 @@ function show_ishare2_usage() {
 
     STR=""
     LOCAL_VALUE=$ISHARE2_VERSION_USAGE
-    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/ishare2-org/ishare2/main/version)
+    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
     
     if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
     then
@@ -1685,7 +1685,7 @@ function corrections_for_iol_images() {
         NAME="i86bi_linux_l2-L2-Adventerprisek9-ms.nov3_2015_high_iron.bin"
         if ! [[ -e /opt/unetlab/html/templates/i86bi_linux_l2.yml ]]
         then
-            wget -O /opt/unetlab/html/templates/i86bi_linux_l2.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
+            wget -O /opt/unetlab/html/templates/i86bi_linux_l2.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
         fi
     fi
     
@@ -1694,7 +1694,7 @@ function corrections_for_iol_images() {
         NAME="i86bi_linux_l3-L3-ADVENTERPRISEK9-M-15.4-2T.bin"
         if ! [[ -e /opt/unetlab/html/templates/i86bi_linux_l3.yml ]]
         then
-            wget -O /opt/unetlab/html/templates/i86bi_linux_l3.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
+            wget -O /opt/unetlab/html/templates/i86bi_linux_l3.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
         fi
     fi
 }
@@ -1851,12 +1851,12 @@ function corrections_for_dynamips_images() {
     
     SUBSTRING="c2600"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        wget -O /opt/unetlab/html/templates/c2600.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
+        wget -O /opt/unetlab/html/templates/c2600.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
     fi
     
     SUBSTRING="c1760"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        wget -O /opt/unetlab/html/templates/c1760.yml https://raw.githubusercontent.com/ishare2-org/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
+        wget -O /opt/unetlab/html/templates/c1760.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
     fi
 }
 
