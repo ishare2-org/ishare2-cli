@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.3.7] - 2022-Dic-24
 
-1) Fixed: A problem when trying to download a file in FILE6LINK position (Weird characters added with no reason: ,,,)
+1) Fixed: A problem when trying to download a file in FILE6LINK position (Weird characters added for no reason: ,,,)
 2) Modified: Some "if-then" were put in the same line for a better readability
 3) Deleted: Code related to problem 1 and png files
 4) Deleted: Some echo commands that were previously commented
