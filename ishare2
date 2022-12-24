@@ -1703,117 +1703,83 @@ function corrections_for_iol_images() {
 function corrections_for_qemu_images_in_lab_function() {
     QEMU_NAME=$1
     
-    if [[ $QEMU_NAME = "huaweicx-V800R011" ]]
-    then
+    if [[ $QEMU_NAME = "huaweicx-V800R011" ]]; then
         QEMU_NAME="cx"
     fi
     
-    if [[ $QEMU_NAME = "huaweine40e-ne40e" ]]
-    then
+    if [[ $QEMU_NAME = "huaweine40e-ne40e" ]]; then
         QEMU_NAME="ne40e"
     fi
     
-    if [[ $QEMU_NAME = "huaweine5ke-ne5000e" ]]
-    then
+    if [[ $QEMU_NAME = "huaweine5ke-ne5000e" ]]; then
         QEMU_NAME="ne5000e"
     fi
     
-    if [[ $QEMU_NAME = "huaweine9k-ne9000" ]]
-    then
+    if [[ $QEMU_NAME = "huaweine9k-ne9000" ]]; then
         QEMU_NAME="ne9000"
     fi
     
-    if [[ $QEMU_NAME = "huaweice6800-ce6800" ]]
-    then
+    if [[ $QEMU_NAME = "huaweice6800-ce6800" ]]; then
         QEMU_NAME="ce6800"
     fi
     
-    if [[ $QEMU_NAME = "huaweice12800-ce12800" ]]
-    then
+    if [[ $QEMU_NAME = "huaweice12800-ce12800" ]]; then
         QEMU_NAME="ce12800"
     fi
     
-    if [[ $QEMU_NAME = "cips-7.0.8" ]]
-    then
+    if [[ $QEMU_NAME = "cips-7.0.8" ]]; then
         QEMU_NAME="vIPS-7.0.8"
     fi
     
-    if [[ $QEMU_NAME = "catalyst8000v-17.07.01a" ]]
-    then
+    if [[ $QEMU_NAME = "catalyst8000v-17.07.01a" ]]; then
         QEMU_NAME="c8000v-17.07.01a"
     fi
     
-    if [[ $QEMU_NAME = "linux-kali2020-epiol" ]]
-    then
+    if [[ $QEMU_NAME = "linux-kali2020-epiol" ]]; then
         QEMU_NAME="kali-2020-epiol"
-    fi
-    
-    if [[ "${FILE6LINK: -4}" != ".png" ]]
-    then
-        STR="${FILE6LINK: -4}"
-        SUB="png"
-        if [[ "$STR" == *"$SUB"* ]]; then
-            #echo "It's there."
-            length="${#FILE6LINK}"
-            FILE6LINK=${FILE6LINK: 0:length-1}
-        fi
     fi
 }
 
 function corrections_for_qemu_images() {
-    if [[ $FOLDERNAME = "cx" ]]
-    then
+    # Delete ,,, characters (if present) at the end of the FILE6LINK variable (6th element)
+    if [[ "${FILE6LINK: -4}" == *",,,"* ]]; then
+        FILE6LINK=${FILE6LINK::-4}
+    fi
+
+    if [[ $FOLDERNAME = "cx" ]]; then
         FOLDERNAME="huaweicx-V800R011"
     fi
     
-    if [[ $FOLDERNAME = "ne40e" ]]
-    then
+    if [[ $FOLDERNAME = "ne40e" ]]; then
         FOLDERNAME="huaweine40e-ne40e"
     fi
     
-    if [[ $FOLDERNAME = "ne5000e" ]]
-    then
+    if [[ $FOLDERNAME = "ne5000e" ]]; then
         FOLDERNAME="huaweine5ke-ne5000e"
     fi
     
-    if [[ $FOLDERNAME = "ne9000" ]]
-    then
+    if [[ $FOLDERNAME = "ne9000" ]]; then
         FOLDERNAME="huaweine9k-ne9000"
     fi
     
-    if [[ $FOLDERNAME = "ce6800" ]]
-    then
+    if [[ $FOLDERNAME = "ce6800" ]]; then
         FOLDERNAME="huaweice6800-ce6800"
     fi
     
-    if [[ $FOLDERNAME = "ce12800" ]]
-    then
+    if [[ $FOLDERNAME = "ce12800" ]]; then
         FOLDERNAME="huaweice12800-ce12800"
     fi
     
-    if [[ $FOLDERNAME = "vIPS-7.0.8" ]]
-    then
+    if [[ $FOLDERNAME = "vIPS-7.0.8" ]]; then
         FOLDERNAME="cips-7.0.8"
     fi
     
-    if [[ $FOLDERNAME = "c8000v-17.07.01a" ]]
-    then
+    if [[ $FOLDERNAME = "c8000v-17.07.01a" ]]; then
         FOLDERNAME="catalyst8000v-17.07.01a"
     fi
     
-    if [[ $FOLDERNAME = "kali-2020-epiol" ]]
-    then
+    if [[ $FOLDERNAME = "kali-2020-epiol" ]]; then
         FOLDERNAME="linux-kali2020-epiol"
-    fi
-    
-    if [[ "${FILE6LINK: -4}" != ".png" ]]
-    then
-        STR="${FILE6LINK: -4}"
-        SUB="png"
-        if [[ "$STR" == *"$SUB"* ]]; then
-            length="${#FILE6LINK}"
-            FILE6LINK=${FILE6LINK: 0:length-1}
-        fi
     fi
 }
 
@@ -1901,9 +1867,6 @@ function pull_qemu() {
             FILE6NAME=$col15
             FILE6LINK=$col16
             
-            # echo "${FILE6LINK: -4}"
-            # echo "${FILE6LINK: -4:-1}"
-            
             corrections_for_qemu_images
             count_elements_to_download_for_qemu_images
         fi
@@ -1928,9 +1891,6 @@ function pull_qemu() {
         FILE5LINK=$col14
         FILE6NAME=$col15
         FILE6LINK=$col16
-        
-        # echo "${FILE6LINK: -4}"
-        # echo "${FILE6LINK: -4:-1}"
         
         corrections_for_qemu_images
         count_elements_to_download_for_qemu_images
