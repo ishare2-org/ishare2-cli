@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.3.7] - 2022-Dic-24
+
+1) Fixed: Problem when trying to download some files (Weirds characters added with no reason: ,,,)
+2) Modified: Some if then were put in the same line for a better readability
+3) Deleted: Code related to problem 1 and png files
+4) Deleted: Some echo commands that were commented
+
 ## [v1.3.6] - 2022-Dic-19
 
 1) Added code in show_ishare2_usage() function: 
