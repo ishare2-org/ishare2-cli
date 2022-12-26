@@ -99,7 +99,7 @@ wget -O upgrade.sh https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/up
 After a few seconds, the upgrade will be done.
 
 Note: This upgrade does not use ishare2:
-It just downloads the upgrade.sh file from this repository and executes it using the same instructions as described in the PNETLab Official website ["How to Upgrade PNETLab? Section 2. PNETLab can not connect to Internet."](https://pnetlab.com/pages/documentation?slug=how-to-upgrade-pnetlab)
+It just downloads a file called `upgrade.sh` from this [repository](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/to_5.0.1) and executes it using the same instructions as described in the PNETLab Official website ["How to Upgrade PNETLab? Section 2. PNETLab can not connect to Internet."](https://pnetlab.com/pages/documentation?slug=how-to-upgrade-pnetlab)
 
 ### Known Limitations
 
