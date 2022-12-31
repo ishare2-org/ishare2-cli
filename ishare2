@@ -35,9 +35,7 @@ function set_yml_template_folder_location() {
     data_array=($data)
     pnetlab_version=${data_array[1]}
 
-    if [[ $pnetlab_version == "4.2.10" ]]; then
-        YML_DIR="/opt/unetlab/html/templates/"
-    fi
+    if [[ $pnetlab_version == "4.2.10" ]]; then YML_DIR="/opt/unetlab/html/templates/" ; fi
 
     if [[ $pnetlab_version == "5.2.5" ]]; then
         grep -q vmx /proc/cpuinfo && echo -n vmx > /opt/unetlab/platform
@@ -45,13 +43,8 @@ function set_yml_template_folder_location() {
 
         platform=$(cat /opt/unetlab/platform)
 
-        if [[ $platform == "vmx" ]]; then
-            YML_DIR="/opt/unetlab/html/templates/intel/"
-        fi
-
-        if [[ $platform == "svm" ]]; then
-            YML_DIR="/opt/unetlab/html/templates/amd/"
-        fi
+        if [[ $platform == "vmx" ]]; then YML_DIR="/opt/unetlab/html/templates/intel/" ; fi
+        if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/" ; fi
     fi
 }
 
@@ -63,17 +56,15 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     LABS_DIR=$1
 
     # Added some correction when "/" is not found at the end of the provided path (LABS_DIR)
-    if ! [[ ${LABS_DIR: -1} == "/" ]] ; then LABS_DIR=$LABS_DIR/ ; fi
+    if ! [[ ${LABS_DIR: -1} == "/" ]]; then LABS_DIR=$LABS_DIR/ ; fi
 
-    if ! [[ -d $LABS_DIR ]]
-    then
+    if ! [[ -d $LABS_DIR ]]; then
         echo "Folder $LABS_DIR has not been found"
         echo "Check your full path to the labs"
         exit 0
     fi
 
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]
-    then
+    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
         echo "No labs found at $LABS_DIR folder in server"
         exit 0
     fi
@@ -81,7 +72,7 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     counter_all_labs_installed_on_server=0
     for file in "$LABS_DIR"*
     do
-        if [[ -d $file ]] ; then continue ; fi # Avoiding folders
+        if [[ -d $file ]]; then continue ; fi # Avoiding folders
         counter_all_lab
         s_installed_on_server=$((counter_all_labs_installed_on_server+1))
     done
@@ -93,16 +84,14 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     
     for file in "$LABS_DIR"*
     do
-        if [[ -d $file ]] ; then continue ; fi # Avoiding folders
+        if [[ -d $file ]]; then continue ; fi # Avoiding folders
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
         SUB="encoding"
-        if [[ $check == *"$SUB"* ]]
-        then
+        if [[ $check == *"$SUB"* ]]; then
             readableLabsArray+=("$file")
             # Get Author name list
             author_lab_name=$(grep -Pio '.*author="\K[^"]*' "$file" | sort -u)
-            if [[ -z $author_lab_name ]] # Author name not specified
-            then
+            if [[ -z $author_lab_name ]]; then # Author name not specified
                 author_lab_name=N/A
             fi
             authorLabsArray+=("$author_lab_name")
@@ -111,8 +100,7 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     
     echo "Labs in plain text: ${#readableLabsArray[@]}"
     
-    if [[ ${#readableLabsArray[@]} -eq 0 ]]
-    then
+    if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
@@ -132,7 +120,6 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     STR2="ishare2 mylabs <path> all"
     echo -e "\nTo install images for a specific lab, use the following command:\n\033[32m$STR1\033[0m"
     echo -e "\nTo install images for all of the labs, use the following command:\n\033[32m$STR2\033[0m"
-
 }
 
 function mylabs_install_lab_images_just_for_only_readable_labs() {
@@ -140,17 +127,15 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     NUMBER=$2
 
     # Added some correction when "/" is not found at the end of the provided path (LABS_DIR)
-    if ! [[ ${LABS_DIR: -1} == "/" ]] ; then LABS_DIR=$LABS_DIR/ ; fi
+    if ! [[ ${LABS_DIR: -1} == "/" ]]; then LABS_DIR=$LABS_DIR/ ; fi
     
-    if ! [[ -d $LABS_DIR ]]
-    then
+    if ! [[ -d $LABS_DIR ]]; then
         echo "Folder $LABS_DIR has not been found"
         echo "Check your full path to the labs"
         exit 0
     fi
 
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]
-    then
+    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
         echo "No labs found at $LABS_DIR folder in server"
         exit 0
     fi
@@ -158,11 +143,10 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     declare -a readableLabsArray=()
     for file in "$LABS_DIR"*
     do
-        if [[ -d $file ]] ; then continue ; fi # Avoiding folders      
+        if [[ -d $file ]]; then continue ; fi # Avoiding folders      
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
         SUB="encoding"
-        if [[ $check == *"$SUB"* ]]
-        then
+        if [[ $check == *"$SUB"* ]]; then
             readableLabsArray+=("$file")
         fi
     done
@@ -173,17 +157,14 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         counter_for_readable_labs=$((counter_for_readable_labs+1))
     done
        
-    if [[ ${#readableLabsArray[@]} -eq 0 ]]
-    then
+    if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
     fi
     
-    if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]
-    then
-        if [[ $counter_for_readable_labs -eq 1 ]]
-        then
+    if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]; then
+        if [[ $counter_for_readable_labs -eq 1 ]]; then
             STR="Last parameter must be 1 because you have only one lab"
             YELLOW='\033[1;33m'
             NO_COLOR='\033[0m'
@@ -228,28 +209,16 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     filename4_docker_images=/opt/unetlab/labs/docker_images.txt
     
     BIN_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename1_iol_images
-    then
-        BIN_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename1_iol_images; then BIN_FLAG=1 ; fi
     
     DYNAMIPS_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename2_dynamips_images
-    then
-        DYNAMIPS_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename2_dynamips_images; then DYNAMIPS_FLAG=1 ; fi
     
     QEMU_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename3_qemu_images
-    then
-        QEMU_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename3_qemu_images; then QEMU_FLAG=1 ; fi
     
     DOCKER_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename4_docker_images
-    then
-        DOCKER_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename4_docker_images; then DOCKER_FLAG=1 ; fi
     
     echo -e "\nImages found on lab\n"
     
@@ -257,8 +226,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     NO_COLOR='\033[0m'
 
     echo -e "${GREEN}--- bin images ---${NO_COLOR}"
-    if [[ BIN_FLAG -eq 1 ]]
-    then
+    if [[ BIN_FLAG -eq 1 ]]; then
         echo No bin images found
     else
         n=1
@@ -269,8 +237,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]
-    then
+    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
         echo No dynamips images found
     else
         n=1
@@ -281,8 +248,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
-    if [[ QEMU_FLAG -eq 1 ]]
-    then
+    if [[ QEMU_FLAG -eq 1 ]]; then
         echo No qemu images found
     else
         n=1
@@ -293,8 +259,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
-    if [[ DOCKER_FLAG -eq 1 ]]
-    then
+    if [[ DOCKER_FLAG -eq 1 ]]; then
         echo No docker images found
     else
         n=1
@@ -306,8 +271,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     STR_BIN="\nDownload BIN images for this lab"
     echo -e "\033[32m$STR_BIN\033[0m"
-    if [[ BIN_FLAG -eq 1 ]]
-    then
+    if [[ BIN_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_iol_images "$file"
@@ -315,8 +279,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     STR_DYNAMIPS="\nDownload DYNAMIPS images for this lab"
     echo -e "\033[32m$STR_DYNAMIPS\033[0m"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]
-    then
+    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_dynamips_images
@@ -324,8 +287,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     STR_QEMU="\nDownload QEMU images for this lab"
     echo -e "\033[32m$STR_QEMU\033[0m"
-    if [[ QEMU_FLAG -eq 1 ]]
-    then
+    if [[ QEMU_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_qemu_images
@@ -333,8 +295,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     STR_DOCKER="\nDownload DOCKER images for this lab"
     echo -e "\033[32m$STR_DOCKER\033[0m"
-    if [[ DOCKER_FLAG -eq 1 ]]
-    then
+    if [[ DOCKER_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_docker_images
@@ -347,25 +308,22 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     rm /opt/unetlab/labs/iol_images.txt
     rm /opt/unetlab/labs/dynamips_images.txt
     rm /opt/unetlab/labs/qemu_images.txt
-    rm /opt/unetlab/labs/docker_images.txt  
+    rm /opt/unetlab/labs/docker_images.txt
 }
 
 function mylabs_install_lab_images_just_for_only_readable_labs_ALL() {
-
     LABS_DIR=$1
 
     # Added some correction when "/" is not found at the end of the provided path (LABS_DIR)
-    if ! [[ ${LABS_DIR: -1} == "/" ]] ; then LABS_DIR=$LABS_DIR/ ; fi
+    if ! [[ ${LABS_DIR: -1} == "/" ]]; then LABS_DIR=$LABS_DIR/ ; fi
 
-    if ! [[ -d $LABS_DIR ]]
-    then
+    if ! [[ -d $LABS_DIR ]]; then
         echo "Folder $LABS_DIR has not been found"
         echo "Check your full path to the labs"
         exit 0
     fi
 
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]
-    then
+    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
         echo "No labs found at $LABS_DIR in server"
         exit 0
     fi
@@ -373,26 +331,23 @@ function mylabs_install_lab_images_just_for_only_readable_labs_ALL() {
     declare -a readableLabsArray=()
     for file in "$LABS_DIR"*
     do
-        if [[ -d $file ]] ; then continue ; fi # Avoiding folders
+        if [[ -d $file ]]; then continue ; fi # Avoiding folders
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
         SUB="encoding"
-        if [[ $check == *"$SUB"* ]]
-        then
+        if [[ $check == *"$SUB"* ]]; then
             readableLabsArray+=("$file")
         fi
     done
       
     N=${#readableLabsArray[@]}
 
-    if [[ $N -eq 0 ]]
-    then
+    if [[ $N -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
     fi
     
-    if [[ $N -eq 1 ]]
-    then
+    if [[ $N -eq 1 ]]; then
         echo "Starting to download images for $N lab"
     else
         echo "Starting to download images for $N labs"
@@ -410,15 +365,13 @@ function mylabs_install_lab_images_just_for_only_readable_labs_ALL() {
 function get_lab_list_just_for_only_readable_labs() {
     LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
 
-    if ! [[ -d $LABS_DIR ]]
-    then
+    if ! [[ -d $LABS_DIR ]]; then
         echo "Folder Your labs from PNETLab Store has not been found"
         echo "This folder is created when a lab from PNETLab Store is downloaded"
         exit 0
     fi
 
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]
-    then
+    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
         echo "No labs found at PNETLab Store folder in server"
         exit 0
     fi
@@ -438,12 +391,10 @@ function get_lab_list_just_for_only_readable_labs() {
     do       
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
         SUB="encoding"
-        if [[ $check == *"$SUB"* ]]
-        then
+        if [[ $check == *"$SUB"* ]]; then
             readableLabsArray+=("$file")
             author_lab_name=$(grep -Pio '.*author="\K[^"]*' "$file" | sort -u)
-            if [[ -z $author_lab_name ]] # Author name not specified
-            then
+            if [[ -z $author_lab_name ]]; then # Author name not specified
                 author_lab_name=N/A
             fi
             authorLabsArray+=("$author_lab_name")
@@ -452,8 +403,7 @@ function get_lab_list_just_for_only_readable_labs() {
     
     echo "Labs in plain text: ${#readableLabsArray[@]}"
     
-    if [[ ${#readableLabsArray[@]} -eq 0 ]]
-    then
+    if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
@@ -478,15 +428,13 @@ function install_lab_images_just_for_only_readable_labs() {
     
     LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
     
-    if ! [[ -d $LABS_DIR ]]
-    then
+    if ! [[ -d $LABS_DIR ]]; then
         echo "Folder Your labs from PNETLab Store has not been found"
         echo "This folder is created when a lab from PNETLab Store is downloaded"
         exit 0
     fi
 
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]
-    then
+    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
         echo "No labs found at PNETLab Store folder in server"
         exit 0
     fi
@@ -496,8 +444,7 @@ function install_lab_images_just_for_only_readable_labs() {
     do        
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
         SUB="encoding"
-        if [[ $check == *"$SUB"* ]]
-        then
+        if [[ $check == *"$SUB"* ]]; then
             readableLabsArray+=("$file")
         fi
     done
@@ -508,17 +455,14 @@ function install_lab_images_just_for_only_readable_labs() {
         counter_for_readable_labs=$((counter_for_readable_labs+1))
     done
     
-    if [[ ${#readableLabsArray[@]} -eq 0 ]]
-    then
+    if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
     fi
     
-    if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]
-    then
-        if [[ $counter_for_readable_labs -eq 1 ]]
-        then
+    if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]; then
+        if [[ $counter_for_readable_labs -eq 1 ]]; then
             STR="Last parameter must be 1 because you have only one lab"
             YELLOW='\033[1;33m'
             NO_COLOR='\033[0m'
@@ -563,28 +507,16 @@ function install_lab_images_just_for_only_readable_labs() {
     filename4_docker_images=/opt/unetlab/labs/docker_images.txt
     
     BIN_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename1_iol_images
-    then
-        BIN_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename1_iol_images; then BIN_FLAG=1 ; fi
     
     DYNAMIPS_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename2_dynamips_images
-    then
-        DYNAMIPS_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename2_dynamips_images; then DYNAMIPS_FLAG=1 ; fi
     
     QEMU_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename3_qemu_images
-    then
-        QEMU_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename3_qemu_images; then QEMU_FLAG=1 ; fi
     
     DOCKER_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename4_docker_images
-    then
-        DOCKER_FLAG=1
-    fi
+    if ! grep -q '[^[:space:]]' $filename4_docker_images; then DOCKER_FLAG=1 ; fi
     
     echo -e "\nImages found on lab"
 
@@ -592,8 +524,7 @@ function install_lab_images_just_for_only_readable_labs() {
     NO_COLOR='\033[0m'
     
     echo -e "${GREEN}--- bin images ---${NO_COLOR}"
-    if [[ BIN_FLAG -eq 1 ]]
-    then
+    if [[ BIN_FLAG -eq 1 ]]; then
         echo No bin images found
     else
         n=1
@@ -604,8 +535,7 @@ function install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]
-    then
+    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
         echo No dynamips images found
     else
         n=1
@@ -616,8 +546,7 @@ function install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
-    if [[ QEMU_FLAG -eq 1 ]]
-    then
+    if [[ QEMU_FLAG -eq 1 ]]; then
         echo No qemu images found
     else
         n=1
@@ -628,8 +557,7 @@ function install_lab_images_just_for_only_readable_labs() {
     fi
     
     echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
-    if [[ DOCKER_FLAG -eq 1 ]]
-    then
+    if [[ DOCKER_FLAG -eq 1 ]]; then
         echo No docker images found
     else
         n=1
@@ -641,8 +569,7 @@ function install_lab_images_just_for_only_readable_labs() {
     
     STR_BIN="\nDownload BIN images for this lab"
     echo -e "\033[32m$STR_BIN\033[0m"
-    if [[ BIN_FLAG -eq 1 ]]
-    then
+    if [[ BIN_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_iol_images "$file"
@@ -650,8 +577,7 @@ function install_lab_images_just_for_only_readable_labs() {
     
     STR_DYNAMIPS="\nDownload DYNAMIPS images for this lab"
     echo -e "\033[32m$STR_DYNAMIPS\033[0m"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]
-    then
+    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_dynamips_images
@@ -659,8 +585,7 @@ function install_lab_images_just_for_only_readable_labs() {
     
     STR_QEMU="\nDownload QEMU images for this lab"
     echo -e "\033[32m$STR_QEMU\033[0m"
-    if [[ QEMU_FLAG -eq 1 ]]
-    then
+    if [[ QEMU_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_qemu_images
@@ -668,8 +593,7 @@ function install_lab_images_just_for_only_readable_labs() {
     
     STR_DOCKER="\nDownload DOCKER images for this lab"
     echo -e "\033[32m$STR_DOCKER\033[0m"
-    if [[ DOCKER_FLAG -eq 1 ]]
-    then
+    if [[ DOCKER_FLAG -eq 1 ]]; then
         echo -
     else
         download_lab_docker_images
@@ -688,15 +612,13 @@ function install_lab_images_just_for_only_readable_labs() {
 function install_lab_images_just_for_only_readable_labs_ALL() {
     LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
 
-    if ! [[ -d $LABS_DIR ]]
-    then
+    if ! [[ -d $LABS_DIR ]]; then
         echo "Folder Your labs from PNETLab Store has not been found"
         echo "This folder is created when a lab from PNETLab Store is downloaded"
         exit 0
     fi
 
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]
-    then
+    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
         echo "No labs found at PNETLab Store folder in server"
         exit 0
     fi
@@ -706,23 +628,20 @@ function install_lab_images_just_for_only_readable_labs_ALL() {
     do
         check=$(grep -Pio 'encoding="UTF-8"' "$file")
         SUB="encoding"
-        if [[ $check == *"$SUB"* ]]
-        then
+        if [[ $check == *"$SUB"* ]]; then
             readableLabsArray+=("$file")
         fi
     done
       
     N=${#readableLabsArray[@]}
 
-    if [[ $N -eq 0 ]]
-    then
+    if [[ $N -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
         echo -e "\033[31m$STR\033[0m"
         exit 0
     fi
     
-    if [[ $N -eq 1 ]]
-    then
+    if [[ $N -eq 1 ]]; then
         echo "Starting to download images for $N lab"
     else
         echo "Starting to download images for $N labs"
@@ -741,8 +660,7 @@ function corrections_for_bin_images_in_lab_function() {
     BIN_NAME=$1
     LAB_PATH=$2
     
-    if [[ $BIN_NAME = "i86_Linux-L2-Adventerpisek9-mx.SSA.high_iron_20190423.bin" ]]
-    then
+    if [[ $BIN_NAME = "i86_Linux-L2-Adventerpisek9-mx.SSA.high_iron_20190423.bin" ]]; then
         OLD_FILENAME="i86_Linux-L2-Adventerpisek9-mx.SSA.high_iron_20190423.bin"
         NEW_FILENAME="i86bi_linux_l2-adventerprisek9-ms.SSA.high_iron_20190423.bin"
         # Bad spelling: 4 errors
@@ -760,8 +678,7 @@ function corrections_for_bin_images_in_lab_function() {
         echo -e "Changing: OK\n"
     fi
     
-    if [[ $BIN_NAME = "L3-ADVENTERPRISEK9-M-15.4-2T.bin" ]]
-    then
+    if [[ $BIN_NAME = "L3-ADVENTERPRISEK9-M-15.4-2T.bin" ]]; then
         OLD_FILENAME="L3-ADVENTERPRISEK9-M-15.4-2T.bin"
         NEW_FILENAME="i86bi_linux_l3-L3-ADVENTERPRISEK9-M-15.4-2T.bin"
         # Bad spelling: 1 error
@@ -797,23 +714,20 @@ function download_lab_iol_images() {
         
         while IFS=',' read -r col1 col2 col3 col4 col5
         do
-            if [[ "$col2" == "$BIN_NAME" ]]
-            then
+            if [[ "$col2" == "$BIN_NAME" ]]; then
                 FLAG=1
                 NUMBER_TO_DOWNLOAD=$col1
                 ishare2 pull bin "$NUMBER_TO_DOWNLOAD"
             fi
         done < $FILENAME
 
-        if [[ "$col2" == "$BIN_NAME" ]]
-        then
+        if [[ "$col2" == "$BIN_NAME" ]]; then
             FLAG=1
             NUMBER_TO_DOWNLOAD=$col1
             ishare2 pull bin "$NUMBER_TO_DOWNLOAD"
         fi
 
-        if [[ $FLAG -eq 0 ]]
-        then
+        if [[ $FLAG -eq 0 ]]; then
             STR="(BIN) WARNING: Image $BIN_NAME has not been found"
             YELLOW='\033[1;33m'
             NO_COLOR='\033[0m'
@@ -837,23 +751,20 @@ function download_lab_dynamips_images() {
         FLAG=0
         while IFS=',' read -r col1 col2 col3 col4 col5
         do
-            if [[ "$col2" == "$DYNAMIPS_NAME" ]]
-            then
+            if [[ "$col2" == "$DYNAMIPS_NAME" ]]; then
                 FLAG=1
                 NUMBER_TO_DOWNLOAD=$col1
                 ishare2 pull dynamips "$NUMBER_TO_DOWNLOAD"
             fi
         done < $FILENAME
 
-        if [[ "$col2" == "$DYNAMIPS_NAME" ]]
-        then
+        if [[ "$col2" == "$DYNAMIPS_NAME" ]]; then
             FLAG=1
             NUMBER_TO_DOWNLOAD=$col1
             ishare2 pull dynamips "$NUMBER_TO_DOWNLOAD"
         fi
 
-        if [[ $FLAG -eq 0 ]]
-        then
+        if [[ $FLAG -eq 0 ]]; then
             STR="(DYNAMIPS) WARNING: Image $DYNAMIPS_NAME has not been found"
             YELLOW='\033[1;33m'
             NO_COLOR='\033[0m'
@@ -881,23 +792,20 @@ function download_lab_qemu_images() {
         
         while IFS=',' read -r col1 col2 col3 col4 col5
         do
-            if [[ "$col2" == "$QEMU_NAME" ]]
-            then
+            if [[ "$col2" == "$QEMU_NAME" ]]; then
                 FLAG=1
                 NUMBER_TO_DOWNLOAD=$col1
                 ishare2 pull qemu "$NUMBER_TO_DOWNLOAD"
             fi
         done < $FILENAME
 
-        if [[ "$col2" == "$QEMU_NAME" ]]
-        then
+        if [[ "$col2" == "$QEMU_NAME" ]]; then
             FLAG=1
             NUMBER_TO_DOWNLOAD=$col1
             ishare2 pull qemu "$NUMBER_TO_DOWNLOAD"
         fi
 
-        if [[ $FLAG -eq 0 ]]
-        then
+        if [[ $FLAG -eq 0 ]]; then
             STR="(QEMU) WARNING: Image $QEMU_NAME has not been found"
             YELLOW='\033[1;33m'
             NO_COLOR='\033[0m'
@@ -912,19 +820,16 @@ function check_docker_service_status() {
     GREEN='\033[32m'
     NO_COLOR='\033[0m'
 
-    if service docker status | grep -q "active (running)"
-    then
+    if service docker status | grep -q "active (running)"; then
         return 0 # 0 means "no failures"
     fi
 
-    if service docker status | grep -q "inactive (dead)"
-    then
+    if service docker status | grep -q "inactive (dead)"; then
         echo -e "${RED}Detected: Docker service is down. Trying to restart it${NO_COLOR}"
         service docker restart
     fi
 
-    if service docker status | grep -q "active (running)"
-    then
+    if service docker status | grep -q "active (running)"; then
         echo -e "${GREEN}Docker service has been restarted successfully${NO_COLOR}"
         return 0 # 0 means "no failures"
     else
@@ -944,8 +849,7 @@ function count_dockers(){
     data=$(docker images | wc -l)
     docker_count=$((data-1))
 
-    if [[ $docker_count -eq 1 ]]
-    then
+    if [[ $docker_count -eq 1 ]]; then
         echo -e "\n$docker_count docker image found in server"
     else
         echo -e "\n$docker_count docker images found in server"
@@ -988,8 +892,7 @@ function corrections_for_docker_images_in_lab_function() {
 
     for i in "${array[@]}"
     do
-        if [[ $DOCKER_NAME == $i ]]
-            then
+        if [[ $DOCKER_NAME == $i ]]; then
                 OLD_FILENAME=$DOCKER_NAME
                 NEW_FILENAME=eveng/$DOCKER_NAME
 
@@ -1009,8 +912,7 @@ function download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
     # Checking docker service status before pull any docker image
-    if check_docker_service_status $1 # When 0 is returned
-    then
+    if check_docker_service_status $1; then # When 0 is returned
         while read -r line; do
             DOCKER_NAME=$line
 
@@ -1028,8 +930,7 @@ function download_lab_docker_images() {
 }
 
 function check_version_file_exists() {
-    if ! [[ -e /usr/sbin/ishare2_version ]]
-    then
+    if ! [[ -e /usr/sbin/ishare2_version ]]; then
         echo -n "$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)" >> /usr/sbin/ishare2_version
     fi
 }
@@ -1040,8 +941,7 @@ function upgrade_ishare2() {
     LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
     REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
     
-    if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
-    then
+    if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         echo "ishare2 $REMOTE_VALUE is currently the newest version available"
         exit 0
     fi
@@ -1064,8 +964,7 @@ function general_available_list() {
     rm /opt/unetlab/addons/"$FILENAME" > /dev/null 2>&1
     wget --connect-timeout 5 -O "$FILENAME" "$URL" > /dev/null 2>&1
     
-    if [[ $TYPE == "QEMU" ]]
-    then
+    if [[ $TYPE == "QEMU" ]]; then
         awk -F, '{print $1,$2,$3,$4}' "$FILENAME" | column -t
     else # [[ $TYPE == "DYNAMIPS" || $TYPE == "BIN" ]]
         awk -F, '{print $1,$2,$4,$5}' "$FILENAME" | column -t
@@ -1080,7 +979,7 @@ function generate_a_new_license() {
     PYTHON_FILE=$BIN_PATH"CiscoIOUKeygen.py"
     PERL_FILE=$BIN_PATH"keepalive.pl"
 
-    if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
+    if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE ; fi
 
     wget -O $PYTHON_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
     python $PYTHON_FILE > /dev/null 2>&1
@@ -1105,13 +1004,11 @@ function download_1_file_bin_or_dynamips() {
     echo -e "\033[33m$STR\033[0m $NAME"
     echo -e "$SIZE $UNIT\n"
     
-    if [[ $TYPE = "dynamips" ]]
-    then
+    if [[ $TYPE = "dynamips" ]]; then
         wget -q --show-progress -O /opt/unetlab/addons/dynamips/"$NAME" "$LINK"
     fi
     
-    if [[ $TYPE = "bin" ]]
-    then
+    if [[ $TYPE = "bin" ]]; then
         wget -q --show-progress -O /opt/unetlab/addons/iol/bin/"$NAME" "$LINK"
     fi
 }
@@ -1211,8 +1108,7 @@ function pull_all_dynamips_images() {
 function pull_dynamips() {
     PARAMETER=$1
     
-    if [[ $PARAMETER = "all" ]]
-    then
+    if [[ $PARAMETER = "all" ]]; then
         pull_all_dynamips_images
         exit 0
     fi
@@ -1226,8 +1122,7 @@ function pull_dynamips() {
     FLAG=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
-        if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]
-        then
+        if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]; then
             FLAG=1
             NAME=$col2
             LINK=$col3
@@ -1237,8 +1132,7 @@ function pull_dynamips() {
             corrections_for_dynamips_images "$NAME"
         fi
     done < $FILENAME
-    if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]
-    then
+    if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]; then
         FLAG=1
         NAME=$col2
         LINK=$col3
@@ -1251,8 +1145,7 @@ function pull_dynamips() {
     # Remove csv file
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     
-    if [[ $FLAG = 1 ]]
-    then
+    if [[ $FLAG = 1 ]]; then
         if [[ -e /opt/unetlab/addons/dynamips/"$NAME" ]]; then
             echo -e "File $NAME already exists in server"
             exit 0
@@ -1278,8 +1171,7 @@ function pull_dynamips() {
 function pull_bin() {
     PARAMETER=$1
     
-    if [[ $PARAMETER = "all" ]]
-    then
+    if [[ $PARAMETER = "all" ]]; then
         pull_all_iol_images
         exit 0
     fi
@@ -1293,8 +1185,7 @@ function pull_bin() {
     FLAG=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
-        if [[ "$col1" = "$BIN_NUMBER" ]]
-        then
+        if [[ "$col1" = "$BIN_NUMBER" ]]; then
             FLAG=1
             NAME=$col2
             LINK=$col3
@@ -1304,8 +1195,8 @@ function pull_bin() {
             corrections_for_iol_images "$NAME"
         fi
     done < $FILENAME
-    if [[ "$col1" = "$BIN_NUMBER" ]]
-    then
+
+    if [[ "$col1" = "$BIN_NUMBER" ]]; then
         FLAG=1
         NAME=$col2
         LINK=$col3
@@ -1318,8 +1209,7 @@ function pull_bin() {
     # Remove csv file
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     
-    if [[ $FLAG = 1 ]]
-    then
+    if [[ $FLAG = 1 ]]; then
         if [[ -e /opt/unetlab/addons/iol/bin/"$NAME" ]]; then
             echo -e "File $NAME already exists in server"
             exit 0
@@ -1368,8 +1258,7 @@ function show_ishare2_usage() {
     LOCAL_VALUE=$ISHARE2_VERSION_USAGE
     REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
     
-    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]
-    then
+    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         STR="New ishare2 version available: $REMOTE_VALUE"
     fi
     
@@ -1458,8 +1347,7 @@ function tgz_files_function() {
     
     EXTENSION=".tgz"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         echo -e "\nDecompressing $EXTENSION file..."
         tar -xf "$file" --strip-components 1 -C "$DIR"
@@ -1475,8 +1363,7 @@ function tar_gz_files_function() {
     
     EXTENSION=".tar.gz"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         echo -e "\nDecompressing $EXTENSION file..."
         tar -xf "$file" --strip-components 1 -C "$DIR"
@@ -1492,8 +1379,7 @@ function tar_files_function() {
     
     EXTENSION=".tar"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         echo -e "\nDecompressing $EXTENSION file..."
         tar -xf "$file" --strip-components 1 -C "$DIR"
@@ -1509,8 +1395,7 @@ function zip_files_function() {
     
     EXTENSION=".zip"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         echo -e "\nDecompressing $EXTENSION file..."
         unzip -a -j "$file" -d "$DIR"
@@ -1526,12 +1411,10 @@ function rar_files_function() {
     
     EXTENSION=".rar"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         
-        if ! [[ -e /usr/bin/unrar ]]
-        then
+        if ! [[ -e /usr/bin/unrar ]]; then
             apt -qq update > /dev/null 2>&1 && apt -qq install --assume-yes unrar > /dev/null 2>&1
         fi
         
@@ -1549,8 +1432,7 @@ function ova_files_function() {
     
     EXTENSION=".ova"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         COMPRESSED_FILE=$(ls "${DIR}"/*"$EXTENSION")
         echo -e "\nDecompressing $EXTENSION file..."
         tar -xvf "$COMPRESSED_FILE" -C "$DIR"
@@ -1566,17 +1448,14 @@ function iso_files_function() {
     
     EXTENSION=".iso"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then 
         ISO_FILE=$(ls "${DIR}"/*"$EXTENSION")
         
-        if ! [[ "${ISO_FILE: -9}" == "cdrom.iso" ]]
-        then
+        if ! [[ "${ISO_FILE: -9}" == "cdrom.iso" ]]; then
             mv "$ISO_FILE" "$DIR"/cdrom.iso # Rename file
         fi
         
-        if [[ $FILES_COUNTER -eq 1 ]]
-        then
+        if [[ $FILES_COUNTER -eq 1 ]]; then
             /opt/qemu/bin/qemu-img create -f qcow2 "$DIR"/virtioa.qcow2 20G
         fi
     fi
@@ -1590,8 +1469,7 @@ function yml_files_function() {
     EXTENSION=".yml"
     #YML_DIR="/opt/unetlab/html/templates/" # Value getted from set_yml_template_folder_location()
 
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then 
         file=$(ls "${DIR}"/*"$EXTENSION")
         cp "$file" $YML_DIR
     fi
@@ -1606,8 +1484,7 @@ function txt_files_function() {
     
     for ELEMENT in "$DIR"/*
     do
-        if [[ "${ELEMENT: -4}" == "$EXTENSION" ]]
-        then
+        if [[ "${ELEMENT: -4}" == "$EXTENSION" ]]; then
             echo -e "\nReading file: $ELEMENT\n"
             cat "$ELEMENT"
             echo -e
@@ -1622,8 +1499,7 @@ function sh_files_function() {
     
     EXTENSION=".sh"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         chmod +x "$file"
         echo -e "\nExecuting $file"
@@ -1639,13 +1515,11 @@ function png_files_function() {
     EXTENSION=".png"
     PNG_DIR="/opt/unetlab/html/images/icons/"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         
         # Change .png filename for a Huawei device: from ne5000e.png to ne.png
-        if [[ $file == "/opt/unetlab/addons/qemu/huaweine5ke-ne5000e/ne5000e.png" ]]
-        then
+        if [[ $file == "/opt/unetlab/addons/qemu/huaweine5ke-ne5000e/ne5000e.png" ]]; then
             NEW_PNG_FILENAME="/opt/unetlab/addons/qemu/huaweine5ke-ne5000e/ne.png"
             mv "$file" $NEW_PNG_FILENAME
             file=$NEW_PNG_FILENAME
@@ -1663,8 +1537,7 @@ function php_files_function() {
     EXTENSION=".php"
     PHP_DIR="/opt/unetlab/html/devices/qemu/"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         cp "$file" $PHP_DIR
     fi
@@ -1677,8 +1550,7 @@ function vmdk_files_function() {
     
     EXTENSION=".vmdk"
     
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null
-    then
+    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         VMDK_FILE=$(ls "${DIR}"/*"$EXTENSION")
         
         echo -e "\nConverting .vmdk to .qcow2. It might take a while..."
@@ -1729,84 +1601,29 @@ function corrections_for_iol_images() {
 function corrections_for_qemu_images_in_lab_function() {
     QEMU_NAME=$1
     
-    if [[ $QEMU_NAME = "huaweicx-V800R011" ]]; then
-        QEMU_NAME="cx"
-    fi
-    
-    if [[ $QEMU_NAME = "huaweine40e-ne40e" ]]; then
-        QEMU_NAME="ne40e"
-    fi
-    
-    if [[ $QEMU_NAME = "huaweine5ke-ne5000e" ]]; then
-        QEMU_NAME="ne5000e"
-    fi
-    
-    if [[ $QEMU_NAME = "huaweine9k-ne9000" ]]; then
-        QEMU_NAME="ne9000"
-    fi
-    
-    if [[ $QEMU_NAME = "huaweice6800-ce6800" ]]; then
-        QEMU_NAME="ce6800"
-    fi
-    
-    if [[ $QEMU_NAME = "huaweice12800-ce12800" ]]; then
-        QEMU_NAME="ce12800"
-    fi
-    
-    if [[ $QEMU_NAME = "cips-7.0.8" ]]; then
-        QEMU_NAME="vIPS-7.0.8"
-    fi
-    
-    if [[ $QEMU_NAME = "catalyst8000v-17.07.01a" ]]; then
-        QEMU_NAME="c8000v-17.07.01a"
-    fi
-    
-    if [[ $QEMU_NAME = "linux-kali2020-epiol" ]]; then
-        QEMU_NAME="kali-2020-epiol"
-    fi
+    if [[ $QEMU_NAME = "huaweicx-V800R011" ]]; then QEMU_NAME="cx" ; fi
+    if [[ $QEMU_NAME = "huaweine40e-ne40e" ]]; then QEMU_NAME="ne40e" ; fi
+    if [[ $QEMU_NAME = "huaweine5ke-ne5000e" ]]; then QEMU_NAME="ne5000e" ; fi
+    if [[ $QEMU_NAME = "huaweine9k-ne9000" ]]; then QEMU_NAME="ne9000" ; fi
+    if [[ $QEMU_NAME = "huaweice6800-ce6800" ]]; then QEMU_NAME="ce6800" ; fi
+    if [[ $QEMU_NAME = "huaweice12800-ce12800" ]]; then QEMU_NAME="ce12800" ; fi
+    if [[ $QEMU_NAME = "cips-7.0.8" ]]; then QEMU_NAME="vIPS-7.0.8" ; fi
+    if [[ $QEMU_NAME = "catalyst8000v-17.07.01a" ]]; then QEMU_NAME="c8000v-17.07.01a" ; fi
+    if [[ $QEMU_NAME = "linux-kali2020-epiol" ]]; then QEMU_NAME="kali-2020-epiol" ; fi
 }
 
 function corrections_for_qemu_images() {
-    # Delete ,,, characters (if present) at the end of the FILE6LINK variable (6th element)
-    if [[ "${FILE6LINK: -4}" == *",,,"* ]]; then
-        FILE6LINK=${FILE6LINK::-4}
-    fi
-
-    if [[ $FOLDERNAME = "cx" ]]; then
-        FOLDERNAME="huaweicx-V800R011"
-    fi
-    
-    if [[ $FOLDERNAME = "ne40e" ]]; then
-        FOLDERNAME="huaweine40e-ne40e"
-    fi
-    
-    if [[ $FOLDERNAME = "ne5000e" ]]; then
-        FOLDERNAME="huaweine5ke-ne5000e"
-    fi
-    
-    if [[ $FOLDERNAME = "ne9000" ]]; then
-        FOLDERNAME="huaweine9k-ne9000"
-    fi
-    
-    if [[ $FOLDERNAME = "ce6800" ]]; then
-        FOLDERNAME="huaweice6800-ce6800"
-    fi
-    
-    if [[ $FOLDERNAME = "ce12800" ]]; then
-        FOLDERNAME="huaweice12800-ce12800"
-    fi
-    
-    if [[ $FOLDERNAME = "vIPS-7.0.8" ]]; then
-        FOLDERNAME="cips-7.0.8"
-    fi
-    
-    if [[ $FOLDERNAME = "c8000v-17.07.01a" ]]; then
-        FOLDERNAME="catalyst8000v-17.07.01a"
-    fi
-    
-    if [[ $FOLDERNAME = "kali-2020-epiol" ]]; then
-        FOLDERNAME="linux-kali2020-epiol"
-    fi
+    # Delete ,,, characters (if present) at the end of the FILE6LINK variable (6th element to download)
+    if [[ "${FILE6LINK: -4}" == *",,,"* ]]; then FILE6LINK=${FILE6LINK::-4} ; fi
+    if [[ $FOLDERNAME = "cx" ]]; then FOLDERNAME="huaweicx-V800R011" ; fi
+    if [[ $FOLDERNAME = "ne40e" ]]; then FOLDERNAME="huaweine40e-ne40e" ; fi
+    if [[ $FOLDERNAME = "ne5000e" ]]; then FOLDERNAME="huaweine5ke-ne5000e" ; fi
+    if [[ $FOLDERNAME = "ne9000" ]]; then FOLDERNAME="huaweine9k-ne9000" ; fi
+    if [[ $FOLDERNAME = "ce6800" ]]; then FOLDERNAME="huaweice6800-ce6800" ; fi
+    if [[ $FOLDERNAME = "ce12800" ]]; then FOLDERNAME="huaweice12800-ce12800" ; fi
+    if [[ $FOLDERNAME = "vIPS-7.0.8" ]]; then FOLDERNAME="cips-7.0.8" ; fi
+    if [[ $FOLDERNAME = "c8000v-17.07.01a" ]]; then FOLDERNAME="catalyst8000v-17.07.01a" ; fi
+    if [[ $FOLDERNAME = "kali-2020-epiol" ]]; then FOLDERNAME="linux-kali2020-epiol" ; fi
 }
 
 function count_elements_to_download_for_qemu_images() {
@@ -1858,8 +1675,7 @@ function corrections_for_dynamips_images() {
 function pull_qemu() {
     PARAMETER=$1
     
-    if [[ $PARAMETER = "all" ]]
-    then
+    if [[ $PARAMETER = "all" ]]; then
         echo "Feature not available for qemu images due to size"
         exit 0
     fi
@@ -1874,8 +1690,7 @@ function pull_qemu() {
     declare -a myArray=()
     while IFS=',' read -r col1 col2 col3 col4 col5 col6 col7 col8 col9 col10 col11 col12 col13 col14 col15 col16
     do
-        if [[ "$col1" = "$QEMU_NUMBER" ]]
-        then
+        if [[ "$col1" = "$QEMU_NUMBER" ]]; then
             FLAG=1
             
             #NUMBER=$col1
@@ -1899,8 +1714,8 @@ function pull_qemu() {
             count_elements_to_download_for_qemu_images
         fi
     done < $FILENAME
-    if [[ "$col1" = "$QEMU_NUMBER" ]]
-    then
+
+    if [[ "$col1" = "$QEMU_NUMBER" ]]; then
         FLAG=1
         
         #NUMBER=$col1
@@ -1927,8 +1742,7 @@ function pull_qemu() {
     # Remove csv file
     rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     
-    if [[ $FLAG = 1 ]]
-    then
+    if [[ $FLAG = 1 ]]; then
         if [[ -d /opt/unetlab/addons/qemu/"$FOLDERNAME" ]]; then
             echo -e "Folder $FOLDERNAME already exists in server"
             exit 0
@@ -1937,16 +1751,14 @@ function pull_qemu() {
         mkdir /opt/unetlab/addons/qemu/"$FOLDERNAME"/
         
         #1. Download file requested
-        if [[ $FILES_COUNTER -eq 1 ]]
-        then
+        if [[ $FILES_COUNTER -eq 1 ]]; then
             download_1_file_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "$FILE1NAME" "$FILE1LINK"
             
             #2. Move file to /opt/unetlab/addons/qemu/<folder>
             mv "$FILE1NAME" /opt/unetlab/addons/qemu/"$FOLDERNAME"/"$FILE1NAME"
         fi
         
-        if [[ $FILES_COUNTER -gt 1 ]]
-        then
+        if [[ $FILES_COUNTER -gt 1 ]]; then
             #echo $FILES_COUNTER
             download_multiple_files_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "${myArray[@]}"
             
@@ -1998,16 +1810,14 @@ function filter_bin() {
     FLAG_TO_SHOW_RESULTS_BIN=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
-        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"
-        then
+        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"; then
             CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
             FLAG_TO_SHOW_RESULTS_BIN=1
             break
         fi
     done < $FILENAME
     
-    if [[ $FLAG_TO_SHOW_RESULTS_BIN -eq 1 ]]
-    then
+    if [[ $FLAG_TO_SHOW_RESULTS_BIN -eq 1 ]]; then
         echo "Number, Name, Link, Size, Unit" >> new.csv
         echo "$CMD" >> new.csv
         echo -e
@@ -2036,16 +1846,14 @@ function filter_dynamips() {
     FLAG_TO_SHOW_RESULTS_DYNAMIPS=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
-        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"
-        then
+        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"; then
             CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
             FLAG_TO_SHOW_RESULTS_DYNAMIPS=1
             break
         fi
     done < $FILENAME
     
-    if [[ $FLAG_TO_SHOW_RESULTS_DYNAMIPS -eq 1 ]]
-    then
+    if [[ $FLAG_TO_SHOW_RESULTS_DYNAMIPS -eq 1 ]]; then
         echo "Number, Name, Link, Size, Unit" >> new.csv
         echo "$CMD" >> new.csv
         echo -e
@@ -2074,16 +1882,14 @@ function filter_qemu() {
     FLAG_TO_SHOW_RESULTS_QEMU=0
     while IFS=',' read -r col1 col2 col3 col4 col5
     do
-        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"
-        then
+        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"; then
             CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
             FLAG_TO_SHOW_RESULTS_QEMU=1
             break
         fi
     done < $FILENAME
     
-    if [[ $FLAG_TO_SHOW_RESULTS_QEMU -eq 1 ]]
-    then
+    if [[ $FLAG_TO_SHOW_RESULTS_QEMU -eq 1 ]]; then
         echo "Number, Name, Size, Unit" >> new.csv
         echo "$CMD" >> new.csv
         echo "$CMD" | awk -F, '{print $1,$2,$3,$4}' new.csv | column -t
@@ -2102,36 +1908,28 @@ function filter_qemu() {
 
 # Main code
 
-if [[ "$1" = "search" ]] # ishare2 search
-then
-    if [[ "$2" = "all" ]] # ishare2 search all
-    then
+if [[ "$1" = "search" ]]; then # ishare2 search
+    if [[ "$2" = "all" ]]; then # ishare2 search all
         ishare2 search qemu
         ishare2 search dynamips
         ishare2 search bin
         echo " "
-    elif [[ "$2" = "qemu" ]] # ishare2 search qemu
-    then
+    elif [[ "$2" = "qemu" ]]; then # ishare2 search qemu
         FILENAME=QEMU_URL.csv
         general_available_list QEMU "$FILENAME" "$QEMU_URL"
         rm "$(pwd)"/$FILENAME > /dev/null 2>&1
-    elif [[ "$2" = "dynamips" ]] # ishare2 search dynamips
-    then
+    elif [[ "$2" = "dynamips" ]]; then # ishare2 search dynamips
         FILENAME=DYNAMIPS_URL.csv
         general_available_list DYNAMIPS "$FILENAME" "$DYNAMIPS_URL"
         rm "$(pwd)"/$FILENAME > /dev/null 2>&1
-    elif [[ "$2" = "bin" ]] # ishare2 search bin
-    then
+    elif [[ "$2" = "bin" ]]; then # ishare2 search bin
         FILENAME=BIN_URL.csv
         general_available_list BIN "$FILENAME" "$BIN_URL"
         rm "$(pwd)"/$FILENAME > /dev/null 2>&1
     else # 1) ishare2 search 2) ishare2 search <number> 3) ishare2 search <string>
-        if [[ $2 ]]
-        then
+        if [[ $2 ]]; then
             filter_bin "$2"
-            
             filter_dynamips "$2"
-            
             filter_qemu "$2"
         else
             echo -e "Available options\n"
@@ -2152,14 +1950,10 @@ then
             echo "  - More <name> options using ishare2 search all"
         fi
     fi
-elif [[ "$1" = "pull" ]] # ishare2 pull
-then
-    if [[ "$2" ]] # check if exists an arg to ishare2 pull x
-    then
-        if [[ "$2" = "qemu" ]] # ishare2 pull qemu
-        then
-            if [[ "$3" ]] # check if exists an arg to ishare2 pull qemu
-            then
+elif [[ "$1" = "pull" ]]; then # ishare2 pull
+    if [[ "$2" ]]; then # check if exists an arg to ishare2 pull x
+        if [[ "$2" = "qemu" ]]; then # ishare2 pull qemu
+            if [[ "$3" ]]; then # check if exists an arg to ishare2 pull qemu
                 pull_qemu "$3"
             else
                 STR="Last parameter not detected"
@@ -2169,10 +1963,8 @@ then
                 echo -e "${RED}$STR${NO_COLOR}"
                 echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
             fi
-        elif [[ "$2" = "dynamips" ]] # ishare2 pull dynamips
-        then
-            if [[ "$3" ]]
-            then
+        elif [[ "$2" = "dynamips" ]]; then # ishare2 pull dynamips
+            if [[ "$3" ]]; then
                 pull_dynamips "$3"
             else
                 STR="Last parameter not detected"
@@ -2182,10 +1974,8 @@ then
                 echo -e "${RED}$STR${NO_COLOR}"
                 echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
             fi
-        elif [[ "$2" = "bin" ]] # ishare2 pull bin
-        then
-            if [[ "$3" ]]
-            then
+        elif [[ "$2" = "bin" ]]; then # ishare2 pull bin
+            if [[ "$3" ]]; then
                 pull_bin "$3"
             else
                 STR="Last parameter not detected"
@@ -2211,12 +2001,9 @@ then
         echo "Example: ishare2 pull dynamips 5"
         echo -e "Example: ishare2 pull bin 6"
     fi
-elif [[ "$1" = "installed" ]] # ishare2 installed
-then
-    if [[ "$2" ]]
-    then
-        if [[ "$2" = "all" ]]
-        then
+elif [[ "$1" = "installed" ]]; then # ishare2 installed
+    if [[ "$2" ]]; then
+        if [[ "$2" = "all" ]]; then
             GREEN='\033[32m'
             NO_COLOR='\033[0m'
 
@@ -2228,23 +2015,19 @@ then
             ishare2 installed bin
             echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
             ishare2 installed docker
-        elif [[ "$2" = "qemu" ]]
-        then
+        elif [[ "$2" = "qemu" ]]; then
             echo -e
             ls -lh -R /opt/unetlab/addons/qemu/
             echo -e
-        elif [[ "$2" = "dynamips" ]]
-        then
+        elif [[ "$2" = "dynamips" ]]; then
             echo -e
             ls -lh -R /opt/unetlab/addons/dynamips/
             echo -e
-        elif [[ "$2" = "bin" ]]
-        then
+        elif [[ "$2" = "bin" ]]; then
             echo -e
             ls -lh -R /opt/unetlab/addons/iol/bin
             echo -e
-        elif [[ "$2" = "docker" ]]
-        then
+        elif [[ "$2" = "docker" ]]; then
             list_dockers
             count_dockers
         else
@@ -2259,12 +2042,9 @@ then
         echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
         echo -e "type: all, bin, qemu, dynamips or docker"
     fi
-elif [[ "$1" = "labs" ]] # ishare2 labs
-then
-    if [[ "$2" ]] # ishare2 labs x (x could be "all" or a number)
-    then
-        if [[ "$2" = "all" ]] # ishare2 labs all
-        then
+elif [[ "$1" = "labs" ]]; then # ishare2 labs
+    if [[ "$2" ]]; then # ishare2 labs x (x could be "all" or a number)
+        if [[ "$2" = "all" ]]; then # ishare2 labs all
             install_lab_images_just_for_only_readable_labs_ALL
             exit 0
         else # ishare2 labs <number>
@@ -2273,18 +2053,13 @@ then
         fi
     fi
     get_lab_list_just_for_only_readable_labs
-elif [[ $1 == "mylabs" ]] # ishare2 mylabs
-then
-    if [[ "$2" ]]
-    then
-        if [[ "$3" ]]
-        then
-            if [[ "$3" == "all" ]] # ishare2 mylabs <path> all
-            then
+elif [[ $1 == "mylabs" ]]; then # ishare2 mylabs
+    if [[ "$2" ]]; then
+        if [[ "$3" ]]; then
+            if [[ "$3" == "all" ]]; then # ishare2 mylabs <path> all
                 mylabs_install_lab_images_just_for_only_readable_labs_ALL $2 all
             else
-                if ! [[ -z "${3##*[!0-9]*}" ]] # ishare2 mylabs <path> <number>
-                then
+                if ! [[ -z "${3##*[!0-9]*}" ]]; then # ishare2 mylabs <path> <number>
                     mylabs_install_lab_images_just_for_only_readable_labs $2 $3
                 else
                     STR="The last parameter must be a number"
@@ -2303,14 +2078,11 @@ then
         echo "ishare2 mylabs <path> <number>"
         echo -e "ishare2 mylabs <path> all"
     fi
-elif [[ "$1" = "relicense" ]] # ishare2 relicense
-then
+elif [[ "$1" = "relicense" ]]; then # ishare2 relicense
     generate_a_new_license
-elif [[ "$1" = "upgrade" ]] # ishare2 upgrade
-then
+elif [[ "$1" = "upgrade" ]]; then # ishare2 upgrade
     upgrade_ishare2
-elif [[ "$1" = "help" ]] # ishare2 help
-then
+elif [[ "$1" = "help" ]]; then # ishare2 help
     show_help_info
 else # when no args are passed to ishare2
     show_ishare2_usage
