@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.3.9] - 2022-Dic-31
+
+1) Modified: Code has been modified for a better readability
+
 ## [v1.3.8] - 2022-Dic-31
 
 1) Deleted: variables called CREDENTIALS (No longer used)
