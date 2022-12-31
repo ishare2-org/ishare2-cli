@@ -20,7 +20,6 @@ function get_initial_info() {
     BIN_GID=$( echo "$ID_LIST" | awk -F= '/^BIN/ { print $2 }' )
     QEMU_GID=$( echo "$ID_LIST" | awk -F= '/^QEMU/ { print $2 }' )
     DYNAMIPS_GID=$( echo "$ID_LIST" | awk -F= '/^DYNAMIPS/ { print $2 }' )
-    #CREDENTIALS_GID=$( echo "$ID_LIST" | awk -F= '/^CREDENTIALS/ { print $2 }' )
     
     URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
     URL_POSTFIX='&single=true&output=csv'
@@ -28,11 +27,37 @@ function get_initial_info() {
     BIN_URL=$URL_PREFIX$BIN_GID$URL_POSTFIX
     QEMU_URL=$URL_PREFIX$QEMU_GID$URL_POSTFIX
     DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS_GID$URL_POSTFIX
-    #CREDENTIALS_URL=$URL_PREFIX$CREDENTIALS_GID$URL_POSTFIX
+}
+
+function set_yml_template_folder_location() {
+    # Get PNETLab version from DB
+    data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
+    data_array=($data)
+    pnetlab_version=${data_array[1]}
+
+    if [[ $pnetlab_version == "4.2.10" ]]; then
+        YML_DIR="/opt/unetlab/html/templates/"
+    fi
+
+    if [[ $pnetlab_version == "5.2.5" ]]; then
+        grep -q vmx /proc/cpuinfo && echo -n vmx > /opt/unetlab/platform
+        grep -q svm /proc/cpuinfo && echo -n svm > /opt/unetlab/platform
+
+        platform=$(cat /opt/unetlab/platform)
+
+        if [[ $platform == "vmx" ]]; then
+            YML_DIR="/opt/unetlab/html/templates/intel/"
+        fi
+
+        if [[ $platform == "svm" ]]; then
+            YML_DIR="/opt/unetlab/html/templates/amd/"
+        fi
+    fi
 }
 
 check_user_is_root
 get_initial_info
+set_yml_template_folder_location
 
 function mylabs_get_lab_list_just_for_only_readable_labs() {
     LABS_DIR=$1
@@ -57,7 +82,8 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
     for file in "$LABS_DIR"*
     do
         if [[ -d $file ]] ; then continue ; fi # Avoiding folders
-        counter_all_labs_installed_on_server=$((counter_all_labs_installed_on_server+1))
+        counter_all_lab
+        s_installed_on_server=$((counter_all_labs_installed_on_server+1))
     done
     
     echo -e "Labs inside $LABS_DIR folder in VM: $counter_all_labs_installed_on_server"
@@ -1562,8 +1588,8 @@ function yml_files_function() {
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
     
     EXTENSION=".yml"
-    YML_DIR="/opt/unetlab/html/templates/"
-    
+    #YML_DIR="/opt/unetlab/html/templates/" # Value getted from set_yml_template_folder_location()
+
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null
     then
         file=$(ls "${DIR}"/*"$EXTENSION")
@@ -1665,14 +1691,14 @@ function vmdk_files_function() {
 function check_if_yml_template_is_missing() {
     FOLDERNAME=$1
     
-    YML_DIR="/opt/unetlab/html/templates/"
+    #YML_DIR="/opt/unetlab/html/templates/" # Value getted from set_yml_template_folder_location()
+
     TEMPLATE_NAME="$(cut -d'-' -f1 <<<"$FOLDERNAME")"
     EXTENSION=".yml"
     
     FULL_TEMPLATE_PATH=$YML_DIR"$TEMPLATE_NAME"$EXTENSION
     
-    if ! [[ -e $FULL_TEMPLATE_PATH ]]
-    then
+    if ! [[ -e $FULL_TEMPLATE_PATH ]]; then
         STR="\nTemplate $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
         echo -e "\033[31m$STR\033[0m"
     fi
@@ -1681,21 +1707,21 @@ function check_if_yml_template_is_missing() {
 function corrections_for_iol_images() {
     NAME=$1
     
-    if [[ $NAME = "L2-Adventerprisek9-ms.nov3_2015_high_iron.bin" ]]
-    then
+    if [[ $NAME = "L2-Adventerprisek9-ms.nov3_2015_high_iron.bin" ]]; then
         NAME="i86bi_linux_l2-L2-Adventerprisek9-ms.nov3_2015_high_iron.bin"
-        if ! [[ -e /opt/unetlab/html/templates/i86bi_linux_l2.yml ]]
-        then
-            wget -O /opt/unetlab/html/templates/i86bi_linux_l2.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
+
+        FILE="$YML_DIR"i86bi_linux_l2.yml
+        if ! [[ -e $FILE ]]; then
+            wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
         fi
     fi
     
-    if [[ $NAME = "L3-ADVENTERPRISEK9-M-15.4-2T.bin" ]]
-    then
+    if [[ $NAME = "L3-ADVENTERPRISEK9-M-15.4-2T.bin" ]]; then
         NAME="i86bi_linux_l3-L3-ADVENTERPRISEK9-M-15.4-2T.bin"
-        if ! [[ -e /opt/unetlab/html/templates/i86bi_linux_l3.yml ]]
-        then
-            wget -O /opt/unetlab/html/templates/i86bi_linux_l3.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
+
+        FILE="$YML_DIR"i86bi_linux_l3.yml
+        if ! [[ -e $FILE ]]; then
+            wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
         fi
     fi
 }
@@ -1815,15 +1841,17 @@ function count_elements_to_download_for_qemu_images() {
 
 function corrections_for_dynamips_images() {
     NAME=$1
-    
+
     SUBSTRING="c2600"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        wget -O /opt/unetlab/html/templates/c2600.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
+        FILE="$YML_DIR"c2600.yml
+        wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
     fi
     
     SUBSTRING="c1760"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        wget -O /opt/unetlab/html/templates/c1760.yml https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
+        FILE="$YML_DIR"c1760.yml
+        wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
     fi
 }
 
