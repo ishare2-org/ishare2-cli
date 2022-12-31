@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. You can upg
 ## [v1.3.8] - 2022-Dic-31
 
 1) Deleted: variables called CREDENTIALS (No longer used)
-2) Added: Code supporting PNETLab 5.2.5 users (related to amd and intel folders) while PNETLab 4.2.10 users are able to keep using it without any problems
+2) Added: Code supporting PNETLab upgrade to v5.2.5. This way, users can upgrade to v5.2.5 and use ishare2 (Problem fixed is related to amd and intel folders). Also, PNETLab v4.2.10 users are able to keep using it without any problems
 
 ## [v1.3.7] - 2022-Dic-24
 
