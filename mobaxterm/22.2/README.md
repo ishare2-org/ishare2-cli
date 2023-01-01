@@ -8,7 +8,7 @@ This code has been modified from its original version
 ### Installation
 Download this script into Windows applying this command in cmd or PowerShell:
 ```batch
-curl -o MobaXterm-Keygen-v2.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/MobaXterm-Keygen-v2.py
+curl -o MobaXterm-Keygen-v2.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.2/MobaXterm-Keygen-v2.py
 ```
 
 ### Useful information
