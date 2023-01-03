@@ -55,6 +55,16 @@ function set_yml_template_folder_location() {
         if [[ $platform == "vmx" ]]; then YML_DIR="/opt/unetlab/html/templates/intel/" ; fi
         if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/" ; fi
     fi
+    
+    if [[ $pnetlab_version == "5.2.7" ]]; then
+        grep -q vmx /proc/cpuinfo && echo -n vmx > /opt/unetlab/platform
+        grep -q svm /proc/cpuinfo && echo -n svm > /opt/unetlab/platform
+
+        platform=$(cat /opt/unetlab/platform)
+
+        if [[ $platform == "vmx" ]]; then YML_DIR="/opt/unetlab/html/templates/intel/" ; fi
+        if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/" ; fi
+    fi
 }
 
 check_user_is_root
