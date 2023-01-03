@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.4.2] - 2023-Jan-03
+
+1) Modified: Code in the set_yml_template_folder_location() function has been rewritten for a better readability (5.2.5, 5.2.6 and 5.2.7)
+
 ## [v1.4.1] - 2023-Jan-02
 
 1) Added: Some code has been added to ishare2 to support PNETLab upgrade to v5.2.7 (Same as v5.2.6 fix: AMD and Intel folders at html/templates/). PNETLab users from v4.2.10 should not have any problem
