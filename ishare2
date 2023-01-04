@@ -961,6 +961,7 @@ function show_changelog() {
     CHANGELOG_URL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/CHANGELOG.md
     DATA="$(wget -q $CHANGELOG_URL -P /root)"
     head -n 15 $FILE
+    rm $FILE
 }
 
 function general_available_list() {
