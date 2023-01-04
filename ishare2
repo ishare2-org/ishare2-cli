@@ -954,6 +954,15 @@ function upgrade_ishare2() {
     echo "$REMOTE_VALUE" >> /usr/sbin/ishare2_version
 }
 
+function show_changelog() {
+    FILE=/root/CHANGELOG.md
+    if [[ -e $FILE ]]; then rm $FILE ; fi
+
+    CHANGELOG_URL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/CHANGELOG.md
+    DATA="$(wget -q $CHANGELOG_URL -P /root)"
+    head -n 15 $FILE
+}
+
 function general_available_list() {
     TYPE=$1
     FILENAME=$2
@@ -1332,6 +1341,7 @@ function show_ishare2_usage() {
 
     - ishare2 relicense
     - ishare2 upgrade
+    - ishare2 changelog
     - ishare2 help
 
     ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
@@ -2081,6 +2091,8 @@ elif [[ "$1" = "relicense" ]]; then # ishare2 relicense
     generate_a_new_license
 elif [[ "$1" = "upgrade" ]]; then # ishare2 upgrade
     upgrade_ishare2
+elif [[ "$1" = "changelog" ]]; then # ishare2 changelog
+    show_changelog
 elif [[ "$1" = "help" ]]; then # ishare2 help
     show_help_info
 else # when no args are passed to ishare2
