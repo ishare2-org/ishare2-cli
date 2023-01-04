@@ -22,6 +22,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
       mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
       upgrade     : Upgrade ishare2 code to the latest version
+      changelog   : Show the latest changes made to ishare2
       help        : Show useful information
       
     param1:
@@ -74,6 +75,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     
     - ishare2 relicense
     - ishare2 upgrade
+    - ishare2 changelog
     - ishare2 help
     
 ### Useful information
