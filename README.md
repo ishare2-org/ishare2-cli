@@ -95,18 +95,9 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 [CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
 
-### How to upgrade your PNETLab server to v5.0.1
+### How to upgrade your PNETLab server
 
-Only applicable for cases where your PNETLab version is 4.2.10:
-
-Copy and paste this command in your server
-```linux
-wget -O upgrade.sh https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/to_5.0.1/upgrade.sh > /dev/null 2>&1 && chmod +x upgrade.sh && bash upgrade.sh
-```
-After a few seconds, the upgrade will be done.
-
-Note: This upgrade does not use ishare2:
-It just downloads a file called `upgrade.sh` from this [repository](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/to_5.0.1) and executes it using the same instructions as described in the PNETLab Official website ["How to Upgrade PNETLab? Section 2. PNETLab can not connect to Internet."](https://pnetlab.com/pages/documentation?slug=how-to-upgrade-pnetlab)
+#### Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/to_5.0.1)
 
 ### Known Limitations
 
