@@ -1,6 +1,7 @@
 # ishare2
 
-### CLI-based tool written in Bash used to download and install images into a PNETLab server automatically and with minimal efforts
+### CLI-based Bash tool used to download and install images into a PNETLab server automatically and with minimal efforts.
+#### Images = qemu, bin, dynamips or docker
 
 ### Installation
 Apply this command using the terminal
