@@ -90,6 +90,10 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     
     Telegram Channel: https://t.me/unetlab_cloud
 
+### See the latest changes on ishare2
+
+[CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
+
 ### How to upgrade your PNETLab server to v5.0.1
 
 Only applicable for cases where your PNETLab version is 4.2.10:
@@ -118,11 +122,11 @@ Images (QEMU, bin and dynamips) can be found at [unetlab.cloud](https://unetlab.
 
 There are 2 Excel and 1 PNG password files for device credentials
 
-1) passwords_eve.xlsx [Excel file #1](https://unetlab.cloud/0:/addons/passwords/)
+1) [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/0:/addons/passwords/)
 
-2) Passwords - QEMU.xls [Excel file #2](https://unetlab.cloud/1:/)
+2) [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/1:/)
 
-3) Eve-NG-Linux.png [PNG file 3](https://unetlab.cloud/1:/qemu/Linux/Eve-NG-Linux/)
+3) [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/1:/qemu/Linux/Eve-NG-Linux/)
 
 ### Need help?
 
