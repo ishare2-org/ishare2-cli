@@ -101,14 +101,15 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 ### Known Limitations
 
-1) Avoid to cancel a download in progress:
+1) Avoid to cancel a download in progress: (BUG FOUND AND TRYING TO FIX IT)
 
-    You will not be allowed to download that image again because ishare2 will recognize that your file/folder already exists in the server.
-    In this case, you will have to manually remove that file/folder
+    If you cancel a download in progress, next time you try to download it you will not be allowed to do it again because ishare2 will recognize that it already exists in the server.
+    In this case, you will have to manually remove it in order to restart the download
 
 ### Links
 
-Images (QEMU, bin and dynamips) can be found at [unetlab.cloud](https://unetlab.cloud/)
+QEMU, bin and dynamips images can be found at [unetlab.cloud](https://unetlab.cloud/)
+Docker images can be found at [hub.docker.com](https://hub.docker.com/)
 
 ### Useful resources
 
