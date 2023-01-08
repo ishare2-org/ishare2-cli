@@ -7,7 +7,7 @@
   CLI-based Bash tool used to download and install images into a PNETLab server automatically and with minimal efforts
 </h2>
 
-## :hammer_and_wrench: Language:
+## :hammer_and_wrench: Language
 <div>
   <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" title="Bash" alt="Bash" width="40" height="40"/>&nbsp;
 </div>
@@ -110,20 +110,20 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 ## Known limitations
 
-1) Avoid to cancel a download in progress: (BUG FOUND AND TRYING TO FIX IT)
+* Avoid to cancel a download in progress: (IN PROCESS TO FIX IT)
 
-    If you cancel a download in progress, next time you try to download it you will not be allowed to do it again because ishare2 will recognize that it already exists in the server.
+    If you cancel a download in progress, next time you try to download it you will not be allowed to do it again because ishare2 will recognize that it already exists in the server
     
     In this case, you will have to manually remove it in order to restart the download
 
 ## Links
 
-* QEMU, bin and dynamips images can be found at [unetlab.cloud](https://unetlab.cloud/)
+* qemu, bin and dynamips images can be found at [unetlab.cloud](https://unetlab.cloud/)
 * Docker images can be found at [hub.docker.com](https://hub.docker.com/)
 
 ## Useful resources
 
-There are 2 Excel and 1 PNG file for device credentials
+Check these links to get information on device credentials
 
 * [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/0:/addons/passwords/)
 * [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/1:/)
