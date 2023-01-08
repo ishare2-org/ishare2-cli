@@ -116,12 +116,12 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     
     In this case, you will have to manually remove it in order to restart the download
 
-## Links
+## ✨ Links
 
 * qemu, bin and dynamips images can be found at [unetlab.cloud](https://unetlab.cloud/)
 * Docker images can be found at [hub.docker.com](https://hub.docker.com/)
 
-## Useful resources
+## ✨ Useful resources
 
 Check these links to get information on device credentials
 
@@ -129,7 +129,7 @@ Check these links to get information on device credentials
 * [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/1:/)
 * [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/1:/qemu/Linux/Eve-NG-Linux/)
 
-## Need help?
+## ❓Need help?
 
 [ico-telegram]: https://img.shields.io/badge/@PNETLab_Platform_Group-2CA5E0.svg?style=flat-square&logo=telegram&label=Telegram
 
