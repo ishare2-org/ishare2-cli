@@ -1,9 +1,18 @@
-# ishare2
+<h1 align="center">
+  <img src="https://media1.giphy.com/media/wvQIqJyNBOCjK/giphy.gif" width="100"/>
+    ishare2
+</h1>
 
-### CLI-based Bash tool used to download and install images into a PNETLab server automatically and with minimal efforts.
-#### Images = qemu, bin, dynamips or docker
+<h2 align="center">
+  CLI-based Bash tool used to download and install images into a PNETLab server automatically and with minimal efforts
+</h2>
 
-### Installation
+## :hammer_and_wrench: Language:
+<div>
+  <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" title="Bash" alt="Bash" width="40" height="40"/>&nbsp;
+</div>
+
+## 🚀 Installation
 Apply this command using the terminal
 ```linux
 wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
@@ -11,7 +20,7 @@ wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
 
 Note: There is no need to be in the same directory where *ishare2* file is installed in order to execute it
 
-### Syntax
+## ✅ Syntax
     
     ishare2 [action] [param1] [param2]
     
@@ -32,7 +41,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     param2:
       number = This number can be obtained using ishare2 search <type>
    
-### Examples of usage
+## ✅ Examples of usage
     
     - ishare2 search <type>
         - ishare2 search all
@@ -79,7 +88,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     - ishare2 changelog
     - ishare2 help
     
-### Useful information
+## Useful information
 
     1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video
     2) For new files to be uploaded, you can use our Telegram Channel too. In this case, you can send or ask for new images to be uploaded
@@ -91,15 +100,15 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     
     Telegram Channel: https://t.me/unetlab_cloud
 
-### See the latest changes on ishare2
+## See the latest changes on ishare2
 
 [CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
 
-### How to upgrade your PNETLab server
+## How to upgrade your PNETLab server
 
-#### Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/to_5.0.1)
+- Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/to_5.0.1)
 
-### Known Limitations
+## Known limitations
 
 1) Avoid to cancel a download in progress: (BUG FOUND AND TRYING TO FIX IT)
 
@@ -107,22 +116,19 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     
     In this case, you will have to manually remove it in order to restart the download
 
-### Links
+## Links
 
-QEMU, bin and dynamips images can be found at [unetlab.cloud](https://unetlab.cloud/)
+* QEMU, bin and dynamips images can be found at [unetlab.cloud](https://unetlab.cloud/)
+* Docker images can be found at [hub.docker.com](https://hub.docker.com/)
 
-Docker images can be found at [hub.docker.com](https://hub.docker.com/)
+## Useful resources
 
-### Useful resources
+There are 2 Excel and 1 PNG file for device credentials
 
-There are 2 Excel and 1 PNG password files for device credentials
+* [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/0:/addons/passwords/)
+* [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/1:/)
+* [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/1:/qemu/Linux/Eve-NG-Linux/)
 
-1) [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/0:/addons/passwords/)
-
-2) [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/1:/)
-
-3) [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/1:/qemu/Linux/Eve-NG-Linux/)
-
-### Need help?
+## Need help?
 
 Get in touch with us using our Telegram Channel: [PNETLab platform Group](https://t.me/PNETLab)
