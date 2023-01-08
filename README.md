@@ -131,10 +131,8 @@ Check these links to get information on device credentials
 
 ## Need help?
 
-Get in touch with us using our Telegram Channel: [PNETLab platform Group](https://t.me/PNETLab)
-
-[![Chat on Telegram][ico-telegram]][link-telegram]
-
 [ico-telegram]: https://img.shields.io/badge/@PNETLab_Platform_Group-2CA5E0.svg?style=flat-square&logo=telegram&label=Telegram
 
 [link-telegram]: https://t.me/PNETLab
+
+Get in touch with us using our [![Chat on Telegram][ico-telegram]][link-telegram]
