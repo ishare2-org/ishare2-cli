@@ -106,7 +106,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 ## How to upgrade your PNETLab server
 
-- Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/to_5.0.1)
+- Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.0.1)
 
 ## Known limitations
 
