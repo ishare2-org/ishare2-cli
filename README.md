@@ -51,27 +51,28 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
         - ishare2 search dynamips
         - ishare2 search <name>
             Examples:
-            - ishare2 search vios
-            - ishare2 search win-
-            - ishare2 search winserver
-            - ishare2 search kali
-            - ishare2 search mikro
-            - ishare2 search forti
-            - ishare2 search nxos
-            - ishare2 search vmx
-            - ishare2 search esxi
-            - ishare2 search palo
-            - ishare2 search Licensed
-            - More <name> options using ishare2 search all
-            
+              - ishare2 search vios
+              - ishare2 search win-
+              - ishare2 search winserver
+              - ishare2 search kali
+              - ishare2 search mikro
+              - ishare2 search forti
+              - ishare2 search nxos
+              - ishare2 search vmx
+              - ishare2 search esxi
+              - ishare2 search palo
+              - ishare2 search Licensed
+              - More <name> options using ishare2 search all
+
 ## 💎 Pull images by number
     - ishare2 pull bin <number>
     - ishare2 pull qemu <number>
     - ishare2 pull dynamips <number>
+`<number> can be obtained by using ishare2 search <type>`
     
 ## 💎 Pull all images at once
     - ishare2 pull bin all
-    - ishare2 pull qemu all (Unavailable for qemu type)
+    - ishare2 pull qemu all (Unavailable for qemu type due to size)
     - ishare2 pull dynamips all
 
 ## 💎 Show which images were installed
@@ -85,6 +86,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     - ishare2 labs
     - ishare2 labs <number>
     - ishare2 labs all
+`Not available to every lab because some of them were encrypted by authors and cannot be analyzed`
 
 ## 💎 Download every image available from a lab at a custom location in your server
     - ishare2 mylabs <path>
@@ -99,13 +101,13 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     
 ## Useful information
 
-    1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video
-    2) For new files to be uploaded, you can use our Telegram Channel too. In this case, you can send or ask for new images to be uploaded
-    3) Using ishare2 upgrade will result in upgrading this utility (ishare2). It will not upgrade your PNETLab Ubuntu VM version
-    4) If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using ishare2 relicense. This will not affect images in there
+    * For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video
+    * For new files to be uploaded, you can use our Telegram Channel too. In this case, you can send or ask for new images to be uploaded
+    * Using ishare2 upgrade will result in upgrading this utility (ishare2). It will not upgrade your PNETLab Ubuntu VM version
+    * If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using ishare2 relicense. This will not affect images in there
     Also, this command when used, will generate a new license file called "iourc", needed for bin files
-    5) Don't cancell a download. In case you do it, you will have to remove incomplete files or folders manually
-    6) The main difference between ishare2 labs and ishare2 mylabs is that, in the first case, the folder used is the one PNETLab creates when you download a lab from the store and in the second case you are able to select any folder you want in order to download labs
+    * Don't cancell a download. In case you do it, you will have to remove incomplete files or folders manually
+    * The main difference between ishare2 labs and ishare2 mylabs is that, in the first case, the folder used is the one PNETLab creates when you download a lab from the store and in the second case you are able to select any folder you want in order to download labs
     
     Telegram Channel: https://t.me/unetlab_cloud
 
@@ -117,7 +119,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 - Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.0.1)
 - Upgrade from v4.2.10 to v5.2.7: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.2.7)
-- Upgrade from v5.0.1 to v5.2.7: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_5.0.1_to_5.2.7)
+- Upgrade from v5.0.1 to v5.2.7:  [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_5.0.1_to_5.2.7)
                                                 
 ## Known limitations
 
