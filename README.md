@@ -103,7 +103,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 ## Useful information
 
 * For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video
-* For new files to be uploaded, you can use our Telegram Channel too. In this case, you can send or ask for new images to be uploaded
+* For new files to be uploaded, you can also use our Telegram Channel: In this case, you can send or ask for new images to be uploaded
 * Using ishare2 upgrade will result in upgrading this utility (ishare2). It will not upgrade your PNETLab Ubuntu VM version
 * If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using ishare2 relicense. This will not affect images in there
 
