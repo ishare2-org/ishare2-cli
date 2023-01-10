@@ -126,9 +126,9 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 * Avoid to cancel a download in progress: (IN PROCESS TO FIX IT)
 
-    If you cancel a download in progress, next time you try to download it you will not be allowed to do it again because ishare2 will recognize that it already exists in the server
+    If you cancel a download in progress, next time you try to download it you will not be allowed to do it because ishare2 will recognize it already exists in the server
     
-    In this case, you will have to manually remove it in order to restart the download
+    In this case, you will have to manually remove it in order to be able to restart the download
 
 ## ✨ Links
 
