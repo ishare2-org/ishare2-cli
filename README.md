@@ -41,8 +41,9 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     param2:
       number = This number can be obtained using ishare2 search <type>
    
-## ✅ Examples of usage
-    
+## Examples of usage
+
+## 💎 Search for images
     - ishare2 search <type>
         - ishare2 search all
         - ishare2 search bin
@@ -59,30 +60,38 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
             - ishare2 search nxos
             - ishare2 search vmx
             - ishare2 search esxi
+            - ishare2 search palo
+            - ishare2 search Licensed
             - More <name> options using ishare2 search all
             
+## 💎 Pull images by number
     - ishare2 pull bin <number>
     - ishare2 pull qemu <number>
     - ishare2 pull dynamips <number>
     
+## 💎 Pull all images at once
     - ishare2 pull bin all
     - ishare2 pull qemu all (Unavailable for qemu type)
     - ishare2 pull dynamips all
-    
+
+## 💎 Show which images were installed
     - ishare2 installed all
     - ishare2 installed bin
     - ishare2 installed qemu
     - ishare2 installed dynamips
     - ishare2 installed docker
     
+## 💎 Download every image available from a lab downloaded from PNETLab store 
     - ishare2 labs
     - ishare2 labs <number>
     - ishare2 labs all
-    
+
+## 💎 Download every image available from a lab in a custom location
     - ishare2 mylabs <path>
     - ishare2 mylabs <path> <number>
     - ishare2 mylabs <path> all
     
+## 💎 Miscellaneous functions
     - ishare2 relicense
     - ishare2 upgrade
     - ishare2 changelog
