@@ -81,17 +81,17 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
     - ishare2 installed dynamips
     - ishare2 installed docker
     
-## 💎 Download every image available from a lab downloaded from PNETLab store 
+## 💎 Download every image available from a lab that was downloaded from PNETLab Store 
     - ishare2 labs
     - ishare2 labs <number>
     - ishare2 labs all
 
-## 💎 Download every image available from a lab in a custom location
+## 💎 Download every image available from a lab at a custom location in your server
     - ishare2 mylabs <path>
     - ishare2 mylabs <path> <number>
     - ishare2 mylabs <path> all
     
-## 💎 Miscellaneous functions
+## 💎 Extras
     - ishare2 relicense
     - ishare2 upgrade
     - ishare2 changelog
