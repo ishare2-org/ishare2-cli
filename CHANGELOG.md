@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.4.4] - 2023-Jan-11
+
+1) Modified: ishare2 code has been modified to better readability using a main() function
+2) Modified: Some functions were put together for better understanding: msg_available_options_for_ishare2_search() and msg_incorrect_argument_or_no_arg_for_ishare2_pull()
+3) Modified: ishare2 content help function was indented
+4) Modified: get_initial_info() renamed to get_initial_information()
+5) Modified: check_version_file_exists() renamed to check_ishare2_version_file_exists()
+6) Added: - ishare2 search palo and - ishare2 search Licensed were added like examples to the ishare2 message when explaining ishare2 search
+7) Added: selector() function was created in order to use a main() function
+
 ## [v1.4.3] - 2023-Jan-04
 
 1) Added: A new command was added: `ishare2 changelog`. It shows the last 15 lines of this CHANGELOG.md file in the terminal
