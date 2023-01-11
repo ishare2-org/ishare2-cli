@@ -13,7 +13,7 @@ function check_user_is_root() {
     fi
 }
 
-function get_initial_info() {
+function get_initial_information() {
     ID_LIST="$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/id_list)"
     
     GOOGLE_SHEETS_ID=$( echo "$ID_LIST" | awk -F= '/^GOOGLE/ { print $2 }' )
@@ -46,10 +46,6 @@ function set_yml_template_folder_location() {
         if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/" ; fi
     fi
 }
-
-check_user_is_root
-get_initial_info
-set_yml_template_folder_location
 
 function mylabs_get_lab_list_just_for_only_readable_labs() {
     LABS_DIR=$1
@@ -928,13 +924,11 @@ function download_lab_docker_images() {
     count_dockers
 }
 
-function check_version_file_exists() {
+function check_ishare2_version_file_exists() {
     if ! [[ -e /usr/sbin/ishare2_version ]]; then
         echo -n "$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)" >> /usr/sbin/ishare2_version
     fi
 }
-
-check_version_file_exists
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
@@ -1280,34 +1274,36 @@ function show_ishare2_usage() {
     
     # Message displayed when using ishare2 command
     echo "
-    Usage ishare2 [action] [param1] [param2]
+Syntax
 
-    action:
-      search      : Search for images by type
-      pull        : Download an image by type and number
-      installed   : Show installed images on server
-      labs        : Show labs on server and download images for those labs
-      mylabs      : Same as labs command but using a customized path to labs
-      relicense   : Generate a new iourc license for bin images
-      upgrade     : Upgrade ishare2 code to the latest version
-      changelog   : Show the latest changes made to ishare2
-      help        : Show useful information
+ishare2 [action] [param1] [param2]
 
-    param1:
-      type = all, bin, qemu, dynamips, docker or name
+action:
+    search      : Search for images by type
+    pull        : Download an image by type and number
+    installed   : Show installed images on server
+    labs        : Show labs on server and download images for those labs
+    mylabs      : Same as labs command but using a customized path to labs
+    relicense   : Generate a new iourc license for bin images
+    upgrade     : Upgrade ishare2 code to the latest version
+    changelog   : Show the latest changes made to ishare2
+    help        : Show useful information
 
-    param2:
-      number = This number can be obtained using ishare2 search <type>
+param1:
+    type = all, bin, qemu, dynamips, docker or name
 
-    Examples:
+param2:
+    number = This number can be obtained using ishare2 search <type>
 
-    - ishare2 search <type>
-        - ishare2 search all
-        - ishare2 search bin
-        - ishare2 search qemu
-        - ishare2 search dynamips
-        - ishare2 search <name>
-            Examples:
+Examples:
+
+- ishare2 search <type>
+    - ishare2 search all
+    - ishare2 search bin
+    - ishare2 search qemu
+    - ishare2 search dynamips
+    - ishare2 search <name>
+        Examples:
             - ishare2 search vios
             - ishare2 search win-
             - ishare2 search winserver
@@ -1317,38 +1313,68 @@ function show_ishare2_usage() {
             - ishare2 search nxos
             - ishare2 search vmx
             - ishare2 search esxi
+            - ishare2 search palo
+            - ishare2 search Licensed
             - More <name> options using ishare2 search all
 
-    - ishare2 pull bin <number>
-    - ishare2 pull qemu <number>
-    - ishare2 pull dynamips <number>
+- ishare2 pull bin <number>
+- ishare2 pull qemu <number>
+- ishare2 pull dynamips <number>
 
-    - ishare2 pull bin all
-    - ishare2 pull qemu all (Unavailable for qemu type)
-    - ishare2 pull dynamips all
+- ishare2 pull bin all
+- ishare2 pull qemu all (Not available for qemu type due to its large size)
+- ishare2 pull dynamips all
 
-    - ishare2 installed all
-    - ishare2 installed bin
-    - ishare2 installed qemu
-    - ishare2 installed dynamips
-    - ishare2 installed docker
+- ishare2 installed all
+- ishare2 installed bin
+- ishare2 installed qemu
+- ishare2 installed dynamips
+- ishare2 installed docker
 
-    - ishare2 labs
-    - ishare2 labs <number>
-    - ishare2 labs all
+- ishare2 labs
+- ishare2 labs <number>
+- ishare2 labs all
 
-    - ishare2 mylabs <path>
-    - ishare2 mylabs <path> <number>
-    - ishare2 mylabs <path> all
+- ishare2 mylabs <path>
+- ishare2 mylabs <path> <number>
+- ishare2 mylabs <path> all
 
-    - ishare2 relicense
-    - ishare2 upgrade
-    - ishare2 changelog
-    - ishare2 help
+- ishare2 relicense
+- ishare2 upgrade
+- ishare2 changelog
+- ishare2 help
 
-    ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
-    pnetlab: v$PNETLAB_VERSION_USAGE
-    "
+ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
+pnetlab: v$PNETLAB_VERSION_USAGE
+"
+}
+
+function msg_available_options_for_ishare2_search() {
+    echo -e "Available options\n"
+    echo "- ishare2 search all"
+    echo "- ishare2 search qemu"
+    echo "- ishare2 search dynamips"
+    echo "- ishare2 search bin"
+    echo "- ishare2 search <name>"
+    echo "  - ishare2 search vios"
+    echo "  - ishare2 search win-"
+    echo "  - ishare2 search winserver"
+    echo "  - ishare2 search kali"
+    echo "  - ishare2 search mikro"
+    echo "  - ishare2 search forti"
+    echo "  - ishare2 search nxos"
+    echo "  - ishare2 search vmx"
+    echo "  - ishare2 search esxi"
+    echo "  - More <name> options using ishare2 search all"
+}
+
+function msg_incorrect_argument_or_no_arg_for_ishare2_pull() {
+    echo -e "Syntax:\nishare2 pull <type> <number>\n"
+    echo "type: bin, qemu or dynamips"
+    echo -e "number: ishare2 search <type>\n"
+    echo "Example: ishare2 pull qemu 4"
+    echo "Example: ishare2 pull dynamips 5"
+    echo -e "Example: ishare2 pull bin 6"
 }
 
 function tgz_files_function() {
@@ -1918,185 +1944,171 @@ function filter_qemu() {
 }
 
 # Main code
-
-if [[ "$1" = "search" ]]; then # ishare2 search
-    if [[ "$2" = "all" ]]; then # ishare2 search all
-        ishare2 search qemu
-        ishare2 search dynamips
-        ishare2 search bin
-        echo " "
-    elif [[ "$2" = "qemu" ]]; then # ishare2 search qemu
-        FILENAME=QEMU_URL.csv
-        general_available_list QEMU "$FILENAME" "$QEMU_URL"
-        rm "$(pwd)"/$FILENAME > /dev/null 2>&1
-    elif [[ "$2" = "dynamips" ]]; then # ishare2 search dynamips
-        FILENAME=DYNAMIPS_URL.csv
-        general_available_list DYNAMIPS "$FILENAME" "$DYNAMIPS_URL"
-        rm "$(pwd)"/$FILENAME > /dev/null 2>&1
-    elif [[ "$2" = "bin" ]]; then # ishare2 search bin
-        FILENAME=BIN_URL.csv
-        general_available_list BIN "$FILENAME" "$BIN_URL"
-        rm "$(pwd)"/$FILENAME > /dev/null 2>&1
-    else # 1) ishare2 search 2) ishare2 search <number> 3) ishare2 search <string>
-        if [[ $2 ]]; then
-            filter_bin "$2"
-            filter_dynamips "$2"
-            filter_qemu "$2"
-        else
-            echo -e "Available options\n"
-            echo "- ishare2 search all"
-            echo "- ishare2 search qemu"
-            echo "- ishare2 search dynamips"
-            echo "- ishare2 search bin"
-            echo "- ishare2 search <name>"
-            echo "  - ishare2 search vios"
-            echo "  - ishare2 search win-"
-            echo "  - ishare2 search winserver"
-            echo "  - ishare2 search kali"
-            echo "  - ishare2 search mikro"
-            echo "  - ishare2 search forti"
-            echo "  - ishare2 search nxos"
-            echo "  - ishare2 search vmx"
-            echo "  - ishare2 search esxi"
-            echo "  - More <name> options using ishare2 search all"
-        fi
-    fi
-elif [[ "$1" = "pull" ]]; then # ishare2 pull
-    if [[ "$2" ]]; then # check if exists an arg to ishare2 pull x
-        if [[ "$2" = "qemu" ]]; then # ishare2 pull qemu
-            if [[ "$3" ]]; then # check if exists an arg to ishare2 pull qemu
-                pull_qemu "$3"
+function selector() {   
+    if [[ "$1" = "search" ]]; then # ishare2 search
+        if [[ "$2" = "all" ]]; then # ishare2 search all
+            ishare2 search qemu
+            ishare2 search dynamips
+            ishare2 search bin
+            echo " "
+        elif [[ "$2" = "qemu" ]]; then # ishare2 search qemu
+            FILENAME=QEMU_URL.csv
+            general_available_list QEMU "$FILENAME" "$QEMU_URL"
+            rm "$(pwd)"/$FILENAME > /dev/null 2>&1
+        elif [[ "$2" = "dynamips" ]]; then # ishare2 search dynamips
+            FILENAME=DYNAMIPS_URL.csv
+            general_available_list DYNAMIPS "$FILENAME" "$DYNAMIPS_URL"
+            rm "$(pwd)"/$FILENAME > /dev/null 2>&1
+        elif [[ "$2" = "bin" ]]; then # ishare2 search bin
+            FILENAME=BIN_URL.csv
+            general_available_list BIN "$FILENAME" "$BIN_URL"
+            rm "$(pwd)"/$FILENAME > /dev/null 2>&1
+        else # 1) ishare2 search 2) ishare2 search <number> 3) ishare2 search <string>
+            if [[ $2 ]]; then
+                filter_bin "$2"
+                filter_dynamips "$2"
+                filter_qemu "$2"
             else
-                STR="Last parameter not detected"
-                RED='\033[31m'
-                YELLOW='\033[1;33m'
-                NO_COLOR='\033[0m'
-                echo -e "${RED}$STR${NO_COLOR}"
-                echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
+                msg_available_options_for_ishare2_search
             fi
-        elif [[ "$2" = "dynamips" ]]; then # ishare2 pull dynamips
-            if [[ "$3" ]]; then
-                pull_dynamips "$3"
-            else
-                STR="Last parameter not detected"
-                RED='\033[31m'
-                YELLOW='\033[1;33m'
-                NO_COLOR='\033[0m'
-                echo -e "${RED}$STR${NO_COLOR}"
-                echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
-            fi
-        elif [[ "$2" = "bin" ]]; then # ishare2 pull bin
-            if [[ "$3" ]]; then
-                pull_bin "$3"
-            else
-                STR="Last parameter not detected"
-                RED='\033[31m'
-                YELLOW='\033[1;33m'
-                NO_COLOR='\033[0m'
-                echo -e "${RED}$STR${NO_COLOR}"
-                echo -e "Syntax: ishare2 pull bin ${YELLOW}<number>${NO_COLOR}"
-            fi
-        else # ishare2 pull gets an incorrect argument for type (nor dynamips nor bin nor qemu)
-            echo -e "Syntax:\nishare2 pull <type> <number>\n"
-            echo "type: bin, qemu or dynamips"
-            echo -e "number: ishare2 search <type>\n"
-            echo "Example: ishare2 pull qemu 4"
-            echo "Example: ishare2 pull dynamips 5"
-            echo -e "Example: ishare2 pull bin 6"
         fi
-    else # when there is not an arg to ishare2 pull
-        echo -e "Syntax:\nishare2 pull <type> <number>\n"
-        echo "type: bin, qemu or dynamips"
-        echo -e "number: ishare2 search <type>\n"
-        echo "Example: ishare2 pull qemu 4"
-        echo "Example: ishare2 pull dynamips 5"
-        echo -e "Example: ishare2 pull bin 6"
-    fi
-elif [[ "$1" = "installed" ]]; then # ishare2 installed
-    if [[ "$2" ]]; then
-        if [[ "$2" = "all" ]]; then
-            GREEN='\033[32m'
-            NO_COLOR='\033[0m'
-
-            echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
-            ishare2 installed qemu
-            echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
-            ishare2 installed dynamips
-            echo -e "${GREEN}----- BIN -----${NO_COLOR}"
-            ishare2 installed bin
-            echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
-            ishare2 installed docker
-        elif [[ "$2" = "qemu" ]]; then
-            echo -e
-            ls -lh -R /opt/unetlab/addons/qemu/
-            echo -e
-        elif [[ "$2" = "dynamips" ]]; then
-            echo -e
-            ls -lh -R /opt/unetlab/addons/dynamips/
-            echo -e
-        elif [[ "$2" = "bin" ]]; then
-            echo -e
-            ls -lh -R /opt/unetlab/addons/iol/bin
-            echo -e
-        elif [[ "$2" = "docker" ]]; then
-            list_dockers
-            count_dockers
-        else
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
-            echo -e "Syntax:\n\nishare2 installed <type>"
-            echo -e "${YELLOW}type: all, bin, qemu, dynamips or docker${NO_COLOR}"
-        fi
-    else
-        YELLOW='\033[1;33m'
-        NO_COLOR='\033[0m'
-        echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
-        echo -e "type: all, bin, qemu, dynamips or docker"
-    fi
-elif [[ "$1" = "labs" ]]; then # ishare2 labs
-    if [[ "$2" ]]; then # ishare2 labs x (x could be "all" or a number)
-        if [[ "$2" = "all" ]]; then # ishare2 labs all
-            install_lab_images_just_for_only_readable_labs_ALL
-            exit 0
-        else # ishare2 labs <number>
-            install_lab_images_just_for_only_readable_labs "$2"
-            exit 0
-        fi
-    fi
-    get_lab_list_just_for_only_readable_labs
-elif [[ $1 == "mylabs" ]]; then # ishare2 mylabs
-    if [[ "$2" ]]; then
-        if [[ "$3" ]]; then
-            if [[ "$3" == "all" ]]; then # ishare2 mylabs <path> all
-                mylabs_install_lab_images_just_for_only_readable_labs_ALL $2 all
-            else
-                if ! [[ -z "${3##*[!0-9]*}" ]]; then # ishare2 mylabs <path> <number>
-                    mylabs_install_lab_images_just_for_only_readable_labs $2 $3
+    elif [[ "$1" = "pull" ]]; then # ishare2 pull
+        if [[ "$2" ]]; then # check if exists an arg to ishare2 pull x
+            if [[ "$2" = "qemu" ]]; then # ishare2 pull qemu
+                if [[ "$3" ]]; then # check if exists an arg to ishare2 pull qemu
+                    pull_qemu "$3"
                 else
-                    STR="The last parameter must be a number"
+                    STR="Last parameter not detected"
                     RED='\033[31m'
                     YELLOW='\033[1;33m'
                     NO_COLOR='\033[0m'
                     echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "ishare2 mylabs <path> ${YELLOW}<number>${NO_COLOR}"
+                    echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
                 fi
+            elif [[ "$2" = "dynamips" ]]; then # ishare2 pull dynamips
+                if [[ "$3" ]]; then
+                    pull_dynamips "$3"
+                else
+                    STR="Last parameter not detected"
+                    RED='\033[31m'
+                    YELLOW='\033[1;33m'
+                    NO_COLOR='\033[0m'
+                    echo -e "${RED}$STR${NO_COLOR}"
+                    echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
+                fi
+            elif [[ "$2" = "bin" ]]; then # ishare2 pull bin
+                if [[ "$3" ]]; then
+                    pull_bin "$3"
+                else
+                    STR="Last parameter not detected"
+                    RED='\033[31m'
+                    YELLOW='\033[1;33m'
+                    NO_COLOR='\033[0m'
+                    echo -e "${RED}$STR${NO_COLOR}"
+                    echo -e "Syntax: ishare2 pull bin ${YELLOW}<number>${NO_COLOR}"
+                fi
+            else # ishare2 pull gets an incorrect argument for type (nor dynamips nor bin nor qemu)
+                msg_incorrect_argument_or_no_arg_for_ishare2_pull
             fi
-        else # ishare2 mylabs <path>
-            mylabs_get_lab_list_just_for_only_readable_labs $2
+        else # when there is not an arg to ishare2 pull
+            msg_incorrect_argument_or_no_arg_for_ishare2_pull
         fi
-    else
-        echo -e "Syntax:\n\nishare2 mylabs <path>"
-        echo "ishare2 mylabs <path> <number>"
-        echo -e "ishare2 mylabs <path> all"
+    elif [[ "$1" = "installed" ]]; then # ishare2 installed
+        if [[ "$2" ]]; then
+            if [[ "$2" = "all" ]]; then
+                GREEN='\033[32m'
+                NO_COLOR='\033[0m'
+
+                echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
+                ishare2 installed qemu
+                echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
+                ishare2 installed dynamips
+                echo -e "${GREEN}----- BIN -----${NO_COLOR}"
+                ishare2 installed bin
+                echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
+                ishare2 installed docker
+            elif [[ "$2" = "qemu" ]]; then
+                echo -e
+                ls -lh -R /opt/unetlab/addons/qemu/
+                echo -e
+            elif [[ "$2" = "dynamips" ]]; then
+                echo -e
+                ls -lh -R /opt/unetlab/addons/dynamips/
+                echo -e
+            elif [[ "$2" = "bin" ]]; then
+                echo -e
+                ls -lh -R /opt/unetlab/addons/iol/bin
+                echo -e
+            elif [[ "$2" = "docker" ]]; then
+                list_dockers
+                count_dockers
+            else
+                YELLOW='\033[1;33m'
+                NO_COLOR='\033[0m'
+                echo -e "Syntax:\n\nishare2 installed <type>"
+                echo -e "${YELLOW}type: all, bin, qemu, dynamips or docker${NO_COLOR}"
+            fi
+        else
+            YELLOW='\033[1;33m'
+            NO_COLOR='\033[0m'
+            echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
+            echo -e "type: all, bin, qemu, dynamips or docker"
+        fi
+    elif [[ "$1" = "labs" ]]; then # ishare2 labs
+        if [[ "$2" ]]; then # ishare2 labs x (x could be "all" or a number)
+            if [[ "$2" = "all" ]]; then # ishare2 labs all
+                install_lab_images_just_for_only_readable_labs_ALL
+                exit 0
+            else # ishare2 labs <number>
+                install_lab_images_just_for_only_readable_labs "$2"
+                exit 0
+            fi
+        fi
+        get_lab_list_just_for_only_readable_labs
+    elif [[ $1 == "mylabs" ]]; then # ishare2 mylabs
+        if [[ "$2" ]]; then
+            if [[ "$3" ]]; then
+                if [[ "$3" == "all" ]]; then # ishare2 mylabs <path> all
+                    mylabs_install_lab_images_just_for_only_readable_labs_ALL $2 all
+                else
+                    if ! [[ -z "${3##*[!0-9]*}" ]]; then # ishare2 mylabs <path> <number>
+                        mylabs_install_lab_images_just_for_only_readable_labs $2 $3
+                    else
+                        STR="The last parameter must be a number"
+                        RED='\033[31m'
+                        YELLOW='\033[1;33m'
+                        NO_COLOR='\033[0m'
+                        echo -e "${RED}$STR${NO_COLOR}"
+                        echo -e "ishare2 mylabs <path> ${YELLOW}<number>${NO_COLOR}"
+                    fi
+                fi
+            else # ishare2 mylabs <path>
+                mylabs_get_lab_list_just_for_only_readable_labs $2
+            fi
+        else
+            echo -e "Syntax:\n\nishare2 mylabs <path>"
+            echo "ishare2 mylabs <path> <number>"
+            echo -e "ishare2 mylabs <path> all"
+        fi
+    elif [[ "$1" = "relicense" ]]; then # ishare2 relicense
+        generate_a_new_license
+    elif [[ "$1" = "upgrade" ]]; then # ishare2 upgrade
+        upgrade_ishare2
+    elif [[ "$1" = "changelog" ]]; then # ishare2 changelog
+        show_changelog
+    elif [[ "$1" = "help" ]]; then # ishare2 help
+        show_help_info
+    else # when no args are passed to ishare2
+        show_ishare2_usage
     fi
-elif [[ "$1" = "relicense" ]]; then # ishare2 relicense
-    generate_a_new_license
-elif [[ "$1" = "upgrade" ]]; then # ishare2 upgrade
-    upgrade_ishare2
-elif [[ "$1" = "changelog" ]]; then # ishare2 changelog
-    show_changelog
-elif [[ "$1" = "help" ]]; then # ishare2 help
-    show_help_info
-else # when no args are passed to ishare2
-    show_ishare2_usage
-fi
+}
+
+function main(){
+    check_user_is_root
+    get_initial_information
+    set_yml_template_folder_location
+    check_ishare2_version_file_exists
+    selector $1 $2 $3
+}
+
+main $@
