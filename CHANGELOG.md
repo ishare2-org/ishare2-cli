@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.4.5] - 2023-Jan-13
+
+1) Modified: Minor changes in code. Changes are not important at all
+
 ## [v1.4.4] - 2023-Jan-11
 
 1) Modified: ishare2 code has been modified to better readability using a main() function
