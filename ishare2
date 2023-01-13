@@ -1943,7 +1943,6 @@ function filter_qemu() {
     rm "$(pwd)"/new.csv > /dev/null 2>&1
 }
 
-# Main code
 function selector() {   
     if [[ "$1" = "search" ]]; then # ishare2 search
         if [[ "$2" = "all" ]]; then # ishare2 search all
@@ -2037,7 +2036,7 @@ function selector() {
                 echo -e
             elif [[ "$2" = "bin" ]]; then
                 echo -e
-                ls -lh -R /opt/unetlab/addons/iol/bin
+                ls -lh -R /opt/unetlab/addons/iol/bin/
                 echo -e
             elif [[ "$2" = "docker" ]]; then
                 list_dockers
