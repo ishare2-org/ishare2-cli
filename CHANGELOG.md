@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.4.5] - 2023-Jan-13
 
-1) Modified: Minor changes in code. Changes are not important at all
+1) Modified: Minor changes in code
 
 ## [v1.4.4] - 2023-Jan-11
 
