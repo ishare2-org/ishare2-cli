@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
 
+## [v1.4.7] - 2023-Jan-16
+
+1) Added: A function called set_url_constants() was added to the code and to the main() execution. This function contains all of the URL needed in the project. 
+2) Modified: Function called set_color_variables() was renamed to set_color_constants()
+
 ## [v1.4.6] - 2023-Jan-16
 
 1) Modified: Minor changes in code: A function called set_color_variables() was created to define all color variables in there. Added to main() execution 
