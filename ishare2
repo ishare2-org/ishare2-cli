@@ -1,17 +1,28 @@
 #!/bin/bash
 #October, 2022
 
-function set_color_variables() {
+function set_color_constants() {
     RED='\033[31m'
     YELLOW='\033[1;33m'
     GREEN='\033[32m'
-
     NO_COLOR='\033[0m'
+}
+
+function set_url_constants() {
+    URL_ID_LIST=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/id_list
+    URL_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version
+    URL_ISHARE2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2
+    URL_CHANGELOG_MD=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/CHANGELOG.md
+    URL_CISCO_IOU_KEYGEN_PY=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py
+    URL_KEEPALIVE_PL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl
+    URL_I86BI_LINUX_L2_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml
+    URL_I86BI_LINUX_L3_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml
+    URL_C2600_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml
+    URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml
 }
 
 function check_user_is_root() {
     user=$(whoami)
-
     if [[ "$user" != "root" ]]; then
         echo -e "${RED}[!] Current user ($user) is not root, please change user as root to execute this script${NO_COLOR}"
         exit 1
@@ -19,7 +30,7 @@ function check_user_is_root() {
 }
 
 function get_initial_information() {
-    ID_LIST="$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/id_list)"
+    ID_LIST="$(curl -s $URL_ID_LIST)"
     
     GOOGLE_SHEETS_ID=$( echo "$ID_LIST" | awk -F= '/^GOOGLE/ { print $2 }' )
     BIN_GID=$( echo "$ID_LIST" | awk -F= '/^BIN/ { print $2 }' )
@@ -907,13 +918,13 @@ function download_lab_docker_images() {
 
 function check_ishare2_version_file_exists() {
     if ! [[ -e /usr/sbin/ishare2_version ]]; then
-        echo -n "$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)" >> /usr/sbin/ishare2_version
+        echo -n "$(curl -s $URL_VERSION)" >> /usr/sbin/ishare2_version
     fi
 }
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
-    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
+    REMOTE_VALUE=$(curl -s $URL_VERSION)
     
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         echo "ishare2 $REMOTE_VALUE is currently the newest version available"
@@ -921,7 +932,7 @@ function upgrade_ishare2() {
     fi
     
     rm /usr/sbin/ishare2
-    wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1
+    wget -O /usr/sbin/ishare2 $URL_ISHARE2 > /dev/null 2>&1
     chmod +x /usr/sbin/ishare2
 
     echo "ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
@@ -933,8 +944,7 @@ function show_changelog() {
     FILE=/root/CHANGELOG.md
     if [[ -e $FILE ]]; then rm $FILE ; fi
 
-    CHANGELOG_URL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/CHANGELOG.md
-    DATA="$(wget -q $CHANGELOG_URL -P /root)"
+    DATA="$(wget -q $URL_CHANGELOG_MD -P /root)"
     head -n 15 $FILE
     rm $FILE
 }
@@ -965,11 +975,11 @@ function generate_a_new_license() {
 
     if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE ; fi
 
-    wget -O $PYTHON_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py > /dev/null 2>&1
+    wget -O $PYTHON_FILE $URL_CISCO_IOU_KEYGEN_PY > /dev/null 2>&1
     python $PYTHON_FILE > /dev/null 2>&1
     
     if ! [[ -e $PERL_FILE ]]; then
-        wget -O $PERL_FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl > /dev/null 2>&1
+        wget -O $PERL_FILE $URL_KEEPALIVE_PL > /dev/null 2>&1
     fi
     echo "Done"
 }
@@ -1234,7 +1244,7 @@ function show_ishare2_usage() {
 
     STR=""
     LOCAL_VALUE=$ISHARE2_VERSION_USAGE
-    REMOTE_VALUE=$(curl -s https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version)
+    REMOTE_VALUE=$(curl -s $URL_VERSION)
     
     if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         STR="New ishare2 version available: $REMOTE_VALUE"
@@ -1596,7 +1606,7 @@ function corrections_for_iol_images() {
 
         FILE="$YML_DIR"i86bi_linux_l2.yml
         if ! [[ -e $FILE ]]; then
-            wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml > /dev/null 2>&1
+            wget -O $FILE $URL_I86BI_LINUX_L2_YML > /dev/null 2>&1
         fi
     fi
     
@@ -1605,7 +1615,7 @@ function corrections_for_iol_images() {
 
         FILE="$YML_DIR"i86bi_linux_l3.yml
         if ! [[ -e $FILE ]]; then
-            wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml > /dev/null 2>&1
+            wget -O $FILE $URL_I86BI_LINUX_L3_YML > /dev/null 2>&1
         fi
     fi
 }
@@ -1674,13 +1684,13 @@ function corrections_for_dynamips_images() {
     SUBSTRING="c2600"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
         FILE="$YML_DIR"c2600.yml
-        wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml > /dev/null 2>&1
+        wget -O $FILE $URL_C2600_YML > /dev/null 2>&1
     fi
     
     SUBSTRING="c1760"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
         FILE="$YML_DIR"c1760.yml
-        wget -O $FILE https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml > /dev/null 2>&1
+        wget -O $FILE $URL_C1760_YML > /dev/null 2>&1
     fi
 }
 
@@ -2059,7 +2069,8 @@ function selector() {
 }
 
 function main(){
-    set_color_variables
+    set_color_constants
+    set_url_constants
     check_user_is_root
     get_initial_information
     set_yml_template_folder_location
