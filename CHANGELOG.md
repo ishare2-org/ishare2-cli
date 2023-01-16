@@ -3,12 +3,17 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.4.6] - 2023-Jan-16
 
-1) Modified: Minor changes in code: A function called set_color_variables() was created to define all color variables in there. 
-2) Deleted: Minor changes in code: Every usage of those variables was deleted to get a cleaner code
+1) Modified: Minor changes in code: A function called set_color_variables() was created to define all color variables in there. Added to main() execution 
+2) Deleted: Minor changes in code: Every definition of those variables was removed to get a cleaner code
+
+Note: This update does not change how the code works in any way
 
 ## [v1.4.5] - 2023-Jan-13
 
-1) Modified: Minor changes in code
+1) Modified: Minor changes in code: A line was changed from: ls -lh -R /opt/unetlab/addons/iol/bin to: ls -lh -R /opt/unetlab/addons/iol/bin/
+2) Deleted: Minor changes in code: A comment stating "# Main code" was deleted from the code
+
+Note: This update does not change how the code works in any way
 
 ## [v1.4.4] - 2023-Jan-11
 
