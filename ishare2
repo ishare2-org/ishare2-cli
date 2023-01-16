@@ -1,11 +1,16 @@
 #!/bin/bash
 #October, 2022
 
+function set_color_variables() {
+    RED='\033[31m'
+    YELLOW='\033[1;33m'
+    GREEN='\033[32m'
+
+    NO_COLOR='\033[0m'
+}
+
 function check_user_is_root() {
     user=$(whoami)
-
-    RED='\033[31m'
-    NO_COLOR='\033[0m'
 
     if [[ "$user" != "root" ]]; then
         echo -e "${RED}[!] Current user ($user) is not root, please change user as root to execute this script${NO_COLOR}"
@@ -161,13 +166,9 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]; then
         if [[ $counter_for_readable_labs -eq 1 ]]; then
             STR="Last parameter must be 1 because you have only one lab"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         else
             STR="Last parameter must be a number between 1 and $counter_for_readable_labs"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         fi
         
@@ -217,9 +218,6 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     
     echo -e "\nImages found on lab\n"
     
-    GREEN='\033[32m'
-    NO_COLOR='\033[0m'
-
     echo -e "${GREEN}--- bin images ---${NO_COLOR}"
     if [[ BIN_FLAG -eq 1 ]]; then
         echo No bin images found
@@ -459,13 +457,9 @@ function install_lab_images_just_for_only_readable_labs() {
     if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]; then
         if [[ $counter_for_readable_labs -eq 1 ]]; then
             STR="Last parameter must be 1 because you have only one lab"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         else
             STR="Last parameter must be a number between 1 and $counter_for_readable_labs"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         fi
         
@@ -515,9 +509,6 @@ function install_lab_images_just_for_only_readable_labs() {
     
     echo -e "\nImages found on lab"
 
-    GREEN='\033[32m'
-    NO_COLOR='\033[0m'
-    
     echo -e "${GREEN}--- bin images ---${NO_COLOR}"
     if [[ BIN_FLAG -eq 1 ]]; then
         echo No bin images found
@@ -724,8 +715,6 @@ function download_lab_iol_images() {
 
         if [[ $FLAG -eq 0 ]]; then
             STR="(BIN) WARNING: Image $BIN_NAME has not been found"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         fi
     done < $filename1
@@ -761,8 +750,6 @@ function download_lab_dynamips_images() {
 
         if [[ $FLAG -eq 0 ]]; then
             STR="(DYNAMIPS) WARNING: Image $DYNAMIPS_NAME has not been found"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         fi
     done < $filename1
@@ -802,8 +789,6 @@ function download_lab_qemu_images() {
 
         if [[ $FLAG -eq 0 ]]; then
             STR="(QEMU) WARNING: Image $QEMU_NAME has not been found"
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "${YELLOW}$STR${NO_COLOR}"
         fi
     done < $filename1
@@ -811,10 +796,6 @@ function download_lab_qemu_images() {
 }
 
 function check_docker_service_status() {
-    RED='\033[31m'
-    GREEN='\033[32m'
-    NO_COLOR='\033[0m'
-
     if service docker status | grep -q "active (running)"; then
         return 0 # 0 means "no failures"
     fi
@@ -1236,9 +1217,6 @@ function pull_bin() {
 }
 
 function show_help_info() {
-    YELLOW='\033[1;33m'
-    NO_COLOR='\033[0m'
-
     echo -e "1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video"
     echo -e "\n2) For new files to be uploaded, you can use our Telegram Channel too"
     echo -e "In this case, you can send or ask for new images to be uploaded"
@@ -1253,9 +1231,6 @@ function show_help_info() {
 function show_ishare2_usage() {
     # For ishare2
     ISHARE2_VERSION_USAGE=$(cat /usr/sbin/ishare2_version)
-
-    YELLOW='\033[1;33m'
-    NO_COLOR='\033[0m'
 
     STR=""
     LOCAL_VALUE=$ISHARE2_VERSION_USAGE
@@ -1978,9 +1953,6 @@ function selector() {
                     pull_qemu "$3"
                 else
                     STR="Last parameter not detected"
-                    RED='\033[31m'
-                    YELLOW='\033[1;33m'
-                    NO_COLOR='\033[0m'
                     echo -e "${RED}$STR${NO_COLOR}"
                     echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
                 fi
@@ -1989,9 +1961,6 @@ function selector() {
                     pull_dynamips "$3"
                 else
                     STR="Last parameter not detected"
-                    RED='\033[31m'
-                    YELLOW='\033[1;33m'
-                    NO_COLOR='\033[0m'
                     echo -e "${RED}$STR${NO_COLOR}"
                     echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
                 fi
@@ -2000,9 +1969,6 @@ function selector() {
                     pull_bin "$3"
                 else
                     STR="Last parameter not detected"
-                    RED='\033[31m'
-                    YELLOW='\033[1;33m'
-                    NO_COLOR='\033[0m'
                     echo -e "${RED}$STR${NO_COLOR}"
                     echo -e "Syntax: ishare2 pull bin ${YELLOW}<number>${NO_COLOR}"
                 fi
@@ -2015,9 +1981,6 @@ function selector() {
     elif [[ "$1" = "installed" ]]; then # ishare2 installed
         if [[ "$2" ]]; then
             if [[ "$2" = "all" ]]; then
-                GREEN='\033[32m'
-                NO_COLOR='\033[0m'
-
                 echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
                 ishare2 installed qemu
                 echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
@@ -2042,14 +2005,10 @@ function selector() {
                 list_dockers
                 count_dockers
             else
-                YELLOW='\033[1;33m'
-                NO_COLOR='\033[0m'
                 echo -e "Syntax:\n\nishare2 installed <type>"
                 echo -e "${YELLOW}type: all, bin, qemu, dynamips or docker${NO_COLOR}"
             fi
         else
-            YELLOW='\033[1;33m'
-            NO_COLOR='\033[0m'
             echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
             echo -e "type: all, bin, qemu, dynamips or docker"
         fi
@@ -2074,9 +2033,6 @@ function selector() {
                         mylabs_install_lab_images_just_for_only_readable_labs $2 $3
                     else
                         STR="The last parameter must be a number"
-                        RED='\033[31m'
-                        YELLOW='\033[1;33m'
-                        NO_COLOR='\033[0m'
                         echo -e "${RED}$STR${NO_COLOR}"
                         echo -e "ishare2 mylabs <path> ${YELLOW}<number>${NO_COLOR}"
                     fi
@@ -2103,6 +2059,7 @@ function selector() {
 }
 
 function main(){
+    set_color_variables
     check_user_is_root
     get_initial_information
     set_yml_template_folder_location
