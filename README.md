@@ -31,7 +31,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
       labs        : Show labs on server and download images for those labs
       mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
-      upgrade     : Retrieves a menu that allows to upgrade ishare2 and PNETLab VM
+      upgrade     : Retrieves a menu that allows users to upgrade ishare2 and PNETLab VM
       changelog   : Show the latest changes made to ishare2
       help        : Show useful information
       
