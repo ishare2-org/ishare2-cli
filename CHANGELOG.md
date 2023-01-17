@@ -1,5 +1,9 @@
 # Changelog
-All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade`
+All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting option 1
+
+## [v1.4.8] - 2023-Jan-17
+
+1) Added: A menu was added into the `ishare2 upgrade`. This menu allows users to upgrade ishare2 and PNETLab to their latest versions
 
 ## [v1.4.7] - 2023-Jan-16
 
