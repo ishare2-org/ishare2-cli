@@ -1304,7 +1304,7 @@ function show_help_info() {
     echo -e "1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video"
     echo -e "\n2) For new files to be uploaded, you can use our Telegram Channel too"
     echo -e "In this case, you can send or ask for new images to be uploaded"
-    echo -e "\n3) Using \033[32mishare2 upgrade\033[0m will result in upgrading this utility (ishare2). It will \033[31mnot\033[0m upgrade your PNETLab Ubuntu VM version"
+    echo -e "\n3) Using \033[32mishare2 upgrade\033[0m will display a menu that allows users to upgrade ishare2 and PNETLab."
     echo -e "\n4) If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using \033[32mishare2 relicense\033[0m. This will not affect images in there."
     echo -e "Also, this command when used, will generate a new license file called iourc, needed for bin files"
     echo -e "\n5) Don't cancell a download. In case you do it, you will have to remove incomplete files or folders manually"
