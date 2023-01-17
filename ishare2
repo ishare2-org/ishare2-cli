@@ -19,6 +19,9 @@ function set_url_constants() {
     URL_I86BI_LINUX_L3_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml
     URL_C2600_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml
     URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml
+    URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.0.1/upgrade.sh
+    URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.2.7/upgrade.sh
+    URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_5.0.1_to_5.2.7/upgrade.sh
 }
 
 function check_user_is_root() {
@@ -938,6 +941,77 @@ function upgrade_ishare2() {
     echo "ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
     rm /usr/sbin/ishare2_version
     echo "$REMOTE_VALUE" >> /usr/sbin/ishare2_version
+}
+
+function menu_ishare2_upgrade_pnetlab() {
+    prompt="Please, select an option: "
+    options=(
+        "Upgrade PNETLab 4.2.10 to 5.0.1"
+        "Upgrade PNETLab 4.2.10 to 5.2.7" 
+        "Upgrade PNETLab 5.0.1 to 5.2.7"
+    )
+
+    PS3="$prompt"
+    select opt in "${options[@]}" "Exit"; do 
+        case "$REPLY" in
+        1) 
+            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1 > /dev/null 2>&1
+            chmod +x upgrade.sh
+            bash upgrade.sh
+            break
+            ;;
+        2)
+            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7 > /dev/null 2>&1
+            chmod +x upgrade.sh
+            bash upgrade.sh
+            break
+            ;;
+        3)
+            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7 > /dev/null 2>&1
+            chmod +x upgrade.sh
+            bash upgrade.sh
+            break
+            ;;
+        $((${#options[@]}+1)))
+            break
+            ;;
+        *) 
+            STR="Invalid option: Select a number from 1 to 4"
+            echo -e "${RED}$STR${NO_COLOR}"
+            continue
+            ;;
+        esac
+    done
+}
+
+function menu_ishare2_upgrade() {
+    prompt="Please, select an option: "
+    options=(
+        "Upgrade ishare2"
+        "Upgrade PNETLab"
+    )
+
+    PS3="$prompt"
+    select opt in "${options[@]}" "Exit"; do 
+        case "$REPLY" in
+        1) 
+            upgrade_ishare2
+            break
+            ;;
+        2)
+            menu_ishare2_upgrade_pnetlab
+            break
+            ;;
+        $((${#options[@]}+1)))
+            break
+            ;;
+        *) 
+            STR="Invalid option: Select a number from 1 to 3"
+            echo -e "${RED}$STR${NO_COLOR}"
+            continue
+            ;;
+        esac
+    done
 }
 
 function show_changelog() {
@@ -2058,7 +2132,7 @@ function selector() {
     elif [[ "$1" = "relicense" ]]; then # ishare2 relicense
         generate_a_new_license
     elif [[ "$1" = "upgrade" ]]; then # ishare2 upgrade
-        upgrade_ishare2
+        menu_ishare2_upgrade
     elif [[ "$1" = "changelog" ]]; then # ishare2 changelog
         show_changelog
     elif [[ "$1" = "help" ]]; then # ishare2 help
