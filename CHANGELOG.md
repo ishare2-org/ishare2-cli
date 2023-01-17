@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.4.8] - 2023-Jan-17
 
-1) Added: A menu was added into the `ishare2 upgrade`. This menu allows users to upgrade ishare2 and PNETLab to their latest versions
+1) Added: A menu was added into the `ishare2 upgrade` command. This menu allows users to upgrade ishare2 and PNETLab to their latest versions
 
 ## [v1.4.7] - 2023-Jan-16
 
