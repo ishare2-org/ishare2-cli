@@ -31,7 +31,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
       labs        : Show labs on server and download images for those labs
       mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
-      upgrade     : Upgrade ishare2 code to the latest version
+      upgrade     : Retrieves a menu that allows to upgrade ishare2 and PNETLab VM
       changelog   : Show the latest changes made to ishare2
       help        : Show useful information
       
@@ -104,7 +104,7 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 
 * For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video
 * For new files to be uploaded, you can also use our Telegram Channel: In this case, you can send or ask for new images to be uploaded
-* Using ishare2 upgrade will result in upgrading this utility (ishare2). It will not upgrade your PNETLab Ubuntu VM version
+* Using ishare2 upgrade will display a menu that allows users to upgrade ishare2 and PNETLab.
 * If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using ishare2 relicense. This will not affect images in there
 
   Also, this command when used, will generate a new license file called "iourc", needed for bin files
@@ -122,6 +122,8 @@ Note: There is no need to be in the same directory where *ishare2* file is insta
 - Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.0.1)
 - Upgrade from v4.2.10 to v5.2.7: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.2.7)
 - Upgrade from v5.0.1 to v5.2.7:  [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_5.0.1_to_5.2.7)
+
+Note: You can also upgrade PNETLab using `ishare2 upgrade`, then selecting option 2 and finally one more option from the list
                                                 
 ## Known limitations
 
