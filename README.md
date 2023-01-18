@@ -18,7 +18,7 @@ Apply this command using the terminal
 wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
-`Note: There is no need to be in the same directory where *ishare2* file is installed in order to execute it`
+`Note: There is no need to be in the same directory where ishare2 file is installed in order to execute it`
 
 ## ✅ Syntax
     
