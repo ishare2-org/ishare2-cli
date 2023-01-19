@@ -48,6 +48,16 @@ function get_initial_information() {
     DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS_GID$URL_POSTFIX
 }
 
+function get_server_platform() {
+    grep -q vmx /proc/cpuinfo && echo -n vmx > /opt/unetlab/platform
+    grep -q svm /proc/cpuinfo && echo -n svm > /opt/unetlab/platform
+
+    platform=$(cat /opt/unetlab/platform)
+
+    if [[ $platform == "vmx" ]]; then YML_DIR="/opt/unetlab/html/templates/intel/" ; fi
+    if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/" ; fi
+}
+
 function set_yml_template_folder_location() {
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     data_array=($data)
@@ -56,13 +66,11 @@ function set_yml_template_folder_location() {
     if [[ $pnetlab_version == "4.2.10" ]]; then YML_DIR="/opt/unetlab/html/templates/" ; fi
 
     if [[ $pnetlab_version == "5.2.5" ]] || [[ $pnetlab_version == "5.2.6" ]] || [[ $pnetlab_version == "5.2.7" ]]; then
-        grep -q vmx /proc/cpuinfo && echo -n vmx > /opt/unetlab/platform
-        grep -q svm /proc/cpuinfo && echo -n svm > /opt/unetlab/platform
-
-        platform=$(cat /opt/unetlab/platform)
-
-        if [[ $platform == "vmx" ]]; then YML_DIR="/opt/unetlab/html/templates/intel/" ; fi
-        if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/" ; fi
+        get_server_platform
+    fi
+    
+    if [[ $pnetlab_version == *6.* ]]; then
+        get_server_platform
     fi
 }
 
