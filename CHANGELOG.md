@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.4.9] - 2023-Jan-19
 
-1) Added: This version adds support to PNETLab 6.x related to templates location (AMD and Intel folder locations)
+1) Added: This version adds support to PNETLab 6.x related to yml template location (AMD and Intel folders)
 
 ## [v1.4.8] - 2023-Jan-17
 
