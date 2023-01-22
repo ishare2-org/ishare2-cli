@@ -65,7 +65,7 @@ function set_yml_template_folder_location() {
 
     if [[ $pnetlab_version == "4.2.10" ]]; then YML_DIR="/opt/unetlab/html/templates/" ; fi
 
-    if [[ $pnetlab_version == "5.2.5" ]] || [[ $pnetlab_version == "5.2.6" ]] || [[ $pnetlab_version == "5.2.7" ]]; then
+    if [[ $pnetlab_version == "5.2.5" ]] || [[ $pnetlab_version == "5.2.6" ]] || [[ $pnetlab_version == "5.2.7" ]] || [[ $pnetlab_version == "5.2.8" ]]; then
         get_server_platform
     fi
     
