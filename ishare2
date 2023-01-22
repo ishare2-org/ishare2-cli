@@ -955,10 +955,10 @@ function upgrade_ishare2() {
 function menu_ishare2_upgrade_pnetlab() {
     prompt="Please, select an option: "
     options=(
-        "Upgrade PNETLab 4.2.10 to 5.0.1"
-        "Upgrade PNETLab 4.2.10 to 5.2.7" 
-        "Upgrade PNETLab 5.0.1 to 5.2.7"
-        "Upgrade PNETLab any to 5.2.8"
+        "Upgrade PNETLab: from 4.2.10 to 5.0.1"
+        "Upgrade PNETLab: from 4.2.10 to 5.2.7" 
+        "Upgrade PNETLab: from 5.0.1 to 5.2.7"
+        "Upgrade PNETLab: from any version to 5.2.8"
     )
 
     PS3="$prompt"
