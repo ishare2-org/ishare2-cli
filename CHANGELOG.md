@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting option 1
 
+## [v1.5.0] - 2023-Jan-22
+
+1) Added: Some code has been added to ishare2 to support PNETLab upgrade to v5.2.8 (Same as v5.2.7 fix: AMD and Intel folders at html/templates/). PNETLab users from v4.2.10 should not have any problem
+
 ## [v1.4.9] - 2023-Jan-19
 
 1) Added: This version adds support to PNETLab 6.x related to yml template location (AMD and Intel folders)
