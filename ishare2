@@ -1089,11 +1089,11 @@ function download_1_file_bin_or_dynamips() {
     echo -e "$SIZE $UNIT\n"
     
     if [[ $TYPE = "dynamips" ]]; then
-        wget -q --show-progress -O /opt/unetlab/addons/dynamips/"$NAME" "$LINK"
+        wget --content-disposition -q --show-progress -O /opt/unetlab/addons/dynamips/"$NAME" "$LINK"
     fi
     
     if [[ $TYPE = "bin" ]]; then
-        wget -q --show-progress -O /opt/unetlab/addons/iol/bin/"$NAME" "$LINK"
+        wget --content-disposition -q --show-progress -O /opt/unetlab/addons/iol/bin/"$NAME" "$LINK"
     fi
 }
 
@@ -1110,7 +1110,7 @@ function download_1_file_qemu() {
     echo -e "\n\033[33mFolder requested:\033[0m $FOLDERNAME (""$SIZE"" ""$UNIT"")"
     echo -e "\nFile requested:\n  $NAME - $SIZE $UNIT\n"
     
-    wget -q --show-progress -O "$NAME" "$LINK"
+    wget --content-disposition -q --show-progress -O "$NAME" "$LINK"
 }
 
 function download_multiple_files_qemu() {
@@ -1127,7 +1127,7 @@ function download_multiple_files_qemu() {
     for (( c=1; c<=FILES_COUNTER; c++ ))
     do
         echo -e "\nFile $c/$FILES_COUNTER"
-        wget -q --connect-timeout 5 --show-progress -P /opt/unetlab/addons/qemu/"$FOLDERNAME" "${myArray[c-1]}"
+        wget --content-disposition -q --connect-timeout 5 --show-progress -P /opt/unetlab/addons/qemu/"$FOLDERNAME" "${myArray[c-1]}"
     done
 }
 
