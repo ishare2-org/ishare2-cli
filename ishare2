@@ -22,6 +22,7 @@ function set_url_constants() {
     URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.0.1/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.2.7/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_5.0.1_to_5.2.7/upgrade.sh
+    URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.8/upgrade.sh
 }
 
 function check_user_is_root() {
@@ -957,6 +958,7 @@ function menu_ishare2_upgrade_pnetlab() {
         "Upgrade PNETLab 4.2.10 to 5.0.1"
         "Upgrade PNETLab 4.2.10 to 5.2.7" 
         "Upgrade PNETLab 5.0.1 to 5.2.7"
+        "Upgrade PNETLab any to 5.2.8"
     )
 
     PS3="$prompt"
@@ -980,11 +982,17 @@ function menu_ishare2_upgrade_pnetlab() {
             bash upgrade.sh
             break
             ;;
+        4)
+            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8 > /dev/null 2>&1
+            chmod +x upgrade.sh
+            bash upgrade.sh
+            break
+            ;;
         $((${#options[@]}+1)))
             break
             ;;
         *) 
-            STR="Invalid option: Select a number from 1 to 4"
+            STR="Invalid option: Select a number from 1 to 5"
             echo -e "${RED}$STR${NO_COLOR}"
             continue
             ;;
