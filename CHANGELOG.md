@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.5.3] - 2023-Jan-22
+
+1) Modified: --content-disposition was added in order to download images from other repo
+
 ## [v1.5.2] - 2023-Jan-22
 
 1) Modified: Some strings were modified when using this option: `ishare2 upgrade` > `option 2`. Now, it looks better for users
