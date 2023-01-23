@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.5.4] - 2023-Jan-23
+
+1) Modified: Changes were made in set_yml_template_folder_location() function. Now, this function support the following PNETLab versions:
+
+    For `/opt/unetlab/html/templates/`: 4.2.10 and 5.0.1
+
+    For `/opt/unetlab/html/templates/intel/` or `/opt/unetlab/html/templates/amd/`: 5.2.x, 5.3.x and 6.x
+
+    5.3.x is not implemented yet (Change made in case it is needed in the future)
+
 ## [v1.5.3] - 2023-Jan-22
 
 1) Modified: --content-disposition was added in order to download images from other repo
