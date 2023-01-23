@@ -121,8 +121,9 @@ wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
 
 - Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.0.1)
 - Upgrade from v4.2.10 to v5.2.7: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.2.7)
-- Upgrade from v5.0.1 to v5.2.7:  [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_5.0.1_to_5.2.7)
-- Upgrade from any to v5.2.8:  [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_any_to_5.2.8)
+- Upgrade from v5.0.1 to v5.2.7: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_5.0.1_to_5.2.7)
+- Upgrade from any to v5.2.8: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_any_to_5.2.8)
+- Upgrade from any to v5.2.9: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_any_to_5.2.9)
 
 Note: You can also upgrade PNETLab using `ishare2 upgrade`, then using the `option 2` and finally selecting an option from the displayed list
                                                 
