@@ -25,6 +25,8 @@ function set_url_constants() {
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.8/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_9=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.9/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_0=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.0/upgrade.sh
+    URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/app.zip
+    URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/requirements.txt
 }
 
 function check_user_is_root() {
@@ -1053,6 +1055,49 @@ function show_changelog() {
     rm $FILE
 }
 
+function ishare2_gui_download() {
+    rm -rf /root/app
+
+    wget -q $URL_GUI_APP_ZIP -P /root
+    unzip /root/app.zip -d /root > /dev/null 2>&1
+    rm /root/app.zip
+    
+    curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o /root/get-pip.py > /dev/null 2>&1
+    python3 /root/get-pip.py > /dev/null 2>&1
+    rm /root/get-pip.py
+
+    wget -q $URL_REQUIREMENTS_GUI_APP -P /root
+    pip install -r /root/requirements.txt > /dev/null 2>&1
+    rm /root/requirements.txt
+
+    echo -e "${GREEN}GUI has been downloaded and installed. Now, you can start it by using: ishare2 gui start${NO_COLOR}"
+}
+
+function ishare2_gui_start() {
+    DIR="/root/app/"
+    if ! [[ -d "$DIR" ]]; then
+        ishare2 gui download
+    fi
+
+    ip_address="$(ip route get 1.2.3.4 | awk '{print $7}')"
+    echo -e "Use http://$ip_address:5000\n"
+    cd /root/app && python3 /root/app/main.py &
+}    
+
+function ishare2_gui_stop() {
+    array_of_pids="$(ps -a | grep python3 | awk '{ print $1 }')"
+
+    for i in "${array_of_pids[@]}"
+    do
+        kill -9 $i > /dev/null 2>&1
+    done
+}
+
+function ishare2_gui_restart() {
+    ishare2 gui stop
+    ishare2 gui start
+}
+
 function general_available_list() {
     TYPE=$1
     FILENAME=$2
@@ -1376,6 +1421,7 @@ action:
     relicense   : Generate a new iourc license for bin images
     upgrade     : Retrieves a menu that allows users to upgrade ishare2 and PNETLab VM
     changelog   : Show the latest changes made to ishare2
+    gui         : Web app to use ishare2 in browser
     help        : Show useful information
 
 param1:
@@ -1427,6 +1473,11 @@ Examples:
 - ishare2 mylabs <path>
 - ishare2 mylabs <path> <number>
 - ishare2 mylabs <path> all
+
+- ishare2 gui download
+- ishare2 gui start
+- ishare2 gui stop
+- ishare2 gui restart
 
 - ishare2 relicense
 - ishare2 upgrade
@@ -2165,6 +2216,31 @@ function selector() {
         menu_ishare2_upgrade
     elif [[ "$1" = "changelog" ]]; then # ishare2 changelog
         show_changelog
+    elif [[ "$1" = "gui" ]]; then # ishare2 gui
+        if [[ "$2" ]]; then
+            if [[ "$2" == "download" ]]; then # ishare2 gui download
+                ishare2_gui_download
+            elif [[ "$2" == "start" ]]; then # ishare2 gui start
+                ishare2_gui_start
+            elif [[ "$2" == "stop" ]]; then # ishare2 gui stop
+                ishare2_gui_stop
+            elif [[ "$2" == "restart" ]]; then # ishare2 gui restart
+                ishare2_gui_restart
+            else
+                echo -e "${RED}Bad last argument${NO_COLOR}"
+                echo -e "Syntax:\n\nishare2 gui <option>\n"
+                echo "ishare2 gui download"
+                echo -e "ishare2 gui start"
+                echo -e "ishare2 gui stop"
+                echo -e "ishare2 gui restart"
+            fi
+        else
+            echo -e "Syntax:\n\nishare2 gui <option>\n"
+            echo "ishare2 gui download"
+            echo -e "ishare2 gui start"
+            echo -e "ishare2 gui stop"
+            echo -e "ishare2 gui restart"
+        fi
     elif [[ "$1" = "help" ]]; then # ishare2 help
         show_help_info
     else # when no args are passed to ishare2
