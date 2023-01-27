@@ -33,6 +33,7 @@ wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
       relicense   : Generate a new iourc license for bin images
       upgrade     : Retrieves a menu that allows users to upgrade ishare2 and PNETLab VM
       changelog   : Show the latest changes made to ishare2
+      gui         : Web app to use ishare2 in browser
       help        : Show useful information
       
     param1:
@@ -94,6 +95,12 @@ wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
     - ishare2 mylabs <path> <number>
     - ishare2 mylabs <path> all
     
+## 💎 GUI 
+    - ishare2 gui download
+    - ishare2 gui start
+    - ishare2 gui stop
+    - ishare2 gui restart
+
 ## 💎 Extras
     - ishare2 relicense
     - ishare2 upgrade
