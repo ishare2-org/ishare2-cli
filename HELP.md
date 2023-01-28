@@ -1,4 +1,4 @@
-## Useful information
+# Useful information
 
 1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video
 2) For new files to be uploaded, you can also use our Telegram Channel: In this case, you can send or ask for new images to be uploaded
