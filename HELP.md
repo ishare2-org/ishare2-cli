@@ -12,5 +12,3 @@
 5) Don't cancel a download. In case you do it, you will have to remove incomplete files or folders manually
 
 6) The main difference between ishare2 labs and ishare2 mylabs is that, in the first case, the folder used is the one PNETLab creates when you download a lab from the store and in the second case you are able to select any folder you want in order to download labs
-    
-    Telegram Channel: https://t.me/unetlab_cloud
