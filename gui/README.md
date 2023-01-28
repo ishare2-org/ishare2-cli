@@ -29,4 +29,5 @@ ishare2 gui restart
 ```
 
 Note 1: You could implement some port forwarding rules to access this GUI from outside
+
 Note 2: More options will be available soon
