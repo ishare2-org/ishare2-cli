@@ -1,7 +1,7 @@
 ## ishare2 GUI
 
 ### Download
-Apply this command to download this app.zip file into your PNETLab VM
+Apply this command to download and implement GUI into your PNETLab VM
 ```linux
 ishare2 gui download
 ```
