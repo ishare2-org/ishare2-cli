@@ -5,6 +5,8 @@
 
 <h2 align="center">
   CLI-based Bash tool used to download and install images into a PNETLab server automatically and with minimal efforts
+  <br></br>
+  New: Since v1.5.7, a web app was released. App was named ishare2 GUI
 </h2>
 
 ## :hammer_and_wrench: Language
