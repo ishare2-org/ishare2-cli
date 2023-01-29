@@ -6,7 +6,7 @@
 <h2 align="center">
   CLI-based Bash tool used to download and install images into a PNETLab server automatically and with minimal efforts
   <br></br>
-  :star:New: Since v1.5.7, a web app was released to use ishare2 in a browser. App is named ishare2 GUI
+  :star:New: Since v1.5.7, a web app was released to use ishare2 in a browser. App is named <a href='https://github.com/pnetlabrepo/ishare2/tree/main/gui'>ishare2 GUI</a>
 </h2>
 
 ## :hammer_and_wrench: Language
