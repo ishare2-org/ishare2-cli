@@ -25,6 +25,7 @@ function set_url_constants() {
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.8/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_9=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.9/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_0=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.0/upgrade.sh
+    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.2/upgrade.sh
     URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/app.zip
     URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/requirements.txt
 }
@@ -963,6 +964,7 @@ function menu_ishare2_upgrade_pnetlab() {
         "Upgrade PNETLab: from any version to 5.2.8"
         "Upgrade PNETLab: from any version to 5.2.9"
         "Upgrade PNETLab: from any version to 5.3.0"
+        "Upgrade PNETLab: from any version to 5.3.2"
     )
 
     PS3="$prompt"
@@ -1004,11 +1006,17 @@ function menu_ishare2_upgrade_pnetlab() {
             bash upgrade.sh
             break
             ;;
+        7)
+            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2 > /dev/null 2>&1
+            chmod +x upgrade.sh
+            bash upgrade.sh
+            break
+            ;;
         $((${#options[@]}+1)))
             break
             ;;
         *) 
-            STR="Invalid option: Select a number from 1 to 7"
+            STR="Invalid option: Select a number from 1 to 8"
             echo -e "${RED}$STR${NO_COLOR}"
             continue
             ;;
