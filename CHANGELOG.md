@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.5.8] - 2023-Jan-29
+
+1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.2 (Not possible for this case: 6.x to 5.3.2)
+
 ## [v1.5.7] - 2023-Jan-27
 1) Added: A new feature has been added to ishare2: It is a web app to use ishare2 in browser and it is called `ishare2 GUI`. You can download it by using `ishare2 gui download` and then start it with `ishare2 gui start`. Open your web browser using http://localhost:5000, http://127.0.01:5000 or http://pnetlab_ip_address:5000 to access. Also, it can be stopped by using `ishare2 gui stop` and restarted with `ishare2 gui restart`
 
