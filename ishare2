@@ -28,6 +28,7 @@ function set_url_constants() {
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.2/upgrade.sh
     URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/app.zip
     URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/requirements.txt
+    URL_ISHARE2_GUI_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/version_gui
 }
 
 function check_user_is_root() {
@@ -937,6 +938,12 @@ function check_ishare2_version_file_exists() {
     fi
 }
 
+function check_ishare2_gui_version_file_exists() {
+    if ! [[ -e /usr/sbin/ishare2_gui_version ]]; then
+        echo -n "$(curl -s $URL_ISHARE2_GUI_VERSION)" >> /usr/sbin/ishare2_gui_version
+    fi
+}
+
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
     REMOTE_VALUE=$(curl -s $URL_VERSION)
@@ -1029,6 +1036,7 @@ function menu_ishare2_upgrade() {
     options=(
         "Upgrade ishare2"
         "Upgrade PNETLab"
+        "Upgrade ishare2 GUI"
     )
 
     PS3="$prompt"
@@ -1042,11 +1050,15 @@ function menu_ishare2_upgrade() {
             menu_ishare2_upgrade_pnetlab
             break
             ;;
+        3)
+            ishare2 gui download
+            break
+            ;;
         $((${#options[@]}+1)))
             break
             ;;
         *) 
-            STR="Invalid option: Select a number from 1 to 3"
+            STR="Invalid option: Select a number from 1 to 4"
             echo -e "${RED}$STR${NO_COLOR}"
             continue
             ;;
@@ -1064,6 +1076,8 @@ function show_changelog() {
 }
 
 function ishare2_gui_download() {
+    echo -e "${GREEN}GUI is being downloaded and installed. Please, wait until process is done${NO_COLOR}"
+
     rm -rf /root/app
 
     wget -q $URL_GUI_APP_ZIP -P /root
@@ -1079,6 +1093,15 @@ function ishare2_gui_download() {
     rm /root/requirements.txt
 
     echo -e "${GREEN}GUI has been downloaded and installed. Now, you can start it by using: ishare2 gui start${NO_COLOR}"
+
+    LOCAL_VALUE=$(cat /usr/sbin/ishare2_gui_version)
+    REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
+    
+    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
+        echo "ishare2 GUI was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
+        rm /usr/sbin/ishare2_gui_version
+        echo "$REMOTE_VALUE" >> /usr/sbin/ishare2_gui_version
+    fi
 }
 
 function ishare2_gui_start() {
@@ -1414,6 +1437,19 @@ function show_ishare2_usage() {
     pnetlab_info=($data)
     PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
     
+    # For ishare2 GUI
+    ISHARE2_GUI_VERSION_USAGE=$(cat /usr/sbin/ishare2_gui_version)
+
+    STR=""
+    LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
+    REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
+    
+    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
+        STR="New ishare2 GUI version available: $REMOTE_VALUE"
+    fi
+    
+    NEW_VERSION_RESULT_FOR_ISHARE2_GUI=$(echo -e ${YELLOW} $STR ${NO_COLOR})
+
     # Message displayed when using ishare2 command
     echo "
 Syntax
@@ -1494,6 +1530,7 @@ Examples:
 
 ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
 pnetlab: v$PNETLAB_VERSION_USAGE
+ishare2 GUI: $ISHARE2_GUI_VERSION_USAGE$NEW_VERSION_RESULT_FOR_ISHARE2_GUI
 "
 }
 
@@ -2263,6 +2300,7 @@ function main(){
     get_initial_information
     set_yml_template_folder_location
     check_ishare2_version_file_exists
+    check_ishare2_gui_version_file_exists
     selector $1 $2 $3
 }
 
