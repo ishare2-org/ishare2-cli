@@ -1,4 +1,4 @@
-# Changelog
+# Changelog for ishare2
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
 ## [v1.6.0] - 2023-Jan-30
