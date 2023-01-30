@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
 ## [v1.6.1] - 2023-Jan-30
-1) Added: Some imports were added to `ishare2_gui_download()` function in order to avoid some errors related to missing packages (pip install uvicorn, pip install fastapi and pip install jinja2 instructions were added)
+1) Added: Some instructions were added to `ishare2_gui_download()` function in order to avoid some errors related to missing packages (pip install uvicorn, pip install fastapi and pip install jinja2 instructions were added)
 
 ## [v1.6.0] - 2023-Jan-30
 1) Added: Command `ishare2 gui stop` was added into `ishare2_gui_download()` function in order to avoid errors when downloading/upgrading ishare2 GUI
