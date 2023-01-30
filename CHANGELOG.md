@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
 ## [v1.5.9] - 2023-Jan-30
-1) Added: A new version control was added for ishare2 GUI. It can be seen using the `ishare2` command and looking at the bottom of it. New functions and variables were implemented.
+1) Added: A new version control was added for ishare2 GUI. It can be seen using the `ishare2` command and looking at the bottom of it. New functions and variables were implemented. Also, using `ishare2 upgrade` > `option 3` it is possible to upgrade it.
 
 ## [v1.5.8] - 2023-Jan-29
 
