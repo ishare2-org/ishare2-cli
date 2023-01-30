@@ -1092,6 +1092,11 @@ function ishare2_gui_download() {
 
     wget -q $URL_REQUIREMENTS_GUI_APP -P /root
     pip install -r /root/requirements.txt > /dev/null 2>&1
+
+    pip install uvicorn > /dev/null 2>&1
+    pip install fastapi > /dev/null 2>&1
+    pip install jinja2 > /dev/null 2>&1
+
     rm /root/requirements.txt
 
     echo -e "${GREEN}GUI has been downloaded and installed. Now, you can start it by using: ishare2 gui start${NO_COLOR}"
