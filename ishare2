@@ -1078,6 +1078,8 @@ function show_changelog() {
 function ishare2_gui_download() {
     echo -e "${GREEN}GUI is being downloaded and installed. Please, wait until process is done${NO_COLOR}"
 
+    ishare2 gui stop
+
     rm -rf /root/app
 
     wget -q $URL_GUI_APP_ZIP -P /root
