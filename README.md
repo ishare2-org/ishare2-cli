@@ -147,9 +147,9 @@ Note: You can also upgrade PNETLab using `ishare2 upgrade`, then using the `opti
 
 Check these links to get information on device credentials
 
-* [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/0:/addons/passwords/)
-* [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/1:/)
-* [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/1:/qemu/Linux/Eve-NG-Linux/)
+* [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/api/raw/?path=/UNETLAB%20I/addons/passwords/passwords_eve.xlsx)
+* [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/api/raw/?path=/UNETLAB%20II/Passwords%20-%20QEMU.xls)
+* [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/api/raw/?path=/UNETLAB%20II/qemu/Linux/Eve-NG-Linux/Eve-NG-Linux.png)
 
 ## ❓Need help?
 
