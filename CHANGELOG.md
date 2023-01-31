@@ -1,7 +1,7 @@
 # Changelog for ishare2
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
-## [v1.6.1] - 2023-Jan-31
+## [v1.6.2] - 2023-Jan-31
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.4 (Not possible for this case: 6.x to 5.3.4)
 
 ## [v1.6.1] - 2023-Jan-30
