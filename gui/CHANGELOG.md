@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file. You can upgrade ishare2 GUI to the latest version using `ishare2 upgrade` and then selecting `option 3`
 
 ## [v1.0.3] - 2023-Feb-02
-1) Modified: A bug related to search field was solved. This bug was not retrieving the correct id for every match in the search causing wrong downloads. Applies to bin, dynamips and qemu searches
+1) Modified: A bug related to search field was solved. This bug was not retrieving the correct id for every match causing wrong downloads. It applies to bin, dynamips and qemu searches
 
 ## [v1.0.2] - 2023-Jan-30
 1) Added: Now, in home.html it is possible to see pnetlab and ishare2 GUI versions (Before, only ishare2 was possible to see)
