@@ -20,17 +20,17 @@ function set_url_constants() {
     URL_C2600_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml
     URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml
     URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.0.1/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.2.7/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_5.0.1_to_5.2.7/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.8/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_9=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.9/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_0=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.0/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.2/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_4=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.4/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_5=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.5/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.7/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.8/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_10=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.10/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.2.7/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_5.0.1_to_5.2.7/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.8/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_9=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.9/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_0=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.0/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.2/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_4=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.4/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_5=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.5/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.7/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.8/upgrade.sh
+    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_10=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.10/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.11/upgrade.sh
     URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/app.zip
     URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/requirements.txt
@@ -972,17 +972,6 @@ function menu_ishare2_upgrade_pnetlab() {
     prompt="Please, select an option: "
     options=(
         "(STABLE) Upgrade PNETLab: from 4.2.10 to 5.0.1"
-        "(BETA) Upgrade PNETLab: from 4.2.10 to 5.2.7" 
-        "(BETA) Upgrade PNETLab: from 5.0.1 to 5.2.7"
-        "(BETA) Upgrade PNETLab: from any version to 5.2.8"
-        "(BETA) Upgrade PNETLab: from any version to 5.2.9"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.0"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.2"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.4"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.5"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.7"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.8"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.10"
         "(STABLE) Upgrade PNETLab: from any version to 5.3.11"
     )
 
@@ -996,72 +985,6 @@ function menu_ishare2_upgrade_pnetlab() {
             break
             ;;
         2)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        3)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        4)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        5)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_9 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        6)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_0 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        7)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        8)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_4 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        9)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_5 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        10)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_7 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        11)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_8 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        12)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_10 > /dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
-            ;;
-        13)
             wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11 > /dev/null 2>&1
             chmod +x upgrade.sh
             bash upgrade.sh
@@ -1071,7 +994,7 @@ function menu_ishare2_upgrade_pnetlab() {
             break
             ;;
         *) 
-            STR="Invalid option: Select a number from 1 to 14"
+            STR="Invalid option: Select a number from 1 to 3"
             echo -e "${RED}$STR${NO_COLOR}"
             continue
             ;;
