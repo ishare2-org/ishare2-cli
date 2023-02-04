@@ -983,7 +983,7 @@ function menu_ishare2_upgrade_pnetlab() {
         "(BETA) Upgrade PNETLab: from any version to 5.3.7"
         "(BETA) Upgrade PNETLab: from any version to 5.3.8"
         "(BETA) Upgrade PNETLab: from any version to 5.3.10"
-        "(BETA) Upgrade PNETLab: from any version to 5.3.11"
+        "(STABLE) Upgrade PNETLab: from any version to 5.3.11"
     )
 
     PS3="$prompt"
