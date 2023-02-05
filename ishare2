@@ -40,7 +40,7 @@ function set_url_constants() {
 function check_user_is_root() {
     user=$(whoami)
     if [[ "$user" != "root" ]]; then
-        echo -e "${RED}[!] Current user ($user) is not root, please change user as root to execute this script${NO_COLOR}"
+        echo -e "${RED}[!] This script requires root privileges to execute. The current user, "$user", does not have sufficient permissions. Please switch to the root user to run the script.${NO_COLOR}"
         exit 1
     fi
 }
