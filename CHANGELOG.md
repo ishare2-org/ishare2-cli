@@ -1,6 +1,9 @@
 # Changelog for ishare2
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.7.1] - 2023-Feb-08
+1) Modified: Minor changes were made in the check_user_is_root() function in order to be more precise on user privileges when executing ishare2
+
 ## [v1.7.0] - 2023-Feb-04
 1) Modified: About `ishare2 upgrade` > `option 2`: Now, there are 2 stable versions of PNETLab available to use. Other releases were BETA type and they are not available anymore
 
