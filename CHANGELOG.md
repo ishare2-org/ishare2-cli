@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
 ## [v1.7.0] - 2023-Feb-04
-1) Modified: About `ishare2 upgrade` > `option 2`: Now, there are 2 stable versions of PNETLab available to use. Other release were BETA and not available any more
+1) Modified: About `ishare2 upgrade` > `option 2`: Now, there are 2 stable versions of PNETLab available to use. Other releases were BETA type and they are not available anymore
 
 ## [v1.6.9] - 2023-Feb-04
 1) Modified: PNETLab version 5.3.11 changed state from BETA to STABLE. This upgrade can be implemented using this command: `ishare2 upgrade` > `option 2` and selecting the correspondant option 
