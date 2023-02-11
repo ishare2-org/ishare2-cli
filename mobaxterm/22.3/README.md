@@ -10,7 +10,7 @@ Requirement: You must have Python3 installed in your computer (Tested and workin
 ### ✨ Quick installation and execution
 Use cmd or PowerShell to execute the following:
 ```batch
-curl -s -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/crack-mobaxterm.py && python crack-mobaxterm.py
+curl -s -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/crack-mobaxterm.py && python crack-mobaxterm.py && del .\crack-mobaxterm.py
 ```
 Note: After executing this python file, select `Yes` to confirm
 
