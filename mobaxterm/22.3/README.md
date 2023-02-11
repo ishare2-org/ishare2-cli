@@ -17,15 +17,20 @@ curl -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2
 1. Syntax for this script is as follows:
 
 ```batch
-python crack-mobaxterm.py <username> <version>
+python crack-mobaxterm.py [username] [version]
 ```
-2. When installing MobaXterm, make sure installation path is one of the following because python code will be scanning them in order to know where Moba was installed:
+
+Note: `username` and `version` are optional parameters
+
+2. When installing MobaXterm, make sure installation path is one of the following because python code will be scanning them in order to know where MobaXterm.exe was installed:
 
 ```batch
 "C:\Program Files (x86)\Mobatek\MobaXterm\"
 "D:\Program Files (x86)\Mobatek\MobaXterm\"
 "E:\Program Files (x86)\Mobatek\MobaXterm\"
 ```
+
+Note: You can add a new installation path by modifing this list inside code
 
    This allows the code to move the generated crack file to the MobaXterm´s installation path and open the software for you when crack process finishes.
    
@@ -34,7 +39,7 @@ python crack-mobaxterm.py <username> <version>
 ### Execution
 Once MobaXterm is installed, locate in the same directory crack-mobaxterm.py was downloaded and execute it with:
 ```batch
-python crack-mobaxterm.py admin 22.3
+python crack-mobaxterm.py
 ```
 
 
