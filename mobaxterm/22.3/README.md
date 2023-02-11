@@ -3,19 +3,19 @@ This script, designed to be used in Windows, allows you to crack MobaXterm from 
 This code has been modified from its original version
 ```
 
-# MobaXterm-Keygen-v2.py
+# crack-mobaxterm.py
 
 ### Installation
 Download this script into Windows applying this command in cmd or PowerShell:
 ```batch
-curl -o MobaXterm-Keygen-v2.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/MobaXterm-Keygen-v2.py
+curl -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/crack-mobaxterm.py
 ```
 
 ### Useful information
 1. Syntax for this script is as follows:
 
 ```batch
-python MobaXterm-Keygen-v2.py <username> <version>
+python crack-mobaxterm.py <username> <version>
 ```
 2. When installing MobaXterm, make sure installation path is one of the following because python code will be scanning them in order to know where Moba was installed:
 
@@ -30,9 +30,9 @@ python MobaXterm-Keygen-v2.py <username> <version>
    If MobaXterm is installed in another path, crack file will be generated as well but it must be moved manually by you to complete the process.
 
 ### Execution
-Once MobaXterm is installed, locate in the same directory MobaXterm-Keygen-v2.py was downloaded and execute it with:
+Once MobaXterm is installed, locate in the same directory crack-mobaxterm.py was downloaded and execute it with:
 ```batch
-python MobaXterm-Keygen-v2.py admin 22.3
+python crack-mobaxterm.py admin 22.3
 ```
 
 
