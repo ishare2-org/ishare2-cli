@@ -41,7 +41,7 @@ Once MobaXterm is installed, locate in the same directory crack-mobaxterm.py was
 ```batch
 python crack-mobaxterm.py
 ```
-
+After executing this python file, Select Yes to confirm
 
 ### Software used:
 
