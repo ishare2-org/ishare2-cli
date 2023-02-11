@@ -137,6 +137,7 @@ def config(sys):
 
     if number_of_args == 3:
         username = sys.argv[1],
+        username = ''.join(username)
         major_version, minor_version = sys.argv[2].split('.')[0:2]
         major_version = int(major_version)
         minor_version = int(minor_version)
