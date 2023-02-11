@@ -7,10 +7,17 @@ Requirement: You must have Python3 installed in your computer (Tested and workin
 
 # crack-mobaxterm.py
 
+### ✨ Quick installation and execution
+Use cmd or PowerShell to execute the following:
+```batch
+curl -s -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/crack-mobaxterm.py && python crack-mobaxterm.py
+```
+Note: After executing this python file, select `Yes` to confirm
+
 ### Installation
 Download this script into Windows applying this command in cmd or PowerShell:
 ```batch
-curl -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/crack-mobaxterm.py
+curl -s -o crack-mobaxterm.py https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/mobaxterm/22.3/crack-mobaxterm.py
 ```
 
 ### Useful information
@@ -41,7 +48,7 @@ Once MobaXterm is installed, locate in the same directory crack-mobaxterm.py was
 ```batch
 python crack-mobaxterm.py
 ```
-After executing this python file, Select Yes to confirm
+After executing this python file, select `Yes` to confirm
 
 ### Software used:
 
