@@ -1,8 +1,8 @@
 ```batch
-This script, designed to be used in Windows, allows you to crack MobaXterm from Personal to Professional Edition using Python 3
+This script, designed to be used in Windows, allows you to crack MobaXterm from Personal to Professional Edition using Python3
 This code has been modified from its original version
 
-Requirement: You must have Python 3 installed in your computer (Tried with Python 3.10.6)
+Requirement: You must have Python3 installed in your computer (Tested and working with Python 3.10.6)
 ```
 
 # crack-mobaxterm.py
