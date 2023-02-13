@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.7.2] - 2023-Feb-12
+
+1) Added: `--overwrite` flag. Users can specify they want to overwrite an image by passing this 4th argument. Useful when download gets interrupted or you want to restore it to the initial state. Syntax: `ishare pull <type> <id> --overwrite`
+
 ## [v1.7.1] - 2023-Feb-08
 
 1) Modified: Minor changes were made in the check_user_is_root() function in order to be more precise on user privileges when executing ishare2
