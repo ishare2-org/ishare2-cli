@@ -1,43 +1,57 @@
 # Changelog for ishare2
+
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
 ## [v1.7.1] - 2023-Feb-08
+
 1) Modified: Minor changes were made in the check_user_is_root() function in order to be more precise on user privileges when executing ishare2
 
 ## [v1.7.0] - 2023-Feb-04
+
 1) Modified: About `ishare2 upgrade` > `option 2`: Now, there are 2 stable versions of PNETLab available to use. Other releases were BETA type and they are not available anymore
 
 ## [v1.6.9] - 2023-Feb-04
-1) Modified: PNETLab version 5.3.11 changed state from BETA to STABLE. This upgrade can be implemented using this command: `ishare2 upgrade` > `option 2` and selecting the correspondant option 
+
+1) Modified: PNETLab version 5.3.11 changed state from BETA to STABLE. This upgrade can be implemented using this command: `ishare2 upgrade` > `option 2` and selecting the correspondant option
 
 ## [v1.6.8] - 2023-Feb-03
+
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.11 (Not possible for this case: 6.x to 5.3.11)
 
 ## [v1.6.7] - 2023-Feb-03
+
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.10 (Not possible for this case: 6.x to 5.3.10)
 
 ## [v1.6.6] - 2023-Feb-02
+
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.8 (Not possible for this case: 6.x to 5.3.8)
 
 ## [v1.6.5] - 2023-Feb-02
+
 1) Added: Now, menu `ishare2 upgrade` > `option 2` displays a message next to each version to distinguish between the STABLE and BETA versions of PNETLab
 
 ## [v1.6.4] - 2023-Feb-02
+
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.7 (Not possible for this case: 6.x to 5.3.7)
 
 ## [v1.6.3] - 2023-Jan-31
+
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.5 (Not possible for this case: 6.x to 5.3.5)
 
 ## [v1.6.2] - 2023-Jan-31
+
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.4 (Not possible for this case: 6.x to 5.3.4)
 
 ## [v1.6.1] - 2023-Jan-30
+
 1) Added: Some instructions were added to `ishare2_gui_download()` function in order to avoid some errors related to missing packages (pip install uvicorn, pip install fastapi and pip install jinja2 instructions were added)
 
 ## [v1.6.0] - 2023-Jan-30
+
 1) Added: Command `ishare2 gui stop` was added into `ishare2_gui_download()` function in order to avoid errors when downloading/upgrading ishare2 GUI
 
 ## [v1.5.9] - 2023-Jan-30
+
 1) Added: A new version control was added for ishare2 GUI. It can be seen using the `ishare2` command and looking at the bottom of it. New functions and variables were implemented. Also, using `ishare2 upgrade` > `option 3` it is possible to upgrade it.
 
 ## [v1.5.8] - 2023-Jan-29
@@ -45,7 +59,8 @@ All notable changes to this project will be documented in this file. You can upg
 1) Added: A new option was added to `ishare2 upgrade` > `option 2`: Now, it is possible to upgrade PNETLab from almost any version to v5.3.2 (Not possible for this case: 6.x to 5.3.2)
 
 ## [v1.5.7] - 2023-Jan-27
-1) Added: A new feature has been added to ishare2: It is a web app to use ishare2 in browser and it is called `ishare2 GUI`. You can download it by using `ishare2 gui download` and then start it with `ishare2 gui start`. Open your web browser using http://localhost:5000, http://127.0.01:5000 or http://pnetlab_ip_address:5000 to access. Also, it can be stopped by using `ishare2 gui stop` and restarted with `ishare2 gui restart`
+
+1) Added: A new feature has been added to ishare2: It is a web app to use ishare2 in browser and it is called `ishare2 GUI`. You can download it by using `ishare2 gui download` and then start it with `ishare2 gui start`. Open your web browser using <http://localhost:5000>, <http://127.0.01:5000> or <http://pnetlab_ip_address:5000> to access. Also, it can be stopped by using `ishare2 gui stop` and restarted with `ishare2 gui restart`
 
 ## [v1.5.6] - 2023-Jan-25
 
@@ -91,12 +106,12 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.4.7] - 2023-Jan-16
 
-1) Added: A function called set_url_constants() was added to the code and to the main() execution. This function contains all of the URL needed in the project. 
+1) Added: A function called set_url_constants() was added to the code and to the main() execution. This function contains all of the URL needed in the project.
 2) Modified: Function called set_color_variables() was renamed to set_color_constants()
 
 ## [v1.4.6] - 2023-Jan-16
 
-1) Modified: Minor changes in code: A function called set_color_variables() was created to define all color variables in there. Added to main() execution 
+1) Modified: Minor changes in code: A function called set_color_variables() was created to define all color variables in there. Added to main() execution
 2) Deleted: Minor changes in code: Every definition of those variables was removed to get a cleaner code
 
 Note: This update does not change how the code works in any way
@@ -152,16 +167,16 @@ Note: This update does not change how the code works in any way
 
 ## [v1.3.6] - 2022-Dec-19
 
-1) Added code in show_ishare2_usage() function: 
+1) Added code in show_ishare2_usage() function:
 
     This code shows a message when a newer ishare2 upgrade is available when using `ishare2` command
-    
+
     ![Screenshot_1](https://user-images.githubusercontent.com/115958905/208381203-fe9065ac-9f93-4c2b-85be-47ac86215d1a.jpg)
 
     Message is displayed in yellow and is located at the bottom part of this command output
-    
+
     Code looks cleaner and organized in that function now
-    
+
 ## [v1.3.5] - 2022-Dec-13
 
 1) Added docker as an option of param1 (type) when using `ishare2`
@@ -173,7 +188,7 @@ Note: This update does not change how the code works in any way
 ## [v1.3.3] - 2022-Dec-13
 
 1) Added a bin image to ishare2: "i86bi_LinuxL3-AdvEnterpriseK9-M2_157_3_May_2018.bin". This image was already available in ishare2 but the name was a little bit different (specifically it was: "i86bi_Linux-L3-AdvEnterpriseK9-M2_157_3_May_2018.bin"). So, this was made in order to be able to find and download this image in some labs that had this new name. So, it was decided to upload the same image but with a different name.
-2) Added support to download dockers from eveng docker hub (https://hub.docker.com/u/eveng) when present in lab files
+2) Added support to download dockers from eveng docker hub (<https://hub.docker.com/u/eveng>) when present in lab files
 3) Added `ishare2 installed docker` command. Also, available from `ishare2 installed all`
 4) Added green colors when using `ishare2 installed all` for better readabillity
 5) Added green colors when using `ishare2 labs` and `ishare2 mylabs` for better readabillity
@@ -188,11 +203,11 @@ Note: This update does not change how the code works in any way
 1) Added a better description message when user tries to upgrade ishare2 and it already has the last version:
 
     Before
-    
+
         echo "You have the latest available version: $REMOTE_VALUE"
 
     After
-    
+
         echo "ishare2 $REMOTE_VALUE is currently the newest version available"
 
 2) Added some validation related to check if the user is root when executing `ishare2`. If not root, an error message will be prompt and the script will finish
@@ -215,4 +230,5 @@ Added some code to check docker service status in order to avoid problems when t
 * `ishare2 mylabs all`
 
 ## [v1.0] - 2022-Nov-22
+
 Initial release
