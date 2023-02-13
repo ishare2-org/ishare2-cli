@@ -1235,6 +1235,7 @@ function pull_all_dynamips_images() {
 
 function pull_dynamips() {
     PARAMETER=$1
+    OVERWRITE=$2
 
     if [[ $PARAMETER = "all" ]]; then
         pull_all_dynamips_images
@@ -1273,8 +1274,8 @@ function pull_dynamips() {
     rm "$(pwd)"/$FILENAME >/dev/null 2>&1
 
     if [[ $FLAG = 1 ]]; then
-        if [[ -e /opt/unetlab/addons/dynamips/"$NAME" ]]; then
-            echo -e "File $NAME already exists in server"
+        if [[ -e /opt/unetlab/addons/dynamips/"$NAME" && "$OVERWRITE" != "--overwrite" ]]; then
+            echo -e "File $NAME already exists in server. Use --overwrite to overwrite it"
             exit 0
         fi
 
@@ -1297,6 +1298,7 @@ function pull_dynamips() {
 
 function pull_bin() {
     PARAMETER=$1
+    OVERWRITE=$2
 
     if [[ $PARAMETER = "all" ]]; then
         pull_all_iol_images
@@ -1336,8 +1338,8 @@ function pull_bin() {
     rm "$(pwd)"/$FILENAME >/dev/null 2>&1
 
     if [[ $FLAG = 1 ]]; then
-        if [[ -e /opt/unetlab/addons/iol/bin/"$NAME" ]]; then
-            echo -e "File $NAME already exists in server"
+        if [[ -e /opt/unetlab/addons/iol/bin/"$NAME" && "$OVERWRITE" != "--overwrite" ]]; then
+            echo -e "File $NAME already exists in server. Use --overwrite to overwrite it"
             exit 0
         fi
 
@@ -1847,6 +1849,7 @@ function corrections_for_dynamips_images() {
 
 function pull_qemu() {
     PARAMETER=$1
+    OVERWRITE=$2
 
     if [[ $PARAMETER = "all" ]]; then
         echo "Feature not available for qemu images due to large size"
@@ -1915,8 +1918,8 @@ function pull_qemu() {
     rm "$(pwd)"/$FILENAME >/dev/null 2>&1
 
     if [[ $FLAG = 1 ]]; then
-        if [[ -d /opt/unetlab/addons/qemu/"$FOLDERNAME" ]]; then
-            echo -e "Folder $FOLDERNAME already exists in server"
+        if [[ -d /opt/unetlab/addons/qemu/"$FOLDERNAME" && "$OVERWRITE" != "--overwrite" ]]; then
+            echo -e "Folder $FOLDERNAME already exists in server. Use --overwrite to overwrite it."
             exit 0
         fi
 
@@ -2107,7 +2110,7 @@ function selector() {
         if [[ "$2" ]]; then              # check if exists an arg to ishare2 pull x
             if [[ "$2" = "qemu" ]]; then # ishare2 pull qemu
                 if [[ "$3" ]]; then      # check if exists an arg to ishare2 pull qemu
-                    pull_qemu "$3"
+                    pull_qemu "$3" "$4"
                 else
                     STR="Last parameter not detected"
                     echo -e "${RED}$STR${NO_COLOR}"
@@ -2115,7 +2118,7 @@ function selector() {
                 fi
             elif [[ "$2" = "dynamips" ]]; then # ishare2 pull dynamips
                 if [[ "$3" ]]; then
-                    pull_dynamips "$3"
+                    pull_dynamips "$3" "$4"
                 else
                     STR="Last parameter not detected"
                     echo -e "${RED}$STR${NO_COLOR}"
@@ -2123,7 +2126,7 @@ function selector() {
                 fi
             elif [[ "$2" = "bin" ]]; then # ishare2 pull bin
                 if [[ "$3" ]]; then
-                    pull_bin "$3"
+                    pull_bin "$3" "$4"
                 else
                     STR="Last parameter not detected"
                     echo -e "${RED}$STR${NO_COLOR}"
@@ -2248,7 +2251,7 @@ function main() {
     set_yml_template_folder_location
     check_ishare2_version_file_exists
     check_ishare2_gui_version_file_exists
-    selector $1 $2 $3
+    selector $1 $2 $3 $4
 }
 
 main $@
