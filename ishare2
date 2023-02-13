@@ -1920,7 +1920,7 @@ function pull_qemu() {
             exit 0
         fi
 
-        mkdir /opt/unetlab/addons/qemu/"$FOLDERNAME"/
+        mkdir -p /opt/unetlab/addons/qemu/"$FOLDERNAME"/
 
         #1. Download file requested
         if [[ $FILES_COUNTER -eq 1 ]]; then
