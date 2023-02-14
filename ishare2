@@ -2251,7 +2251,7 @@ function main() {
     set_yml_template_folder_location
     check_ishare2_version_file_exists
     check_ishare2_gui_version_file_exists
-    selector $1 $2 $3 $4
+    selector "$1" "$2" "$3" "$4"
 }
 
 main $@
