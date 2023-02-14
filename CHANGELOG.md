@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. You can upg
 
 ## [v1.7.2] - 2023-Feb-12
 
-1) Added: `--overwrite` flag. Users can specify they want to overwrite an image by passing this 4th argument. Useful when download gets interrupted or you want to restore it to the initial state. Syntax: `ishare pull <type> <id> --overwrite`
+1) Added: `--overwrite` flag. Users can specify they want to overwrite an image by passing this 4th argument. Useful when download gets interrupted or you want to restore it to the initial state. Syntax: `ishare2 pull <type> <id> --overwrite`
 
 ## [v1.7.1] - 2023-Feb-08
 
