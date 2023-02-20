@@ -14,7 +14,7 @@ contextvars==2.4
 cryptography==2.1.4
 dataclasses==0.8
 distro-info===0.18ubuntu0.18.04.1
-fastapi==0.83.0
+fastapi<=0.83.0
 h11==0.13.0
 httplib2==0.9.2
 hyperlink==17.3.1
@@ -22,7 +22,7 @@ idna==3.4
 immutables==0.19
 importlib-metadata==4.8.3
 incremental==16.10.1
-Jinja2==2.10
+Jinja2<=2.10
 jsonpatch==1.16
 jsonpointer==1.10
 jsonschema==2.6.0
@@ -55,7 +55,7 @@ typing_extensions==4.1.1
 ufw==0.36
 unattended-upgrades==0.1
 urllib3==1.22
-uvicorn==0.16.0
+uvicorn<=0.16.0
 uvloop==0.14.0
 watchgod==0.7
 websockets==9.1
