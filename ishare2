@@ -32,6 +32,7 @@ function set_url_constants() {
     #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.8/upgrade.sh
     #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_10=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.10/upgrade.sh
     URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.11/upgrade.sh
+    URL_UPGRADE_PNETLAB6_INSTALLER='https://unetlab.cloud/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh'
     URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/app.zip
     URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/requirements.txt
     URL_ISHARE2_GUI_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/version_gui
@@ -955,21 +956,22 @@ function menu_ishare2_upgrade_pnetlab() {
     options=(
         "(STABLE) Upgrade PNETLab: from 4.2.10 to 5.0.1"
         "(STABLE) Upgrade PNETLab: from any version to 5.3.11"
+        "(UNSTABLE) Upgrade to / Install PNETLab 6 (ONLY AVAILABLE FOR UBUNTU 20.04)"
     )
 
     PS3="$prompt"
     select opt in "${options[@]}" "Exit"; do
         case "$REPLY" in
         1)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1 >/dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
+            wget -O - $URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1 | bash -i
             break
             ;;
         2)
-            wget -O upgrade.sh $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11 >/dev/null 2>&1
-            chmod +x upgrade.sh
-            bash upgrade.sh
+            wget -O - $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11 | bash -i
+            break
+            ;;
+        3)
+            wget -O - "$URL_UPGRADE_PNETLAB6_INSTALLER" | bash -i
             break
             ;;
         $((${#options[@]} + 1)))
