@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.7.3] - 2023-Feb-23
+
+1) Added: New upgrade option in upgrade menu: 3) (UNSTABLE) Upgrade to PNETLab 6 (ONLY AVAILABLE FOR UBUNTU 20.04). This will install PNetLab 6 on your VM. It is only supported on Ubuntu 20.04.
+
 ## [v1.7.2] - 2023-Feb-12
 
 1) Added: `--overwrite` flag. Users can specify they want to overwrite an image by passing this 4th argument. Useful when download gets interrupted or you want to restore it to the initial state. Syntax: `ishare2 pull <type> <id> --overwrite`
