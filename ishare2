@@ -963,15 +963,21 @@ function menu_ishare2_upgrade_pnetlab() {
     select opt in "${options[@]}" "Exit"; do
         case "$REPLY" in
         1)
-            wget -O - $URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1 | bash -i
+            wget -O upgrade.sh "$URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1"
+            chmod +x upgrade.sh
+            bash upgrade.sh
             break
             ;;
         2)
-            wget -O - $URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11 | bash -i
+            wget -O upgrade.sh "$URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11"
+            chmod +x upgrade.sh
+            bash upgrade.sh
             break
             ;;
         3)
-            wget -O - "$URL_UPGRADE_PNETLAB6_INSTALLER" | bash -i
+            wget --content-disposition -q --show-progress -O upgrade.sh "$URL_UPGRADE_PNETLAB6_INSTALLER"
+            chmod +x upgrade.sh
+            bash upgrade.sh
             break
             ;;
         $((${#options[@]} + 1)))
