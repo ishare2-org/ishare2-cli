@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v1.7.4] - 2023-Mar-05
+
+1) Fixed: Broken links for ishare2 upgrade menu.
+2) Prevent broken links for ishare2 upgrade menu.
+
 ## [v1.7.3] - 2023-Feb-23
 
 1) Added: New upgrade option in upgrade menu: 3) (UNSTABLE) Upgrade to PNETLab 6 (ONLY AVAILABLE FOR UBUNTU 20.04). This will install PNetLab 6 on your VM. It is only supported on Ubuntu 20.04.
