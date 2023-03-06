@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. You can upg
 
 1) Fixed: Broken links for ishare2 upgrade menu.
 2) Prevent broken links for ishare2 upgrade menu.
+3) Added: Reboot confirmation to upgrade scripts.
 
 ## [v1.7.3] - 2023-Feb-23
 
