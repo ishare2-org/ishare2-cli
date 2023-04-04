@@ -1,0 +1,5 @@
+# ignore venv
+venv/
+
+# ignore ipython notebooks
+*.ipynb_checkpoints
