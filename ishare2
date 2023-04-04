@@ -36,9 +36,9 @@ function create_ishare2_dir() {
 function fetch_sources() {
     check_ishare2_dir
     echo -e "${YELLOW}[+] Fetching sources...${NO_COLOR}"
-    curl -s -o $ISHARE2_DIR/sources.ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/sources.ishare2
+    curl -s -o $SOURCES https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/sources.ishare2
     # Check if curl command failed
-    if [[ ! -f $ISHARE2_DIR/sources.ishare2 ]]; then
+    if [[ ! -f $SOURCES ]]; then
         echo -e "${RED}[-] Failed to fetch sources.${NO_COLOR}"
         exit 1
     fi
@@ -47,12 +47,12 @@ function fetch_sources() {
 
 function set_url_constants() {
     # Check if sources file does not exist
-    if [[ ! -f $ISHARE2_DIR/sources.ishare2 ]]; then
+    if [[ ! -f $SOURCES ]]; then
         echo -e "${YELLOW}[+] Sources file does not exist.${NO_COLOR}"
         fetch_sources
     fi
 
-    source $ISHARE2_DIR/sources.ishare2
+    source $SOURCES
 }
 
 function check_user_is_root() {
