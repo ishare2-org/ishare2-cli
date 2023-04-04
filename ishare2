@@ -2,6 +2,7 @@
 #October, 2022
 
 CHANNEL="alpha"
+ISHARE2_DIR="/opt/ishare2"
 
 function set_color_constants() {
     RED='\033[31m'
@@ -15,7 +16,6 @@ function check_ishare2_dir() {
     if [[ ! -d /opt/ishare2 ]]; then
         create_ishare2_dir
     fi
-    ISHARE2_DIR="/opt/ishare2"
 }
 
 function create_ishare2_dir() {
@@ -47,6 +47,7 @@ function fetch_sources() {
 function set_url_constants() {
     # Check if sources file does not exist
     if [[ ! -f $ISHARE2_DIR/sources.ishare2 ]]; then
+        echo -e "${YELLOW}[+] Sources file does not exist.${NO_COLOR}"
         fetch_sources
     fi
 
