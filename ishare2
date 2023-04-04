@@ -33,12 +33,27 @@ function create_ishare2_dir() {
 }
 
 function fetch_sources() {
+    check_ishare2_dir
     echo -e "${YELLOW}[+] Fetching sources...${NO_COLOR}"
     curl -s -o $ISHARE2_DIR/sources.ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/sources.ishare2
+    # Check if curl command failed
+    if [[ ! -f $ISHARE2_DIR/sources.ishare2 ]]; then
+        echo -e "${RED}[-] Failed to fetch sources.${NO_COLOR}"
+        exit 1
+    fi
     echo -e "${GREEN}[+] Done.${NO_COLOR}"
 }
 
 function set_url_constants() {
+    # Check if sources file exists
+    if [[ ! -f $ISHARE2_DIR/sources.ishare2 ]]; then
+        fetch_sources
+        # Check if fetch_sources function failed
+        if [[ ! -f $ISHARE2_DIR/sources.ishare2 ]]; then
+            echo -e "${RED}[-] Failed to fetch sources.${NO_COLOR}"
+            exit 1
+        fi
+    fi
     source $ISHARE2_DIR/sources.ishare2
 }
 
