@@ -1580,7 +1580,7 @@ function tgz_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "\Extracting: $FOLDERNAME$EXTENSION file..."
+        echo -e "Extracting: $FOLDERNAME$EXTENSION file..."
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
         echo -e "Extracted: $DIR. Image ready to use."
@@ -1596,7 +1596,7 @@ function tar_gz_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "\Extracting: $FOLDERNAME$EXTENSION file..."
+        echo -e "Extracting: $FOLDERNAME$EXTENSION file..."
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
         echo -e "Extracted: $DIR. Image ready to use."
@@ -1612,7 +1612,7 @@ function tar_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "\Extracting: $FOLDERNAME$EXTENSION file..."
+        echo -e "Extracting: $FOLDERNAME$EXTENSION file..."
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
         echo -e "Extracted: $DIR. Image ready to use."
@@ -1628,7 +1628,7 @@ function zip_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "\Extracting: $FOLDERNAME$EXTENSION file..."
+        echo -e "Extracting: $FOLDERNAME$EXTENSION file..."
         unzip -a -j "$file" -d "$DIR"
         rm "$file"
         echo -e "Extracted: $DIR. Image ready to use."
@@ -1649,7 +1649,7 @@ function rar_files_function() {
             apt -qq update >/dev/null 2>&1 && apt -qq install --assume-yes unrar >/dev/null 2>&1
         fi
 
-        echo -e "\Extracting: $FOLDERNAME$EXTENSION file..."
+        echo -e "Extracting: $FOLDERNAME$EXTENSION file..."
         unrar e "$file" "$DIR" >/dev/null 2>&1
         echo -e "Extracted: $DIR. Image ready to use."
         rm "$file"
@@ -1665,7 +1665,7 @@ function ova_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         COMPRESSED_FILE=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "\Extracting: $EXTENSION file..."
+        echo -e "Extracting: $EXTENSION file..."
         tar -xvf "$COMPRESSED_FILE" -C "$DIR"
         rm "$COMPRESSED_FILE"
         echo -e "Extracted: $DIR. Image ready to use"
