@@ -1,0 +1,16 @@
+URL_ID_LIST=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/id_list
+URL_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/version
+URL_ISHARE2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/ishare2
+URL_CHANGELOG_MD=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/CHANGELOG.md
+URL_CISCO_IOU_KEYGEN_PY=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/iol/bin/CiscoIOUKeygen.py
+URL_KEEPALIVE_PL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/iol/bin/keepalive.pl
+URL_I86BI_LINUX_L2_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/templates/i86bi_linux_l2/i86bi_linux_l2.yml
+URL_I86BI_LINUX_L3_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/templates/i86bi_linux_l3/i86bi_linux_l3.yml
+URL_C2600_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/templates/cisco/c2600.yml
+URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/templates/cisco/c1760.yml
+URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/upgrades/from_4.2.10_to_5.0.1/upgrade.sh
+URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/upgrades/from_any_to_5.3.11/upgrade.sh
+URL_UPGRADE_PNETLAB6_INSTALLER='https://unetlab.cloud/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh'
+URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/gui/app.zip
+URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/gui/requirements.txt
+URL_ISHARE2_GUI_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/gui/version_gui
