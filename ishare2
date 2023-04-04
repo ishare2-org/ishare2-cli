@@ -10,6 +10,13 @@ function set_color_constants() {
     NO_COLOR='\033[0m'
 }
 
+function check_ishare2_dir() {
+    # check if ishare2 directory exists otherwise create it
+    if [[ ! -d /opt/ishare2 ]]; then
+        create_ishare2_dir
+    fi
+    ISHARE2_DIR="/opt/ishare2"
+}
 function set_url_constants() {
     source $ISHARE2_DIR/sources.ishare2
 }
