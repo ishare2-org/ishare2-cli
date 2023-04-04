@@ -2136,25 +2136,8 @@ function filter_qemu() {
 function connection_tests() {
     # Header
     echo -e "${YELLOW}[-] Running connection tests... ${NO_COLOR}"
-    # Check if the internet is reachable via Google
-    echo -e "${YELLOW}[+] Checking if the internet is reachable, pinging Google... ${NO_COLOR}"
-    if ping -q -c 1 -W 1 google.com >/dev/null; then
-        echo -e "${GREEN}[+] Internet is reachable. Host checked: Google ${NO_COLOR}"
-    else
-        # Show error message
-        echo -e "${RED}[-] Internet is not reachable through Google. Trying Baidu... ${NO_COLOR}"
-        # Check if the internet is reachable via Baidu
-        echo -e "${YELLOW}[+] Checking if the internet is reachable, pinging Baidu... ${NO_COLOR}"
-        if ping -q -c 1 -W 1 baidu.com >/dev/null; then
-            echo -e "${GREEN}[+] Test successful. Host checked: Baidu. ${NO_COLOR}"
-            echo -e "${YELLOW}WARN: Are you in China? If so, you may need to use a VPN to use ishare2. Support for China is coming soon. ${NO_COLOR}"
-        else
-            echo -e "${RED}Internet is not reachable through Baidu either. Please check your internet connection. ${NO_COLOR}"
-            exit 1
-        fi
-    fi
-
     # Check if GitHub is reachable
+    echo -e "${YELLOW}[-] Checking if GitHub is reachable... ${NO_COLOR}"
     if ping -q -c 1 -W 1 github.com >/dev/null; then
         echo -e "${GREEN}[+] GitHub is reachable. ${NO_COLOR}"
     else
@@ -2162,6 +2145,7 @@ function connection_tests() {
         exit 1
     fi
     # Check if Google Sheets is reachable
+    echo -e "${YELLOW}[-] Checking if Google Sheets is reachable... ${NO_COLOR}"
     if ping -q -c 1 -W 1 docs.google.com >/dev/null; then
         echo -e "${GREEN}[+] Google Sheets is reachable. ${NO_COLOR}"
     else
