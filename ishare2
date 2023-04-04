@@ -9,10 +9,10 @@ SOURCES="$ISHARE2_DIR/sources.ishare2"
 VERSION="v.1.7.4"
 
 # Colors
-    RED='\033[31m'
-    YELLOW='\033[1;33m'
-    GREEN='\033[32m'
-    NO_COLOR='\033[0m'
+RED='\033[31m'
+YELLOW='\033[1;33m'
+GREEN='\033[32m'
+NO_COLOR='\033[0m'
 
 function check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
@@ -973,12 +973,24 @@ function upgrade_ishare2() {
     REMOTE_VALUE=$(curl -s $URL_VERSION)
 
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        echo "ishare2 $REMOTE_VALUE is currently the newest version available"
+        echo "${YELLOW}[+] ishare2 $REMOTE_VALUE is currently the newest version available. ${NO_COLOR}"
         exit 0
     fi
 
     rm /usr/sbin/ishare2
     wget -O /usr/sbin/ishare2 $URL_ISHARE2 >/dev/null 2>&1
+    # Check if wget threw an error
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error downloading ishare2. Please, check your internet connection. ${NO_COLOR}"
+        exit 1
+    fi
+    # Check if the file is empty
+    if [[ ! -s ishare2 ]]; then
+        echo "${RED}[-] Error downloading ishare2. Please, check your internet connection. ${NO_COLOR}"
+        exit 1
+    fi
+    echo "Downloaded latest version of ishare2."
+    # Make ishare2 executable
     chmod +x /usr/sbin/ishare2
     # Show success message
     echo "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
@@ -2320,7 +2332,6 @@ function selector() {
 }
 
 function main() {
-    set_color_constants
     set_url_constants
     check_user_is_root
     get_initial_information
