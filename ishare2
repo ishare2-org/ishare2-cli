@@ -2142,7 +2142,6 @@ function connection_tests() {
         echo -e "${GREEN}[+] GitHub is reachable. ${NO_COLOR}"
     else
         echo -e "${RED}[-] GitHub is not reachable ${NO_COLOR}"
-        exit 1
     fi
     # Check if Google Sheets is reachable
     echo -e "${YELLOW}[-] Checking if Google Sheets is reachable... ${NO_COLOR}"
@@ -2150,8 +2149,9 @@ function connection_tests() {
         echo -e "${GREEN}[+] Google Sheets is reachable. ${NO_COLOR}"
     else
         echo -e "${RED}[-] Google Sheets is not reachable ${NO_COLOR}"
-        exit 1
     fi
+    # Checks completed
+    echo -e "${YELLOW}[-] Connection tests completed. ${NO_COLOR}"
 }
 
 function selector() {
