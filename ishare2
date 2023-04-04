@@ -9,33 +9,7 @@ function set_color_constants() {
 }
 
 function set_url_constants() {
-    URL_ID_LIST=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/id_list
-    URL_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/version
-    URL_ISHARE2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2
-    URL_CHANGELOG_MD=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/CHANGELOG.md
-    URL_CISCO_IOU_KEYGEN_PY=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/CiscoIOUKeygen.py
-    URL_KEEPALIVE_PL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/iol/bin/keepalive.pl
-    URL_I86BI_LINUX_L2_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l2/i86bi_linux_l2.yml
-    URL_I86BI_LINUX_L3_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/i86bi_linux_l3/i86bi_linux_l3.yml
-    URL_C2600_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c2600.yml
-    URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/templates/cisco/c1760.yml
-    URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.0.1/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_4.2.10_to_5.2.7/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_5_0_1_TO_5_2_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_5.0.1_to_5.2.7/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.8/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_2_9=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.2.9/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_0=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.0/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.2/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_4=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.4/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_5=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.5/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_7=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.7/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_8=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.8/upgrade.sh
-    #URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_10=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.10/upgrade.sh
-    URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/upgrades/from_any_to_5.3.11/upgrade.sh
-    URL_UPGRADE_PNETLAB6_INSTALLER='https://unetlab.cloud/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh'
-    URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/app.zip
-    URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/requirements.txt
-    URL_ISHARE2_GUI_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/gui/version_gui
+    source $ISHARE2_DIR/sources.ishare2
 }
 
 function check_user_is_root() {
