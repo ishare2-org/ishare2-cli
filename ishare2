@@ -1623,10 +1623,10 @@ function zip_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "\nDecompressing $EXTENSION file..."
+        echo -e "\nDecompressing $FOLDERNAME$EXTENSION file..."
         unzip -a -j "$file" -d "$DIR"
         rm "$file"
-        echo -e "Decompressed. Image ready to use"
+        echo -e "Decompressed. Image ready to use."
     fi
 }
 
@@ -1644,9 +1644,9 @@ function rar_files_function() {
             apt -qq update >/dev/null 2>&1 && apt -qq install --assume-yes unrar >/dev/null 2>&1
         fi
 
-        echo -e "\nDecompressing $EXTENSION file..."
+        echo -e "\nDecompressing $FOLDERNAME$EXTENSION file..."
         unrar e "$file" "$DIR" >/dev/null 2>&1
-        echo -e "Decompressed. Image ready to use"
+        echo -e "Decompressed. Image ready to use."
         rm "$file"
     fi
 }
@@ -2327,6 +2327,7 @@ function selector() {
 }
 
 function main() {
+    connection_tests
     set_url_constants
     check_user_is_root
     get_initial_information
