@@ -2090,6 +2090,39 @@ function filter_qemu() {
     rm "$(pwd)"/new.csv >/dev/null 2>&1
 }
 
+function connection_tests() {
+    # Check if the internet is reachable via Google
+    echo "Checking if the internet is reachable, pinging Google..."
+    if ping -q -c 1 -W 1 google.com >/dev/null; then
+        echo "Internet is reachable. Host checked: Google"
+    else
+        # Check if the internet is reachable via Baidu
+        echo "Checking if the internet is reachable, pinging Baidu..."
+        if ping -q -c 1 -W 1 baidu.com >/dev/null; then
+            echo "Test successful. Host checked: Baidu."
+            echo "Are you in China? If so, you may need to use a VPN to use ishare2. Support for China is coming soon."
+        else
+            echo -e "\033[31mInternet is not reachable\033[0m"
+            exit 1
+        fi
+    fi
+
+    # Check if GitHub is reachable
+    if ping -q -c 1 -W 1 github.com; then
+        echo "GitHub is reachable."
+    else
+        echo -e "\033[31mGitHub is not reachable\033[0m"
+        exit 1
+    fi
+    # Check if Google Sheets is reachable
+    if ping -q -c 1 -W 1 docs.google.com; then
+        echo "Google Sheets is reachable."
+    else
+        echo -e "\033[31mGoogle Sheets is not reachable\033[0m"
+        exit 1
+    fi
+}
+
 function selector() {
     if [[ "$1" = "search" ]]; then  # ishare2 search
         if [[ "$2" = "all" ]]; then # ishare2 search all
