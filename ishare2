@@ -16,15 +16,15 @@ NO_COLOR='\033[0m'
 
 function check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
-    if [[ ! -d /opt/ishare2 ]]; then
+    if [[ ! -d $ISHARE2_DIR ]]; then
         create_ishare2_dir
     fi
 }
 
 function create_ishare2_dir() {
     echo -e "${YELLOW}[+] Creating ishare2 directory...${NO_COLOR}"
-    if ! mkdir -p /opt/ishare2 2>/dev/null; then
-        error_message=$(mkdir -p /opt/ishare2 2>&1 >/dev/null)
+    if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
+        error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
         if [[ $error_message == *"Permission denied"* ]]; then
             echo -e "${RED}[-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
         else
