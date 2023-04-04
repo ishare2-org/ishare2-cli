@@ -6,7 +6,7 @@
 CHANNEL="alpha"
 ISHARE2_DIR="/opt/ishare2"
 SOURCES="$ISHARE2_DIR/sources.ishare2"
-VERSION="v.1.7.4"
+VERSION="v1.7.4"
 
 # Colors
 RED='\033[31m'
@@ -28,7 +28,7 @@ function create_ishare2_dir() {
         if [[ $error_message == *"Permission denied"* ]]; then
             echo -e "${RED}[-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
         else
-            echo -e "${RED}[-] Failed to create ishare2 directory.${NO_COLOR}"
+            echo -e "${RED}[-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
         fi
         exit 1
     fi
