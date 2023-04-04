@@ -1417,7 +1417,7 @@ function show_help_info() {
     echo -e "\n3) Using \033[32mishare2 upgrade\033[0m will display a menu that allows users to upgrade ishare2 and PNETLab."
     echo -e "\n4) If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using \033[32mishare2 relicense\033[0m. This will not affect images in there."
     echo -e "Also, this command when used, will generate a new license file called iourc, needed for bin files"
-    echo -e "\n5) Don't cancell a download. In case you do it, you will have to remove incomplete files or folders manually"
+    echo -e "\n5) Don't cancel a download. In case you do it, you will have to remove incomplete files or folders manually or use the --overwrite parameter."
     echo -e "\n6) The main difference between ${YELLOW}ishare2 labs${NO_COLOR} and ${YELLOW}ishare2 mylabs${NO_COLOR} is that, in the first case, the folder used is the one PNETLab creates when you download a lab from the store and in the second case you are able to select any folder you want in order to download labs"
     echo -e "\nTelegram Channel: https://t.me/unetlab_cloud"
 }
