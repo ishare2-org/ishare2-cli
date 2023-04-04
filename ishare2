@@ -956,8 +956,8 @@ function download_lab_docker_images() {
 }
 
 function check_ishare2_version_file_exists() {
-    if ! [[ -e $ISHARE2_DIR/ishare2_version ]]; then
-        # Save installed version into file
+    # Check if file is empty or not exists or different from installed $VERSION
+    if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
         echo $VERSION >$ISHARE2_DIR/ishare2_version
     fi
 }
