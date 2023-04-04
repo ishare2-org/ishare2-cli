@@ -963,13 +963,13 @@ function check_ishare2_version_file_exists() {
 }
 
 function check_ishare2_gui_version_file_exists() {
-    if ! [[ -e /usr/sbin/ishare2_gui_version ]]; then
-        echo -n "$(curl -s $URL_ISHARE2_GUI_VERSION)" >>/usr/sbin/ishare2_gui_version
+    if ! [[ -e $ISHARE2_DIR/ishare2_gui_version ]]; then
+        echo -n "$(curl -s $URL_ISHARE2_GUI_VERSION)" >>$ISHARE2_DIR/ishare2_gui_version
     fi
 }
 
 function upgrade_ishare2() {
-    LOCAL_VALUE=$(cat /usr/sbin/ishare2_version)
+    LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
     REMOTE_VALUE=$(curl -s $URL_VERSION)
 
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
@@ -980,10 +980,10 @@ function upgrade_ishare2() {
     rm /usr/sbin/ishare2
     wget -O /usr/sbin/ishare2 $URL_ISHARE2 >/dev/null 2>&1
     chmod +x /usr/sbin/ishare2
-
-    echo "ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
-    rm /usr/sbin/ishare2_version
-    echo "$REMOTE_VALUE" >>/usr/sbin/ishare2_version
+    # Show success message
+    echo "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
+    rm $ISHARE2_DIR/ishare2_version
+    echo "$REMOTE_VALUE" >$ISHARE2_DIR/ishare2_version
 }
 
 function menu_ishare2_upgrade_pnetlab() {
@@ -1417,7 +1417,7 @@ function show_help_info() {
 
 function show_ishare2_usage() {
     # For ishare2
-    ISHARE2_VERSION_USAGE=$(cat /usr/sbin/ishare2_version)
+    ISHARE2_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_version)
 
     STR=""
     LOCAL_VALUE=$ISHARE2_VERSION_USAGE
@@ -1435,7 +1435,7 @@ function show_ishare2_usage() {
     PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
 
     # For ishare2 GUI
-    ISHARE2_GUI_VERSION_USAGE=$(cat /usr/sbin/ishare2_gui_version)
+    ISHARE2_GUI_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_gui_version)
 
     STR=""
     LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
