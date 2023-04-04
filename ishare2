@@ -51,6 +51,21 @@ function set_url_constants() {
         echo -e "${YELLOW}[+] Sources file does not exist.${NO_COLOR}"
         fetch_sources
     fi
+    # Check if sources file is empty
+    if [[ ! -s $SOURCES ]]; then
+        echo -e "${YELLOW}[+] Sources file is empty.${NO_COLOR}"
+        fetch_sources
+    fi
+    # Check if sources file is corrupted
+    if ! grep -q "URL_ID_LIST=" $SOURCES; then
+        echo -e "${YELLOW}[+] Sources file is corrupted.${NO_COLOR}"
+        fetch_sources
+    fi
+    # Check if sources file is older than 1 day
+    if [[ $(find $SOURCES -mtime +1) ]]; then
+        echo -e "${YELLOW}[+] Sources file is older than 1 day.${NO_COLOR}"
+        fetch_sources
+    fi
 
     source $SOURCES
 }
