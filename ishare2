@@ -3,6 +3,7 @@
 
 CHANNEL="alpha"
 ISHARE2_DIR="/opt/ishare2"
+SOURCES="$ISHARE2_DIR/sources.ishare2"
 
 function set_color_constants() {
     RED='\033[31m'
