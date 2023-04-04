@@ -2330,13 +2330,14 @@ function selector() {
         fi
     elif [[ "$1" = "help" ]]; then # ishare2 help
         show_help_info
+    elif [[ "$1" = "test" ]]; then # ishare2 test
+        connection_tests
     else # when no args are passed to ishare2
         show_ishare2_usage
     fi
 }
 
 function main() {
-    connection_tests
     set_url_constants
     check_user_is_root
     get_initial_information
