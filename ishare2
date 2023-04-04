@@ -4,7 +4,7 @@
 # Constants
 # ishare2 configuration
 CHANNEL="alpha"
-ISHARE2_DIR="/opt/ishare2"
+ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.ishare2"
 VERSION="v1.7.4"
 
