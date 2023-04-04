@@ -1,6 +1,8 @@
 #!/bin/bash
 #October, 2022
 
+CHANNEL="alpha"
+
 function set_color_constants() {
     RED='\033[31m'
     YELLOW='\033[1;33m'
