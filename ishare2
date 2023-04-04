@@ -2134,6 +2134,8 @@ function filter_qemu() {
 }
 
 function connection_tests() {
+    # Header
+    echo -e "${YELLOW}[-] Running connection tests... ${NO_COLOR}"
     # Check if the internet is reachable via Google
     echo -e "${YELLOW}[+] Checking if the internet is reachable, pinging Google... ${NO_COLOR}"
     if ping -q -c 1 -W 1 google.com >/dev/null; then
