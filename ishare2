@@ -1458,7 +1458,7 @@ function show_ishare2_usage() {
     echo "
 Syntax
 
-ishare2 [action] [param1] [param2]
+ishare2 [action] [param1] [param2] [--overwrite]
 
 action:
     search      : Search for images by type
@@ -1470,6 +1470,7 @@ action:
     upgrade     : Retrieves a menu that allows users to upgrade ishare2 and PNETLab VM
     changelog   : Show the latest changes made to ishare2
     gui         : Web app to use ishare2 in browser
+    test        : Test internet connectivity to required sites (Github, Google Sheets)
     help        : Show useful information
 
 param1:
@@ -1477,6 +1478,9 @@ param1:
 
 param2:
     number = This number can be obtained using ishare2 search <type>
+
+--overwrite:
+    Used to overwrite an existing image if it already exists on your system.
 
 Examples:
 
@@ -1500,9 +1504,9 @@ Examples:
             - ishare2 search Licensed
             - More <name> options using ishare2 search all
 
-- ishare2 pull bin <number>
-- ishare2 pull qemu <number>
-- ishare2 pull dynamips <number>
+- ishare2 pull bin <number> [--overwrite]
+- ishare2 pull qemu <number> [--overwrite]
+- ishare2 pull dynamips <number> [--overwrite]
 
 - ishare2 pull bin all
 - ishare2 pull qemu all (Not available for qemu type due to its large size)
@@ -1530,6 +1534,7 @@ Examples:
 - ishare2 relicense
 - ishare2 upgrade
 - ishare2 changelog
+- ishare2 test
 - ishare2 help
 
 ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
