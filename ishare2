@@ -956,8 +956,9 @@ function download_lab_docker_images() {
 }
 
 function check_ishare2_version_file_exists() {
-    if ! [[ -e /usr/sbin/ishare2_version ]]; then
-        echo -n "$(curl -s $URL_VERSION)" >>/usr/sbin/ishare2_version
+    if ! [[ -e $ISHARE2_DIR/ishare2_version ]]; then
+        # Save installed version into file
+        $VERSION >>$ISHARE2_DIR/ishare2_version
     fi
 }
 
