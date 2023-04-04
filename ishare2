@@ -32,6 +32,12 @@ function create_ishare2_dir() {
     echo -e "${GREEN}[+] Done.${NO_COLOR}"
 }
 
+function fetch_sources() {
+    echo -e "${YELLOW}[+] Fetching sources...${NO_COLOR}"
+    curl -s -o $ISHARE2_DIR/sources.ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/sources.ishare2
+    echo -e "${GREEN}[+] Done.${NO_COLOR}"
+}
+
 function set_url_constants() {
     source $ISHARE2_DIR/sources.ishare2
 }
