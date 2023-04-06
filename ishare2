@@ -964,7 +964,7 @@ function check_ishare2_version_file_exists() {
 
 function check_ishare2_gui_version_file_exists() {
     if ! [[ -e $ISHARE2_DIR/ishare2_gui_version ]]; then
-        echo -n "$(curl -s $URL_ISHARE2_GUI_VERSION)" >>$ISHARE2_DIR/ishare2_gui_version
+        echo -n "$(curl -s $URL_ISHARE2_GUI_VERSION)" >$ISHARE2_DIR/ishare2_gui_version
     fi
 }
 
@@ -1110,7 +1110,7 @@ function ishare2_gui_download() {
     if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         echo "ishare2 GUI was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
         rm /usr/sbin/ishare2_gui_version
-        echo "$REMOTE_VALUE" >>/usr/sbin/ishare2_gui_version
+        echo "$REMOTE_VALUE" >/usr/sbin/ishare2_gui_version
     fi
 }
 
@@ -2047,8 +2047,8 @@ function filter_bin() {
     done <$FILENAME
 
     if [[ $FLAG_TO_SHOW_RESULTS_BIN -eq 1 ]]; then
-        echo "Number, Name, Link, Size, Unit" >>new.csv
-        echo "$CMD" >>new.csv
+        echo "Number, Name, Link, Size, Unit" >new.csv
+        echo "$CMD" >new.csv
         echo -e
         echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' new.csv | column -t
 
@@ -2082,8 +2082,8 @@ function filter_dynamips() {
     done <$FILENAME
 
     if [[ $FLAG_TO_SHOW_RESULTS_DYNAMIPS -eq 1 ]]; then
-        echo "Number, Name, Link, Size, Unit" >>new.csv
-        echo "$CMD" >>new.csv
+        echo "Number, Name, Link, Size, Unit" >new.csv
+        echo "$CMD" >new.csv
         echo -e
         echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' new.csv | column -t
 
@@ -2117,8 +2117,8 @@ function filter_qemu() {
     done <$FILENAME
 
     if [[ $FLAG_TO_SHOW_RESULTS_QEMU -eq 1 ]]; then
-        echo "Number, Name, Size, Unit" >>new.csv
-        echo "$CMD" >>new.csv
+        echo "Number, Name, Size, Unit" >new.csv
+        echo "$CMD" >new.csv
         echo "$CMD" | awk -F, '{print $1,$2,$3,$4}' new.csv | column -t
 
         RESULTS_NUMBER=$(cat <new.csv | wc -l)
