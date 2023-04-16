@@ -1968,33 +1968,18 @@ function corrections_for_qemu_images() {
 }
 
 function count_elements_to_download_for_qemu_images() {
-    FILES_COUNTER=1
-    myArray=("$FILE1LINK")
+    FILES_COUNTER=0
+    myArray=()
 
-    if ! [[ "$FILE2NAME" == *"-"* ]]; then
-        FILES_COUNTER=2
-        myArray=("$FILE1LINK" "$FILE2LINK")
-    fi
+    for i in {1..6}; do
+        filename_var="FILE${i}NAME"
+        link_var="FILE${i}LINK"
 
-    if ! [[ "$FILE3NAME" == *"-"* ]]; then
-        FILES_COUNTER=3
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK")
+        if [[ -n "${!filename_var}" ]] && ! [[ "${!filename_var}" == *"-"* ]]; then
+            FILES_COUNTER=$((FILES_COUNTER + 1))
+            myArray+=("${!link_var}")
     fi
-
-    if ! [[ "$FILE4NAME" == *"-" ]]; then
-        FILES_COUNTER=4
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK" "$FILE4LINK")
-    fi
-
-    if ! [[ "$FILE5NAME" == *"-"* ]]; then
-        FILES_COUNTER=5
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK" "$FILE4LINK" "$FILE5LINK")
-    fi
-
-    if ! [[ "$FILE6NAME" == *"-"* ]]; then
-        FILES_COUNTER=6
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK" "$FILE4LINK" "$FILE5LINK" "$FILE6LINK")
-    fi
+    done
 }
 
 function corrections_for_dynamips_images() {
