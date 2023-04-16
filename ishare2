@@ -103,9 +103,10 @@ download_file_wget() {
 download_file() {
     # Check if aria2c is installed
     if command -v aria2c &>/dev/null; then
-        download_file_aria2 "$1" "$2"
+        download_file_aria2 "$1" "$2" "$3"
     else
-        download_file_wget "$1" "$2"
+        path="$2/$3"
+        download_file_wget "$1" "$path"
     fi
 }
 
