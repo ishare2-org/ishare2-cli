@@ -71,6 +71,7 @@ download_file_aria2() {
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
     if aria2c --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
         echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir. ${NO_COLOR}"
+        rm -f error.log
     else
         echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
         exit 1
@@ -86,7 +87,8 @@ download_file_curl() {
     local output="$2"
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
     if curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" \
+            rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
         # Read the error message from the curl_error file
