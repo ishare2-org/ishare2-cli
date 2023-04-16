@@ -149,20 +149,67 @@ function check_user_is_root() {
     fi
 }
 
-function get_initial_information() {
-    ID_LIST="$(curl -s $URL_ID_LIST)"
-
-    GOOGLE_SHEETS_ID=$(echo "$ID_LIST" | awk -F= '/^GOOGLE/ { print $2 }')
-    BIN_GID=$(echo "$ID_LIST" | awk -F= '/^BIN/ { print $2 }')
-    QEMU_GID=$(echo "$ID_LIST" | awk -F= '/^QEMU/ { print $2 }')
-    DYNAMIPS_GID=$(echo "$ID_LIST" | awk -F= '/^DYNAMIPS/ { print $2 }')
-
-    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
+function download_files_lists() {
+    # Attempt to make ishare2 basic functionality as offline as possible
+    # If files are available locally, use them
+    # If files are not available locally or are too old, download them from the internet
+    # If internet is not available, use the last available version of the files
+    # If "id_list" file exists, don't download it again unless it is older than 1 day
+    if [ -f $ISHARE2_DIR"/id_list" ]; then
+        if [ $(find $ISHARE2_DIR"/id_list" -mtime +1) ]; then
+            echo -e "${YELLOW} [+] The list of Google Spreadsheets IDs is older than 1 day. ${NO_COLOR}"
+            download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+        else
+            echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}"
+        fi
+    else
+        echo -e "${YELLOW} [+] The list of Google Spreadsheets IDs does not exist. ${NO_COLOR}"
+        download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+    fi
+    # Source the id_list file
+    source $ISHARE2_DIR"/id_list"
+    # Define the URLs
+    # $GOOGLE is defined in the id_list file. It is the Google Spreadsheets ID
+    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE'/pub?gid='
     URL_POSTFIX='&single=true&output=csv'
-
-    BIN_URL=$URL_PREFIX$BIN_GID$URL_POSTFIX
-    QEMU_URL=$URL_PREFIX$QEMU_GID$URL_POSTFIX
-    DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS_GID$URL_POSTFIX
+    # $BIN, $QEMU, $DYNAMIPS are defined in the id_list file. They are the Google Spreadsheets IDs
+    BIN_URL=$URL_PREFIX$BIN$URL_POSTFIX
+    QEMU_URL=$URL_PREFIX$QEMU$URL_POSTFIX
+    DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS$URL_POSTFIX
+    # If csv files /list of images exist, don't download them again unless they are older than 1 day
+    if [ -f $ISHARE2_DIR"/BIN.csv" ]; then
+        if [ $(find $ISHARE2_DIR"/BIN.csv" -mtime +1) ]; then
+            echo -e "${YELLOW} [+] The list of BIN images is older than 1 day. ${NO_COLOR}"
+            download_file_wget $BIN_URL $ISHARE2_DIR"/BIN.csv"
+        else
+            echo -e "${GREEN} [+] The list of BIN images is up to date. ${NO_COLOR}"
+        fi
+    else
+        echo -e "${YELLOW} [+] The list of images BIN does not exist. ${NO_COLOR}"
+        download_file_wget $BIN_URL $ISHARE2_DIR"/BIN.csv"
+    fi
+    if [ -f $ISHARE2_DIR"/QEMU.csv" ]; then
+        if [ $(find $ISHARE2_DIR"/QEMU.csv" -mtime +1) ]; then
+            echo -e "${YELLOW} [+] The list of QEMU images is older than 1 day. ${NO_COLOR}"
+            download_file_wget $QEMU_URL $ISHARE2_DIR"/QEMU.csv"
+        else
+            echo -e "${GREEN} [+] The list of QEMU images is up to date. ${NO_COLOR}"
+        fi
+    else
+        echo -e "${YELLOW} [+] The list of QEMU images does not exist. ${NO_COLOR}"
+        download_file_wget $QEMU_URL $ISHARE2_DIR"/QEMU.csv"
+    fi
+    if [ -f $ISHARE2_DIR"/DYNAMIPS.csv" ]; then
+        if [ $(find $ISHARE2_DIR"/DYNAMIPS.csv" -mtime +1) ]; then
+            echo -e "${YELLOW} [+] The list of DYNAMIPS images is older than 1 day. ${NO_COLOR}"
+            download_file_wget $DYNAMIPS_URL $ISHARE2_DIR"/DYNAMIPS.csv"
+        else
+            echo -e "${GREEN} [+] The list of DYNAMIPS images is up to date. ${NO_COLOR}"
+        fi
+    else
+        echo -e "${YELLOW} [+] The list of DYNAMIPS images does not exist. ${NO_COLOR}"
+        download_file_wget $DYNAMIPS_URL $ISHARE2_DIR"/DYNAMIPS.csv"
+    fi
 }
 
 function get_server_platform() {
