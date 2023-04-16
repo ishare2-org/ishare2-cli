@@ -48,21 +48,14 @@ function fetch_sources() {
 }
 
 download_file_aria2() {
-    # Create the directory if it does not exist
-    mkdir -p $ISHARE2_DIR/tmp
-    # Create the file if it does not exist
-    touch $ISHARE2_DIR/tmp/aria2c_error
-    local url="$1"
-    local output="$2"
+    url="$1"
+    output_dir="$2"
+    output_name="$3"
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
-    if timeout 10s aria2c --download-result=hide --allow-overwrite=true --out="$output" "$url" 2>$ISHARE2_DIR/tmp/aria2c_error; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+    if aria2c --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir. ${NO_COLOR}"
     else
-        echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
-        # Read the error message from the aria2c_error file
-        ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/aria2c_error)
-        # Print the error message
-        echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
         exit 1
     fi
 }
