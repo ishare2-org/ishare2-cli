@@ -1714,14 +1714,17 @@ function txt_files_function() {
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
 
-    EXTENSION=".txt"
+    EXTENSIONS=(".txt" ".md")
 
     for ELEMENT in "$DIR"/*; do
-        if [[ "${ELEMENT: -4}" == "$EXTENSION" ]]; then
+        for EXTENSION in "${EXTENSIONS[@]}"; do
+            if [[ "${ELEMENT: -${#EXTENSION}}" == "$EXTENSION" ]]; then
             echo -e "\nReading file: $ELEMENT\n"
             cat "$ELEMENT"
             echo -e
+                break
         fi
+        done
     done
 }
 
