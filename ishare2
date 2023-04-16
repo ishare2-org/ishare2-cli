@@ -1816,9 +1816,9 @@ function yml_files_function() {
     for ext in "${EXTENSIONS[@]}"; do
         if ls "${DIR}"/*"$ext" &>/dev/null; then
             file=$(ls "${DIR}"/*"$ext" | head -1)
-        cp "$file" $YML_DIR
+            cp "$file" $YML_DIR
             break
-    fi
+        fi
     done
 }
 
@@ -1832,11 +1832,11 @@ function txt_files_function() {
     for ELEMENT in "$DIR"/*; do
         for EXTENSION in "${EXTENSIONS[@]}"; do
             if [[ "${ELEMENT: -${#EXTENSION}}" == "$EXTENSION" ]]; then
-            echo -e "\nReading file: $ELEMENT\n"
-            cat "$ELEMENT"
-            echo -e
+                echo -e "\nReading file: $ELEMENT\n"
+                cat "$ELEMENT"
+                echo -e
                 break
-        fi
+            fi
         done
     done
 }
@@ -2150,11 +2150,7 @@ function pull_qemu() {
 function filter_bin() {
     NAME_TO_SEARCH_FOR=$1
 
-    FILENAME=BIN_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$BIN_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-    #awk -F, '{print $1,$2,$3,$4,$5}' $FILENAME | column -t
+    FILENAME=$ISHARE2_DIR"/BIN.csv"
 
     FLAG_TO_SHOW_RESULTS_BIN=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
@@ -2179,17 +2175,13 @@ function filter_bin() {
     fi
 
     # Remove csv files
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
     rm "$(pwd)"/new.csv >/dev/null 2>&1
 }
 
 function filter_dynamips() {
     NAME_TO_SEARCH_FOR=$1
 
-    FILENAME=DYNAMIPS_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$DYNAMIPS_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
+    FILENAME=$ISHARE2_DIR"/DYNAMIPS.csv"
 
     FLAG_TO_SHOW_RESULTS_DYNAMIPS=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
@@ -2214,17 +2206,13 @@ function filter_dynamips() {
     fi
 
     # Remove csv files
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
     rm "$(pwd)"/new.csv >/dev/null 2>&1
 }
 
 function filter_qemu() {
     NAME_TO_SEARCH_FOR=$1
 
-    FILENAME=QEMU_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$QEMU_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
+    FILENAME=$ISHARE2_DIR"/QEMU.csv"
 
     FLAG_TO_SHOW_RESULTS_QEMU=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
@@ -2247,8 +2235,7 @@ function filter_qemu() {
         echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
     fi
 
-    # Remove csv files
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+    # Remove temp csv files
     rm "$(pwd)"/new.csv >/dev/null 2>&1
 }
 
@@ -2281,17 +2268,11 @@ function selector() {
             ishare2 search bin
             echo " "
         elif [[ "$2" = "qemu" ]]; then # ishare2 search qemu
-            FILENAME=QEMU_URL.csv
-            general_available_list QEMU "$FILENAME" "$QEMU_URL"
-            rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+            general_available_list QEMU
         elif [[ "$2" = "dynamips" ]]; then # ishare2 search dynamips
-            FILENAME=DYNAMIPS_URL.csv
-            general_available_list DYNAMIPS "$FILENAME" "$DYNAMIPS_URL"
-            rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+            general_available_list DYNAMIPS
         elif [[ "$2" = "bin" ]]; then # ishare2 search bin
-            FILENAME=BIN_URL.csv
-            general_available_list BIN "$FILENAME" "$BIN_URL"
-            rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+            general_available_list BIN
         else # 1) ishare2 search 2) ishare2 search <number> 3) ishare2 search <string>
             if [[ $2 ]]; then
                 filter_bin "$2"
