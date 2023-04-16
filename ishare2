@@ -2441,9 +2441,9 @@ function selector() {
 }
 
 function main() {
-    set_url_constants
     check_user_is_root
-    get_initial_information
+    set_url_constants
+    download_files_lists
     set_yml_template_folder_location
     check_ishare2_version_file_exists
     check_ishare2_gui_version_file_exists
