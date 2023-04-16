@@ -68,7 +68,7 @@ download_file_curl() {
     local url="$1"
     local output="$2"
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
-    if timeout 10s curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error; then
+    if curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error; then
         echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -88,7 +88,7 @@ download_file_wget() {
     local url="$1"
     local output="$2"
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
-    if timeout 10s wget -q -O "$output" "$url" 2>$ISHARE2_DIR/tmp/wget_error; then
+    if wget -q -O "$output" "$url" 2>$ISHARE2_DIR/tmp/wget_error; then
         echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
