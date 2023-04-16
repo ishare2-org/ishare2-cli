@@ -2081,7 +2081,7 @@ function pull_qemu() {
     fi
 
     # Remove csv file
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
 
     if [[ $FLAG = 1 ]]; then
         if [[ -d /opt/unetlab/addons/qemu/"$FOLDERNAME" && "$OVERWRITE" != "--overwrite" ]]; then
@@ -2096,7 +2096,8 @@ function pull_qemu() {
             download_1_file_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "$FILE1NAME" "$FILE1LINK"
 
             #2. Move file to /opt/unetlab/addons/qemu/<folder>
-            mv "$FILE1NAME" /opt/unetlab/addons/qemu/"$FOLDERNAME"/"$FILE1NAME"
+            # mv "$FILE1NAME" /opt/unetlab/addons/qemu/"$FOLDERNAME"/"$FILE1NAME"
+            # ^ No longer needed since it will be downloaded to the correct folder with aria2c -d
         fi
 
         if [[ $FILES_COUNTER -gt 1 ]]; then
