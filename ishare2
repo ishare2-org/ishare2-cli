@@ -109,6 +109,7 @@ download_file_wget() {
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
     if wget -q -O "$output" "$url" 2>$ISHARE2_DIR/tmp/wget_error; then
         echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+        rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
         # Read the error message from the wget_error file
