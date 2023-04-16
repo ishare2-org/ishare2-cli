@@ -2133,8 +2133,14 @@ function pull_qemu() {
         # 5. Apply fix permissions command
         fix_permissions
     else
-        echo "File not found"
+        echo -e "${RED}Error: ${NC}No image found with number $QEMU_NUMBER"
+        echo -e "Use ${GREEN}ishare2 search qemu${NC} to search for an image"
+        # get user input y or n
+        read -p "Do you want to search for the image? [y/n] " -n 1 -r
+        echo -e # (optional) move to a new line after user input
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
         ishare2 search qemu
+        fi
     fi
 }
 
