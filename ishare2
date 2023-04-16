@@ -21,6 +21,23 @@ function check_ishare2_dir() {
     fi
 }
 
+function check_aria2() {
+    # Check if aria2c is installed
+    if ! command -v aria2c &>/dev/null; then
+        echo -e "${YELLOW}[+] aria2c is not installed.${NO_COLOR}"
+        echo -e "${YELLOW}[+] Installing aria2c...${NO_COLOR}"
+        if ! apt-get install -y aria2 &>/dev/null; then
+            echo -e "${RED}[-] Failed to install aria2c.${NO_COLOR}"
+            echo -e "${RED}[-] ishare2 requires aria2c to work properly.${NO_COLOR}"
+            echo -e "${RED}[-] Please install aria2c manually and try again.${NO_COLOR}"
+            echo -e "Use: ${YELLOW}sudo apt-get install -y aria2${NO_COLOR}"
+            echo -e "${RED}[-] Exiting...${NO_COLOR}"
+            exit 1
+        fi
+        echo -e "${GREEN}[+] Done.${NO_COLOR}"
+    fi
+}
+
 function create_ishare2_dir() {
     echo -e "${YELLOW}[+] Creating ishare2 directory...${NO_COLOR}"
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
@@ -2416,6 +2433,7 @@ function selector() {
 
 function main() {
     check_user_is_root
+    check_aria2
     set_url_constants
     download_files_lists
     set_yml_template_folder_location
