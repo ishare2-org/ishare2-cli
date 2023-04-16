@@ -47,6 +47,75 @@ function fetch_sources() {
     echo -e "${GREEN}[+] Done.${NO_COLOR}"
 }
 
+download_file_aria2() {
+    # Create the directory if it does not exist
+    mkdir -p $ISHARE2_DIR/tmp
+    # Create the file if it does not exist
+    touch $ISHARE2_DIR/tmp/aria2c_error
+    local url="$1"
+    local output="$2"
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    if timeout 10s aria2c --download-result=hide --allow-overwrite=true --out="$output" "$url" 2>$ISHARE2_DIR/tmp/aria2c_error; then
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+    else
+        echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
+        # Read the error message from the aria2c_error file
+        ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/aria2c_error)
+        # Print the error message
+        echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        exit 1
+    fi
+}
+
+download_file_curl() {
+    # Create the directory if it does not exist
+    mkdir -p $ISHARE2_DIR/tmp
+    # Create the file if it does not exist
+    touch $ISHARE2_DIR/tmp/curl_error
+    local url="$1"
+    local output="$2"
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    if timeout 10s curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error; then
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+    else
+        echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
+        # Read the error message from the curl_error file
+        ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/curl_error)
+        # Print the error message
+        echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        exit 1
+    fi
+}
+
+download_file_wget() {
+    # Create the directory if it does not exist
+    mkdir -p $ISHARE2_DIR/tmp
+    # Create the file if it does not exist
+    touch $ISHARE2_DIR/tmp/wget_error
+    local url="$1"
+    local output="$2"
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    if timeout 10s wget -q -O "$output" "$url" 2>$ISHARE2_DIR/tmp/wget_error; then
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+    else
+        echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
+        # Read the error message from the wget_error file
+        ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/wget_error)
+        # Print the error message
+        echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        exit 1
+    fi
+}
+
+download_file() {
+    # Check if aria2c is installed
+    if command -v aria2c &>/dev/null; then
+        download_file_aria2 "$1" "$2"
+    else
+        download_file_wget "$1" "$2"
+    fi
+}
+
 function set_url_constants() {
     # Check if sources file does not exist
     if [[ ! -f $SOURCES ]]; then
