@@ -1697,13 +1697,16 @@ function yml_files_function() {
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
 
-    EXTENSION=".yml"
-    #YML_DIR="/opt/unetlab/html/templates/" # Value getted from set_yml_template_folder_location()
+    EXTENSIONS=(".yml" ".yaml")
+    #YML_DIR="/opt/unetlab/html/templates/" # Value passed from set_yml_template_folder_location()
 
-    if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
-        file=$(ls "${DIR}"/*"$EXTENSION")
+    for ext in "${EXTENSIONS[@]}"; do
+        if ls "${DIR}"/*"$ext" &>/dev/null; then
+            file=$(ls "${DIR}"/*"$ext" | head -1)
         cp "$file" $YML_DIR
+            break
     fi
+    done
 }
 
 function txt_files_function() {
