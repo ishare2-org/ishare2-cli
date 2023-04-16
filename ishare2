@@ -1290,16 +1290,24 @@ function download_1_file_bin_or_dynamips() {
 
     echo -e "Starting to download $FILES_COUNTER file..."
 
-    STR="\nFile requested:"
-    echo -e "\033[33m$STR\033[0m $NAME"
-    echo -e "$SIZE $UNIT\n"
+    STR="\n${YELLOW}File requested:${NO_COLOR}"
+    echo -e "$STR $NAME"
+    STR="${YELLOW}Size:${NO_COLOR}"
+    echo -e "$STR $SIZE $UNIT\n"
+    echo -e "Downloading from $LINK\n"
 
     if [[ $TYPE = "dynamips" ]]; then
-        wget --content-disposition -q --show-progress -O /opt/unetlab/addons/dynamips/"$NAME" "$LINK"
+        mkdir -p /opt/unetlab/addons/dynamips
+        # set save path and name
+        save_path="/opt/unetlab/addons/dynamips"
+        download_file_aria2 "$LINK" "$save_path" "$NAME"
     fi
 
     if [[ $TYPE = "bin" ]]; then
-        wget --content-disposition -q --show-progress -O /opt/unetlab/addons/iol/bin/"$NAME" "$LINK"
+        mkdir -p /opt/unetlab/addons/iol/bin
+        # set save path and name
+        save_path="/opt/unetlab/addons/iol/bin"
+        download_file_aria2 "$LINK" "$save_path" "$NAME"
     fi
 }
 
@@ -1316,7 +1324,8 @@ function download_1_file_qemu() {
     echo -e "\n\033[33mFolder requested:\033[0m $FOLDERNAME (""$SIZE"" ""$UNIT"")"
     echo -e "\nFile requested:\n  $NAME - $SIZE $UNIT\n"
 
-    wget --content-disposition -q --show-progress -O "$NAME" "$LINK"
+    save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
+    download_file_aria2 "$LINK" "$save_path" "$NAME"
 }
 
 function download_multiple_files_qemu() {
@@ -1332,7 +1341,8 @@ function download_multiple_files_qemu() {
 
     for ((c = 1; c <= FILES_COUNTER; c++)); do
         echo -e "\nFile $c/$FILES_COUNTER"
-        wget --content-disposition -q --connect-timeout 5 --show-progress -P /opt/unetlab/addons/qemu/"$FOLDERNAME" "${myArray[c - 1]}"
+        save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
+        download_file_aria2 "${myArray[c - 1]}" "$save_path"
     done
 }
 
@@ -1400,11 +1410,8 @@ function pull_dynamips() {
     fi
 
     DYNAMIPS_NUMBER=$PARAMETER
-    FILENAME=DYNAMIPS_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$DYNAMIPS_URL
+    FILENAME=$ISHARE2_DIR"/DYNAMIPS.csv"
 
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
     FLAG=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
         if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]; then
@@ -1428,7 +1435,7 @@ function pull_dynamips() {
     fi
 
     # Remove csv file
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
 
     if [[ $FLAG = 1 ]]; then
         if [[ -e /opt/unetlab/addons/dynamips/"$NAME" && "$OVERWRITE" != "--overwrite" ]]; then
@@ -1463,10 +1470,7 @@ function pull_bin() {
 
     BIN_NUMBER=$PARAMETER
 
-    FILENAME=BIN_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$BIN_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
+    FILENAME=$ISHARE2_DIR"/BIN.csv"
     FLAG=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
         if [[ "$col1" = "$BIN_NUMBER" ]]; then
@@ -1491,7 +1495,7 @@ function pull_bin() {
     fi
 
     # Remove csv file
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
 
     if [[ $FLAG = 1 ]]; then
         if [[ -e /opt/unetlab/addons/iol/bin/"$NAME" && "$OVERWRITE" != "--overwrite" ]]; then
@@ -1978,7 +1982,7 @@ function count_elements_to_download_for_qemu_images() {
         if [[ -n "${!filename_var}" ]] && ! [[ "${!filename_var}" == *"-"* ]]; then
             FILES_COUNTER=$((FILES_COUNTER + 1))
             myArray+=("${!link_var}")
-    fi
+        fi
     done
 }
 
@@ -2008,11 +2012,8 @@ function pull_qemu() {
     fi
 
     QEMU_NUMBER=$PARAMETER
+    FILENAME=$ISHARE2_DIR"/QEMU.csv"
 
-    FILENAME=QEMU_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$QEMU_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
     FLAG=0
     declare -a myArray=()
     while IFS=',' read -r col1 col2 col3 col4 col5 col6 col7 col8 col9 col10 col11 col12 col13 col14 col15 col16; do
@@ -2125,7 +2126,7 @@ function pull_qemu() {
         read -p "Do you want to search for the image? [y/n] " -n 1 -r
         echo -e # (optional) move to a new line after user input
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-        ishare2 search qemu
+            ishare2 search qemu
         fi
     fi
 }
