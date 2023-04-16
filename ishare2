@@ -1256,12 +1256,9 @@ function ishare2_gui_restart() {
 
 function general_available_list() {
     TYPE=$1
-    FILENAME=$2
-    URL=$3
+    FILENAME=$ISHARE2_DIR/"$TYPE".csv
 
     echo -e "\n$TYPE available images list\n"
-    rm /opt/unetlab/addons/"$FILENAME" >/dev/null 2>&1
-    wget --connect-timeout 5 -O "$FILENAME" "$URL" >/dev/null 2>&1
 
     if [[ $TYPE == "QEMU" ]]; then
         awk -F, '{print $1,$2,$3,$4}' "$FILENAME" | column -t
