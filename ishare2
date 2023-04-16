@@ -1912,8 +1912,8 @@ function check_if_yml_template_is_missing() {
     FULL_TEMPLATE_PATH=$YML_DIR"$TEMPLATE_NAME"$EXTENSION
 
     if ! [[ -e $FULL_TEMPLATE_PATH ]]; then
-        STR="\nTemplate $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
-        echo -e "${RED}[-]$STR\033[0m"
+        STR="\n ${RED}[-] Template $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
+        echo -e "$STR\033[0m"
     fi
 }
 
