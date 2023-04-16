@@ -1445,8 +1445,7 @@ function pull_dynamips() {
         echo -e "\n$NAME was downloaded successfully"
 
         # 3. Apply fix permissions command
-        /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
-        echo -e "\nFix permissions command has been applied"
+        fix_permissions
     else
         echo "File not found"
         ishare2 search dynamips
@@ -1509,8 +1508,7 @@ function pull_bin() {
         echo -e "\n$NAME was downloaded successfully"
 
         # 3. Apply fix permissions command
-        /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
-        echo -e "\nFix permissions command has been applied"
+        fix_permissions
     else
         echo "File not found"
         ishare2 search bin
@@ -2133,8 +2131,7 @@ function pull_qemu() {
         check_if_yml_template_is_missing "$FOLDERNAME"
 
         # 5. Apply fix permissions command
-        /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
-        echo -e "\nFix permissions command has been applied"
+        fix_permissions
     else
         echo "File not found"
         ishare2 search qemu
@@ -2231,6 +2228,15 @@ function filter_qemu() {
 
     # Remove temp csv files
     rm "$(pwd)"/new.csv >/dev/null 2>&1
+}
+
+function fix_permissions() {
+    /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
+    if [[ $? -eq 0 ]]; then
+        echo -e "\n${GREEN} [+] Fix permissions command has been executed correctly ${NO_COLOR}"
+    else
+        echo -e "\n${RED} [-] Failed to fix permissions ${NO_COLOR}"
+    fi
 }
 
 function connection_tests() {
