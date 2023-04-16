@@ -1,6 +1,6 @@
 #!/bin/bash
 #October, 2022
-
+# This alpha version contains verbose output for debugging purposes.
 # Constants
 # ishare2 configuration
 CHANNEL="alpha"
