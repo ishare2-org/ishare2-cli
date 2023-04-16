@@ -188,39 +188,53 @@ function download_files_lists() {
     QEMU_URL=$URL_PREFIX$QEMU$URL_POSTFIX
     DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS$URL_POSTFIX
     # If csv files /list of images exist, don't download them again unless they are older than 1 day
-    if [ -f $ISHARE2_DIR"/BIN.csv" ]; then
-        if [ $(find $ISHARE2_DIR"/BIN.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [+] The list of BIN images is older than 1 day. ${NO_COLOR}"
-            download_file_wget $BIN_URL $ISHARE2_DIR"/BIN.csv"
+    fetch_lists "BIN" $BIN_URL
+    fetch_lists "QEMU" $QEMU_URL
+    fetch_lists "DYNAMIPS" $DYNAMIPS_URL
+}
+
+fetch_lists() {
+    TYPE=$1
+    URL=$2
+    CHECK_DATE=${3:-true} # default value is true
+    if [ -f $ISHARE2_DIR"/$TYPE.csv" ]; then
+        if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
+            echo -e "${YELLOW} [+] The list of $TYPE images is older than 1 day. ${NO_COLOR}"
+            download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
+        elif [[ "$CHECK_DATE" == "false" ]]; then
+            echo -e "${YELLOW} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
+            download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
         else
-            echo -e "${GREEN} [+] The list of BIN images is up to date. ${NO_COLOR}"
+            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}"
         fi
     else
-        echo -e "${YELLOW} [+] The list of images BIN does not exist. ${NO_COLOR}"
-        download_file_wget $BIN_URL $ISHARE2_DIR"/BIN.csv"
+        echo -e "${YELLOW} [+] The list of images $TYPE does not exist. ${NO_COLOR}"
+        download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
     fi
-    if [ -f $ISHARE2_DIR"/QEMU.csv" ]; then
-        if [ $(find $ISHARE2_DIR"/QEMU.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [+] The list of QEMU images is older than 1 day. ${NO_COLOR}"
-            download_file_wget $QEMU_URL $ISHARE2_DIR"/QEMU.csv"
-        else
-            echo -e "${GREEN} [+] The list of QEMU images is up to date. ${NO_COLOR}"
-        fi
+}
+
+manual_sources_update() {
+    echo -e "${YELLOW} [+] Updating the sources file. ${NO_COLOR}"
+    fetch_sources
+    if [ -f $SOURCES ]; then
+        echo -e "${GREEN} [+] The sources file has been updated. ${NO_COLOR}"
     else
-        echo -e "${YELLOW} [+] The list of QEMU images does not exist. ${NO_COLOR}"
-        download_file_wget $QEMU_URL $ISHARE2_DIR"/QEMU.csv"
+        echo -e "${RED} [!] The sources file could not be updated. ${NO_COLOR}"
     fi
-    if [ -f $ISHARE2_DIR"/DYNAMIPS.csv" ]; then
-        if [ $(find $ISHARE2_DIR"/DYNAMIPS.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [+] The list of DYNAMIPS images is older than 1 day. ${NO_COLOR}"
-            download_file_wget $DYNAMIPS_URL $ISHARE2_DIR"/DYNAMIPS.csv"
-        else
-            echo -e "${GREEN} [+] The list of DYNAMIPS images is up to date. ${NO_COLOR}"
-        fi
-    else
-        echo -e "${YELLOW} [+] The list of DYNAMIPS images does not exist. ${NO_COLOR}"
-        download_file_wget $DYNAMIPS_URL $ISHARE2_DIR"/DYNAMIPS.csv"
-    fi
+    echo -e "${YELLOW} [+] Updating the lists of images. ${NO_COLOR}"
+    # Source the id_list file
+    source $ISHARE2_DIR"/id_list"
+    # Define the URLs
+    # $GOOGLE is defined in the id_list file. It is the Google Spreadsheets ID
+    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE'/pub?gid='
+    URL_POSTFIX='&single=true&output=csv'
+    # $BIN, $QEMU, $DYNAMIPS are defined in the id_list file. They are the Google Spreadsheets IDs
+    BIN_URL=$URL_PREFIX$BIN$URL_POSTFIX
+    QEMU_URL=$URL_PREFIX$QEMU$URL_POSTFIX
+    DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS$URL_POSTFIX
+    fetch_lists "BIN" $BIN_URL false
+    fetch_lists "QEMU" $QEMU_URL false
+    fetch_lists "DYNAMIPS" $DYNAMIPS_URL false
 }
 
 function get_server_platform() {
@@ -2393,6 +2407,8 @@ function selector() {
         fi
     elif [[ "$1" = "relicense" ]]; then # ishare2 relicense
         generate_a_new_license
+    elif [[ "$1" = "update" ]]; then # ishare2 update
+        manual_sources_update
     elif [[ "$1" = "upgrade" ]]; then # ishare2 upgrade
         menu_ishare2_upgrade
     elif [[ "$1" = "changelog" ]]; then # ishare2 changelog
