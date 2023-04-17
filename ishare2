@@ -1227,59 +1227,150 @@ function show_changelog() {
     rm $FILE
 }
 
-function ishare2_gui_download() {
-    echo -e "${GREEN}GUI is being downloaded and installed. Please, wait until process is done${NO_COLOR}"
-
-    ishare2 gui stop
-
-    rm -rf /root/app
-
-    wget -q $URL_GUI_APP_ZIP -P /root
-    unzip /root/app.zip -d /root >/dev/null 2>&1
-    rm /root/app.zip
-
-    curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o /root/get-pip.py >/dev/null 2>&1
-    python3 /root/get-pip.py >/dev/null 2>&1
-    rm /root/get-pip.py
-
-    wget -q $URL_REQUIREMENTS_GUI_APP -P /root
-    pip install -r /root/requirements.txt >/dev/null 2>&1
-    rm /root/requirements.txt
-
-    echo -e "${GREEN}GUI has been downloaded and installed. Now, you can start it by using: ishare2 gui start${NO_COLOR}"
-
-    LOCAL_VALUE=$(cat /usr/sbin/ishare2_gui_version)
-    REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
-
-    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        echo "ishare2 GUI was upgraded from $LOCAL_VALUE to $REMOTE_VALUE"
-        rm /usr/sbin/ishare2_gui_version
-        echo "$REMOTE_VALUE" >/usr/sbin/ishare2_gui_version
+function ishare2_gui_install() {
+    ISHARE2_GUI_DIR=/opt/ishare2/gui
+    echo -e "${GREEN}ishare2 GUI is being downloaded and installed. Please, wait until process is done...${NO_COLOR}"
+    echo -e "${GREEN}Stopping ishare2 GUI service...${NO_COLOR}"
+    systemctl stop ishare2_gui.service
+    if [[ ! -d $ISHARE2_GUI_DIR ]]; then
+        mkdir -p $ISHARE2_GUI_DIR
     fi
+    if [[ -d $ISHARE2_GUI_DIR ]]; then
+        read -p "Found a previous installation of ishare2 GUI. Are you sure you want to remove it? [y/n]: " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${GREEN}Removing previous installation of ishare2 GUI...${NO_COLOR}"
+            rm -rf $ISHARE2_GUI_DIR/*
+            rm -rf $ISHARE2_GUI_DIR/.*
+            # remove systemd service
+            echo -e "${GREEN}Removing ishare2 GUI systemd service...${NO_COLOR}"
+            systemctl disable ishare2_gui.service
+            rm /etc/systemd/system/ishare2_gui.service
+        else
+            echo -e "${RED}[-] ishare2 GUI installation was cancelled. ${NO_COLOR}"
+            exit 1
+        fi
+    fi
+
+    echo -e "${GREEN}Downloading ishare2 GUI...${NO_COLOR}"
+    download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR/app.zip"
+
+    # unzip
+    echo -e "${GREEN}Unzipping ishare2 GUI files...${NO_COLOR}"
+    unzip -o -q "$ISHARE2_GUI_DIR/app.zip" -d "$ISHARE2_GUI_DIR"
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error unzipping ishare2 GUI. The file may be corrupted. ${NO_COLOR}"
+        echo "${RED}[-] Please check your internet connection and try again. ${NO_COLOR}"
+        exit 1
+    fi
+    # move files
+    echo -e "${GREEN}Moving files to $ISHARE2_GUI_DIR...${NO_COLOR}"
+    mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/* $ISHARE2_GUI_DIR
+    # move files starting with a dot if any
+    mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/.* $ISHARE2_GUI_DIR
+    rmdir $ISHARE2_GUI_DIR/ishare2-web-gui-master
+
+    rm $ISHARE2_GUI_DIR/app.zip
+
+    echo -e "${GREEN}Installing ishare2 GUI requirements...${NO_COLOR}"
+    # Make sure pip3 is installed
+    apt-get install -y python3-pip
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error installing pip3. ${NO_COLOR}"
+        echo "${RED}[-] Please install pip3 manually and try again. ${NO_COLOR}"
+        exit 1
+    fi
+
+    # Make sure venv is installed
+    apt-get install -y python3-venv
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error installing venv. ${NO_COLOR}"
+        echo "${RED}[-] Please install venv manually and try again. ${NO_COLOR}"
+        echo "${RED}[-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
+        exit 1
+    fi
+
+    # Make venv for ishare2 GUI
+    python3 -m venv $ISHARE2_GUI_DIR/venv
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
+        echo "${RED}[-] Please read previous logs for troubleshooting. ${NO_COLOR}"
+        exit 1
+    fi
+
+    # Install requirements
+    $ISHARE2_GUI_DIR/venv/bin/pip install -r $ISHARE2_GUI_DIR/requirements.txt
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
+        echo "${RED}[-] Please read previous logs for troubleshooting. ${NO_COLOR}"
+        exit 1
+    fi
+
+    # Create systemd service to run ishare2 GUI
+    echo -e "${GREEN}Creating systemd service to run ishare2 GUI...${NO_COLOR}"
+    cat >/etc/systemd/system/ishare2_gui.service <<EOL
+        [Unit]
+        Description=ishare2 GUI Web App
+        After=network.target
+
+        [Service]
+        User=root
+        Group=root
+        WorkingDirectory=/opt/ishare2/gui
+        ExecStart=/opt/ishare2/gui/venv/bin/uvicorn main:app --workers 4 --host 0.0.0.0 --port 5000
+        Restart=always
+
+        [Install]
+        WantedBy=multi-user.target
+EOL
+
+    # Enable and start ishare2 GUI service
+    echo -e "${GREEN}Enabling and starting ishare2 GUI service...${NO_COLOR}"
+    read -p "Do you want to start ishare2 GUI on boot? [y/n]: " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        systemctl enable ishare2_gui.service
+    fi
+    systemctl start ishare2_gui.service
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        exit 1
+    fi
+    echo -e "${GREEN}ishare2 GUI was installed successfully. ${NO_COLOR}"
+    echo -e "${GREEN}You can access ishare2 GUI at: http://<server_ip>:5000 ${NO_COLOR}"
+    echo -e "${GREEN} Additionally, you can use the following commands to manage ishare2 GUI: ${NO_COLOR}"
+    echo -e "${GREEN} ishare2 gui start: Start ishare2 GUI service ${NO_COLOR}"
+    echo -e "${GREEN} ishare2 gui stop: Stop ishare2 GUI service ${NO_COLOR}"
+    echo -e "${GREEN} ishare2 gui restart: Restart ishare2 GUI service ${NO_COLOR}"
+    echo -e "${GREEN} systemctl ishare2_gui status: Check ishare2 GUI service status ${NO_COLOR}"
 }
 
 function ishare2_gui_start() {
-    DIR="/root/app/"
-    if ! [[ -d "$DIR" ]]; then
-        ishare2 gui download
+    systemctl start ishare2_gui.service
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        exit 1
     fi
-
-    ip_address="$(ip route get 1.2.3.4 | awk '{print $7}')"
-    echo -e "Use http://$ip_address:5000\n"
-    cd /root/app && python3 /root/app/main.py &
 }
 
 function ishare2_gui_stop() {
-    array_of_pids="$(ps -a | grep python3 | awk '{ print $1 }')"
-
-    for i in "${array_of_pids[@]}"; do
-        kill -9 $i >/dev/null 2>&1
-    done
+    systemctl stop ishare2_gui.service
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error stopping ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        exit 1
+    fi
 }
 
 function ishare2_gui_restart() {
-    ishare2 gui stop
-    ishare2 gui start
+    systemctl restart ishare2_gui.service
+    if [[ $? -ne 0 ]]; then
+        echo "${RED}[-] Error restarting ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        exit 1
+    fi
 }
 
 function general_available_list() {
@@ -1669,7 +1760,7 @@ Examples:
 - ishare2 mylabs <path> <number>
 - ishare2 mylabs <path> all
 
-- ishare2 gui download
+- ishare2 gui install
 - ishare2 gui start
 - ishare2 gui stop
 - ishare2 gui restart
@@ -2433,8 +2524,8 @@ function selector() {
         show_changelog
     elif [[ "$1" = "gui" ]]; then # ishare2 gui
         if [[ "$2" ]]; then
-            if [[ "$2" == "download" ]]; then # ishare2 gui download
-                ishare2_gui_download
+            if [[ "$2" == "install" ]]; then # ishare2 gui download
+                ishare2_gui_install
             elif [[ "$2" == "start" ]]; then # ishare2 gui start
                 ishare2_gui_start
             elif [[ "$2" == "stop" ]]; then # ishare2 gui stop
