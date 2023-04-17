@@ -11,6 +11,4 @@ URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/tem
 URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/upgrades/from_4.2.10_to_5.0.1/upgrade.sh
 URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/upgrades/from_any_to_5.3.11/upgrade.sh
 URL_UPGRADE_PNETLAB6_INSTALLER='https://unetlab.cloud/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh'
-URL_GUI_APP_ZIP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/gui/app.zip
-URL_REQUIREMENTS_GUI_APP=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/gui/requirements.txt
-URL_ISHARE2_GUI_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/gui/version_gui
+URL_GUI_APP_ZIP=https://github.com/ishare2-org/ishare2-web-gui/archive/refs/heads/master.zip
