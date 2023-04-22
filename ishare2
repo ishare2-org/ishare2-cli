@@ -69,6 +69,7 @@ download_file_aria2() {
     output_dir="$2"
     output_name="$3"
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    rm -f error.log
     if aria2c --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
         echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir. ${NO_COLOR}"
         rm -f error.log
@@ -1676,17 +1677,17 @@ function show_ishare2_usage() {
     PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
 
     # For ishare2 GUI
-    ISHARE2_GUI_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_gui_version)
+    # ISHARE2_GUI_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_gui_version)
 
-    STR=""
-    LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
-    REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
+    # STR=""
+    # LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
+    # REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
 
-    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        STR="New ishare2 GUI version available: $REMOTE_VALUE"
-    fi
+    # if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
+    #     STR="New ishare2 GUI version available: $REMOTE_VALUE"
+    # fi
 
-    NEW_VERSION_RESULT_FOR_ISHARE2_GUI=$(echo -e ${YELLOW} $STR ${NO_COLOR})
+    # NEW_VERSION_RESULT_FOR_ISHARE2_GUI=$(echo -e ${YELLOW} $STR ${NO_COLOR})
 
     # Message displayed when using ishare2 command
     echo "
