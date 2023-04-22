@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v2.0.0] - 2023-Apr-21 (Major release)
+
+1) Added: ```ishare2 test``` command. This command will test if services ishare2 depends on are reachable.
+2) Added: ```ishare2 gui install``` command. This command will install the GUI for ishare2. This replaces the old ```ishare2 gui download``` command.
+3) Added: New way of downloading images. Now, ishare2 will download images using aria2c. This will allow users to download images faster and with less errors. It also allows users to resume downloads in case they get interrupted.
+4) Added: ishare2 will now have its own folder in /opt. Here, ishare2 will store all its files.
+5) Added: optimized ishare2 installation script. Now, ishare2 will reuse already downloaded files if they are available and are not older than 1 day.
+6) Added: new ishare2 GUI version from: <https://github.com/ishare2-org/ishare2-web-gui>
+7) Added: new ishare2 GUI installation script. This script will install the GUI for ishare2.
+8) Added: new ishare2 sources.list file. This file will be used to install ishare2 dependencies and fetch ishare2 files.
+9) Improved: ishare2 will handle errors better. Now, if an error occurs, ishare2 will try to recover from it or will display a message to the user.
+
 ## [v1.7.4] - 2023-Mar-05
 
 1) Fixed: Broken links for ishare2 upgrade menu.
