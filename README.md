@@ -49,6 +49,7 @@ curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
       changelog   : Show the latest changes made to ishare2
       gui         : Web app to use ishare2 in browser
       help        : Show useful information
+      test        : Test if ishare2 dependencies are reachable (GitHub, Google Spreadsheets)
 
     param1:
       type = all, bin, qemu, dynamips, docker or name
@@ -119,7 +120,7 @@ curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
 
 ## 💎 GUI
 
-    - ishare2 gui download
+    - ishare2 gui install
     - ishare2 gui start
     - ishare2 gui stop
     - ishare2 gui restart
@@ -130,6 +131,7 @@ curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
     - ishare2 upgrade
     - ishare2 changelog
     - ishare2 help
+    - ishare2 test
 
 ## Useful information
 
