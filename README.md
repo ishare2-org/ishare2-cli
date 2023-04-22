@@ -15,21 +15,20 @@
   <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" title="Bash" alt="Bash" width="40" height="40"/>&nbsp;
 </div>
 
-## 🚀 Installation (Alpha version)
+## 🚀 Installation
 
-This is an alpha version of ishare2. It is not recommended to use it in production environments. It is recommended to use it in a test environment.
-There are two methods to install `ishare2` alpha from your terminal. Choose one of the following options:
+There are two methods to install `ishare2` in your terminal. Choose one of the following options:
 
 ### wget
 
 ```linux
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/alpha/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 ### curl
 
 ```linux
-curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/alpha/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
+curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 `Note: There is no need to be in the same directory where ishare2 file is installed in order to execute it`
