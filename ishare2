@@ -86,10 +86,10 @@ download_file_curl() {
     touch $ISHARE2_DIR/tmp/curl_error
     local url="$1"
     local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
     if curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" \
-            rm -f $ISHARE2_DIR/tmp/curl_error
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+        rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
         # Read the error message from the curl_error file
@@ -107,9 +107,9 @@ download_file_wget() {
     touch $ISHARE2_DIR/tmp/wget_error
     local url="$1"
     local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
     if wget -q -O "$output" "$url" 2>$ISHARE2_DIR/tmp/wget_error; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}"
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -134,22 +134,22 @@ download_file() {
 function set_url_constants() {
     # Check if sources file does not exist
     if [[ ! -f $SOURCES ]]; then
-        echo -e "${YELLOW}[+] Sources file does not exist.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Sources file does not exist.${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is empty
     if [[ ! -s $SOURCES ]]; then
-        echo -e "${YELLOW}[+] Sources file is empty.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Sources file is empty.${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is corrupted
     if ! grep -q "URL_ID_LIST=" $SOURCES; then
-        echo -e "${YELLOW}[+] Sources file is corrupted.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Sources file is corrupted.${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is older than 1 day
     if [[ $(find $SOURCES -mtime +1) ]]; then
-        echo -e "${YELLOW}[+] Sources file is older than 1 day.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Sources file is older than 1 day.${NO_COLOR}"
         fetch_sources
     fi
 
@@ -172,13 +172,13 @@ function download_files_lists() {
     # If "id_list" file exists, don't download it again unless it is older than 1 day
     if [ -f $ISHARE2_DIR"/id_list" ]; then
         if [ $(find $ISHARE2_DIR"/id_list" -mtime +1) ]; then
-            echo -e "${YELLOW} [+] The list of Google Spreadsheets IDs is older than 1 day. ${NO_COLOR}"
+            echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs is older than 1 day. Updating... ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
             download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
         else
-            echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}"
+            echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
         fi
     else
-        echo -e "${YELLOW} [+] The list of Google Spreadsheets IDs does not exist. ${NO_COLOR}"
+        echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs does not exist. Downloading... ${NO_COLOR}"
         download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
     fi
     # Source the id_list file
@@ -203,16 +203,16 @@ fetch_lists() {
     CHECK_DATE=${3:-true} # default value is true
     if [ -f $ISHARE2_DIR"/$TYPE.csv" ]; then
         if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [+] The list of $TYPE images is older than 1 day. ${NO_COLOR}"
+            echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
             download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
         elif [[ "$CHECK_DATE" == "false" ]]; then
-            echo -e "${YELLOW} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
+            echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
             download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
         else
-            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}"
+            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
         fi
     else
-        echo -e "${YELLOW} [+] The list of images $TYPE does not exist. ${NO_COLOR}"
+        echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
         download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
     fi
 }
@@ -1230,8 +1230,8 @@ function show_changelog() {
 
 function ishare2_gui_install() {
     ISHARE2_GUI_DIR=/opt/ishare2/gui
-    echo -e "${GREEN}ishare2 GUI is being downloaded and installed. Please, wait until process is done...${NO_COLOR}"
-    echo -e "${GREEN}Stopping ishare2 GUI service...${NO_COLOR}"
+    echo -e "${GREEN}[+] ishare2 GUI is being downloaded and installed. Please, wait until process is done...${NO_COLOR}"
+    echo -e "${YELLOW}[!] Stopping ishare2 GUI service...${NO_COLOR}"
     systemctl stop ishare2_gui.service
     if [[ ! -d $ISHARE2_GUI_DIR ]]; then
         mkdir -p $ISHARE2_GUI_DIR
@@ -1244,7 +1244,7 @@ function ishare2_gui_install() {
             rm -rf $ISHARE2_GUI_DIR/*
             rm -rf $ISHARE2_GUI_DIR/.*
             # remove systemd service
-            echo -e "${GREEN}Removing ishare2 GUI systemd service...${NO_COLOR}"
+            echo -e "${YELLOW}[!] Removing ishare2 GUI systemd service...${NO_COLOR}"
             systemctl disable ishare2_gui.service
             rm /etc/systemd/system/ishare2_gui.service
         else
@@ -1253,11 +1253,11 @@ function ishare2_gui_install() {
         fi
     fi
 
-    echo -e "${GREEN}Downloading ishare2 GUI...${NO_COLOR}"
+    echo -e "${GREEN}[+] Downloading ishare2 GUI...${NO_COLOR}"
     download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR/app.zip"
 
     # unzip
-    echo -e "${GREEN}Unzipping ishare2 GUI files...${NO_COLOR}"
+    echo -e "${GREEN}[+] Unzipping ishare2 GUI files...${NO_COLOR}"
     unzip -o -q "$ISHARE2_GUI_DIR/app.zip" -d "$ISHARE2_GUI_DIR"
     if [[ $? -ne 0 ]]; then
         echo "${RED}[-] Error unzipping ishare2 GUI. The file may be corrupted. ${NO_COLOR}"
@@ -1265,7 +1265,7 @@ function ishare2_gui_install() {
         exit 1
     fi
     # move files
-    echo -e "${GREEN}Moving files to $ISHARE2_GUI_DIR...${NO_COLOR}"
+    echo -e "${GREEN}[+] Moving files... ${NO_COLOR}"
     mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/* $ISHARE2_GUI_DIR
     # move files starting with a dot if any
     mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/.* $ISHARE2_GUI_DIR
@@ -1273,7 +1273,7 @@ function ishare2_gui_install() {
 
     rm $ISHARE2_GUI_DIR/app.zip
 
-    echo -e "${GREEN}Installing ishare2 GUI requirements...${NO_COLOR}"
+    echo -e "${GREEN}[+] Installing ishare2 GUI requirements...${NO_COLOR}"
     # Make sure pip3 is installed
     apt-get install -y python3-pip
     if [[ $? -ne 0 ]]; then
@@ -1308,25 +1308,25 @@ function ishare2_gui_install() {
     fi
 
     # Create systemd service to run ishare2 GUI
-    echo -e "${GREEN}Creating systemd service to run ishare2 GUI...${NO_COLOR}"
+    echo -e "${GREEN}[+] Creating systemd service to run ishare2 GUI...${NO_COLOR}"
     cat >/etc/systemd/system/ishare2_gui.service <<EOL
-        [Unit]
-        Description=ishare2 GUI Web App
-        After=network.target
+[Unit]
+Description=ishare2 GUI Web App
+After=network.target
 
-        [Service]
-        User=root
-        Group=root
-        WorkingDirectory=/opt/ishare2/gui
-        ExecStart=/opt/ishare2/gui/venv/bin/uvicorn main:app --workers 4 --host 0.0.0.0 --port 5000
-        Restart=always
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/ishare2/gui
+ExecStart=/opt/ishare2/gui/venv/bin/uvicorn main:app --workers 4 --host 0.0.0.0 --port 5000
+Restart=always
 
-        [Install]
-        WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 EOL
 
     # Enable and start ishare2 GUI service
-    echo -e "${GREEN}Enabling and starting ishare2 GUI service...${NO_COLOR}"
+    echo -e "${GREEN}[+] Enabling and starting ishare2 GUI service...${NO_COLOR}"
     read -p "Do you want to start ishare2 GUI on boot? [y/n]: " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -1338,13 +1338,13 @@ EOL
         echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
-    echo -e "${GREEN}ishare2 GUI was installed successfully. ${NO_COLOR}"
-    echo -e "${GREEN}You can access ishare2 GUI at: http://<server_ip>:5000 ${NO_COLOR}"
-    echo -e "${GREEN} Additionally, you can use the following commands to manage ishare2 GUI: ${NO_COLOR}"
-    echo -e "${GREEN} ishare2 gui start: Start ishare2 GUI service ${NO_COLOR}"
-    echo -e "${GREEN} ishare2 gui stop: Stop ishare2 GUI service ${NO_COLOR}"
-    echo -e "${GREEN} ishare2 gui restart: Restart ishare2 GUI service ${NO_COLOR}"
-    echo -e "${GREEN} systemctl ishare2_gui status: Check ishare2 GUI service status ${NO_COLOR}"
+    echo -e "${GREEN}[!] ishare2 GUI was installed successfully. ${NO_COLOR}"
+    echo -e "${GREEN}You can access ishare2 GUI at: http://<server_ip>:5000 or http://localhost:5000 ${NO_COLOR}"
+    echo -e "${GREEN}Additionally, you can use the following commands to manage ishare2 GUI: ${NO_COLOR}"
+    echo -e "${GREEN}   ishare2 gui start: Start ishare2 GUI service ${NO_COLOR}"
+    echo -e "${GREEN}   ishare2 gui stop: Stop ishare2 GUI service ${NO_COLOR}"
+    echo -e "${GREEN}   ishare2 gui restart: Restart ishare2 GUI service ${NO_COLOR}"
+    echo -e "${GREEN}   systemctl ishare2_gui status: Check ishare2 GUI service status ${NO_COLOR}"
 }
 
 function ishare2_gui_start() {
@@ -1473,15 +1473,7 @@ function download_multiple_files_qemu() {
 }
 
 function pull_all_iol_images() {
-    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
-    URL_POSTFIX='&single=true&output=csv'
-
-    BIN_URL=$URL_PREFIX$BIN_GID$URL_POSTFIX
-
-    FILENAME=BIN_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$BIN_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
+    FILENAME="$ISHARE2_DIR/BIN.csv"
 
     while IFS=',' read -r col1 _ _ _ _; do
         N=$col1
@@ -1495,21 +1487,11 @@ function pull_all_iol_images() {
         ishare2 pull bin "$i"
     done
 
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
     echo -e "\nFinished"
 }
 
 function pull_all_dynamips_images() {
-    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE_SHEETS_ID'/pub?gid='
-    URL_POSTFIX='&single=true&output=csv'
-
-    DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS_GID$URL_POSTFIX
-
-    FILENAME=DYNAMIPS_URL.csv
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-    URL=$DYNAMIPS_URL
-    wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-
+    FILENAME="$ISHARE2_DIR/DYNAMIPS.csv"
     while IFS=',' read -r col1 _ _ _ _; do
         N=$col1
     done <$FILENAME
@@ -1522,7 +1504,6 @@ function pull_all_dynamips_images() {
         ishare2 pull dynamips "$i"
     done
 
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
     echo -e "\nFinished"
 }
 
@@ -1551,7 +1532,7 @@ function pull_dynamips() {
         fi
     done <$FILENAME
     if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]; then
-        FLAG=1
+        FLAG=1to $ISHARE2_GUI_DIR
         NAME=$col2
         LINK=$col3
         SIZE=$col4
