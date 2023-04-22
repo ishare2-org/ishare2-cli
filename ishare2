@@ -21,6 +21,16 @@ function check_ishare2_dir() {
     fi
 }
 
+# set max log file lines to 1000
+function set_max_log_lines() {
+    if [[ -f $ISHARE2_DIR/logs.txt ]]; then
+        if [[ $(wc -l <"$ISHARE2_DIR/logs.txt") -gt 1000 ]]; then
+            tail -n 1000 $ISHARE2_DIR/logs.txt >$ISHARE2_DIR/tmp.txt
+            mv $ISHARE2_DIR/tmp.txt $ISHARE2_DIR/logs.txt
+        fi
+    fi
+}
+
 function check_aria2() {
     # Check if aria2c is installed
     if ! command -v aria2c &>/dev/null; then
