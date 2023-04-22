@@ -2550,6 +2550,7 @@ function selector() {
 
 function main() {
     check_user_is_root
+    set_max_log_lines
     check_aria2
     set_url_constants
     download_files_lists
