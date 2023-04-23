@@ -23,8 +23,27 @@ A CLI-based tool written in Bash to easily download and manage images in your PN
 ## 📚 Summary
 
 - [🚀 Installation](#installation)
+- [✅ Syntax](#syntax)
+- [Examples of usage](#examples)
+- [💎 Search for images by type or name](#search)
+  - [ishare2 search by type](#search-type)
+  - [ishare2 search by name](#search-name)
+- [💎 Pull images by image number](#pull)
+- [💎 Pull all images at once](#pull-all)
+- [💎 Show installed images on server](#installed)
+- [💎 Download all images needed for a lab (Default path)](#labs)
+- [💎 Download all images needed for a lab (Customized path)](#mylabs)
+- [💎 Web app to use ishare2 from a web browser](#gui)
+- [💎 Extras](#extras)
+- [💎 Useful information](#useful-information)
+- [💎 Show the latest changes made to ishare2](#changelog)
+- [💎 Upgrade ishare2 and PNETLab VM](#upgrade)
+- [💎 Known limitations](#known-limitations)
+- [Useful links](#links)
+- [Useful resources](#useful-resources)
+- [Need help?](#help)
 
-## 🚀 Installation {#installation}
+## 🚀 Installation <a id="installation"></a>
 
 There are different ways of installing `ishare2` in your terminal. Choose one of the following options:
 
@@ -49,7 +68,7 @@ curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
 
 `Note: You can install different versions of ishare2 browsing the releases page or tracking back to previous commits`
 
-## ✅ Syntax
+## ✅ Syntax <a id="syntax"></a>
 
 ```linux
     ishare2 [action] [param1] [param2]
@@ -74,19 +93,20 @@ curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
       number = This number can be obtained using ishare2 search <type>
 ```
 
-## Examples of usage
+## Examples of usage <a id="examples"></a>
 
-## 💎 Search for images
+## 💎 Search for images by type or name <a id="search"></a>
 
-### ishare2 search <type>
+### ishare2 search <type> <a id="search-type"></a>
 
 ```linux
 # ishare2 search all
 # ishare2 search bin
 # ishare2 search qemu
 # ishare2 search dynamips
-# ishare2 search <name>
 ```
+
+### ishare2 search <name> <a id="search-name"></a>
 
 Examples:
 
@@ -106,7 +126,7 @@ Examples:
 
 `You can search for images by name or by type. If you search by name, you will get all images that match the name you entered. If you search by type, you will get all images of that type`
 
-## 💎 Pull images by image number
+## 💎 Pull images by image number <a id="pull"></a>
 
 ```linux
 # ishare2 pull bin <number>
@@ -116,7 +136,7 @@ Examples:
 
 The image number can be obtained using `ishare2 search <type>` command.
 
-## 💎 Pull all images at once
+## 💎 Pull all images at once <a id="pull-all"></a>
 
 ```linux
 # ishare2 pull bin all
@@ -124,7 +144,7 @@ The image number can be obtained using `ishare2 search <type>` command.
 # ishare2 pull dynamips all
 ```
 
-## 💎 Show installed images
+## 💎 Show installed images on server <a id="installed"></a>
 
 ```linux
 # ishare2 installed all
@@ -134,7 +154,7 @@ The image number can be obtained using `ishare2 search <type>` command.
 # ishare2 installed docker
 ```
 
-## 💎 Download all images needed for a lab (Default path)  
+## 💎 Download all images needed for a lab (Default path) <a id="labs"></a>
 
 ishare2 can automatically download all images needed for a lab. This feature is available for .unl labs usually downloaded from [PNetLab Store](https://user.pnetlab.com/store/labs/view) or other sources.
 
@@ -146,7 +166,7 @@ ishare2 can automatically download all images needed for a lab. This feature is 
 
 `Not available for every lab because some of them are encrypted by lab authors and cannot be read by ishare2`
 
-## 💎 Download all images needed for a lab (Customized path)
+## 💎 Download all images needed for a lab (Customized path) <a id="mylabs"></a>
 
 ```linux
 # ishare2 mylabs <path>
@@ -154,7 +174,7 @@ ishare2 can automatically download all images needed for a lab. This feature is 
 # ishare2 mylabs <path> all
 ```
 
-## 💎 ishare2 GUI
+## 💎 ishare2 GUI <a id="gui"></a>
 
 ```linux
 # ishare2 gui install
@@ -164,7 +184,7 @@ ishare2 can automatically download all images needed for a lab. This feature is 
 # ishare2 gui restart
 ```
 
-## 💎 Extras
+## 💎 Extras <a id="extras"></a>
 
 ```linux
 # ishare2 relicense
@@ -174,15 +194,15 @@ ishare2 can automatically download all images needed for a lab. This feature is 
 # ishare2 test
 ```
 
-## Useful information
+## Useful information <a id="useful-information"></a>
 
 [HELP.md](https://github.com/pnetlabrepo/ishare2/blob/main/HELP.md)
 
-## See the latest changes on ishare2
+## See the latest changes on ishare2 <a id="changelog"></a>
 
 [CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
 
-## How to upgrade your PNetLab server
+## How to upgrade your PNetLab server <a id="upgrade"></a>
 
 **Important:** Newer versions of PNetLab might be published in PNetLab's official group chat before they are available in ishare2.  
 
@@ -193,17 +213,17 @@ To upgrade your PNETLab server, you can use the following methods:
 
 Note: You can also upgrade PNETLab using `ishare2 upgrade`, then using the `option 2` and finally select an option from list.
 
-## Known limitations
+## Known limitations <a id="known-limitations"></a>
 
 - **Quota Limits:**  
 You might encounter quota limits when downloading images. If that happens, you can wait a few minutes and try again. If the problem persists, please contact us through our Telegram group. Search the link to the group chat in the channel's pinned message or click the chat icon in the channel's description: [@NetLabHub](https://t.me/NetLabHub) (By not sharing the link here, we avoid spam and bots in the group chat)
 
-## 🔗 Links
+## 🔗 Links <a id="links"></a>
 
 - Image files source: [LabHub](https://labhub.eu.org/)
 - Docker images can be found at [hub.docker.com](https://hub.docker.com/)
 
-## ✨ Useful resources
+## ✨ Useful resources <a id="useful-resources"></a>
 
 Check these links to get information on device credentials
 
@@ -211,7 +231,7 @@ Check these links to get information on device credentials
 - [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/UNETLAB%20II/Passwords%20-%20QEMU.xls)
 - [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/UNETLAB%20II/qemu/Linux/Eve-NG-Linux/Eve-NG-Linux.png)
 
-## ❓Need help?
+## ❓Need help? <a id="help"></a>
 
 You can get in touch with the community through the following links:  
 
