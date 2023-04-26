@@ -6,7 +6,7 @@
 CHANNEL="alpha"
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v1.7.4"
+VERSION="v2.0.0-alpha"
 
 # Colors
 RED='\033[31m'
