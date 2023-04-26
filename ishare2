@@ -1,12 +1,11 @@
 #!/bin/bash
 #October, 2022
-# This alpha version contains verbose output for debugging purposes.
 # Constants
 # ishare2 configuration
-CHANNEL="alpha"
+CHANNEL="main" # you can change this to available branches in github.com/pnetlabrepo/ishare2
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v1.7.4"
+VERSION="v2.0.0" # Script version
 
 # Colors
 RED='\033[31m'
