@@ -227,9 +227,9 @@ You might encounter quota limits when downloading images. If that happens, you c
 
 Check these links to get information on device credentials
 
-- [Excel file #1: passwords_eve.xlsx](https://unetlab.cloud/UNETLAB%20I/addons/passwords/passwords_eve.xlsx)
-- [Excel file #2: Passwords - QEMU.xls](https://unetlab.cloud/UNETLAB%20II/Passwords%20-%20QEMU.xls)
-- [PNG file: Eve-NG-Linux.png](https://unetlab.cloud/UNETLAB%20II/qemu/Linux/Eve-NG-Linux/Eve-NG-Linux.png)
+- [Excel file #1: passwords_eve.xlsx](https://labhub.eu.org/UNETLAB%20I/addons/passwords/passwords_eve.xlsx)
+- [Excel file #2: Passwords - QEMU.xls](https://labhub.eu.org/UNETLAB%20II/Passwords%20-%20QEMU.xls)
+- [PNG file: Eve-NG-Linux.png](https://labhub.eu.org/UNETLAB%20II/qemu/Linux/Eve-NG-Linux/Eve-NG-Linux.png)
 
 ## ❓Need help? <a id="help"></a>
 
