@@ -127,7 +127,7 @@ download_file() {
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
 
     if [[ $USE_ARIA2C == "true" ]]; then
-        install_aria2c
+        install_aria2c &>/dev/null
     fi
 
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
