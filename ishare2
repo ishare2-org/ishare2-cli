@@ -147,7 +147,7 @@ download_file_aria2() {
 
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
     rm -f error.log
-    if aria2c --download-result=hide --check-certificate=false --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
+    if aria2c -c --download-result=hide --check-certificate=false --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
         echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir/$output_name. ${NO_COLOR}"
         rm -f error.log
     else
