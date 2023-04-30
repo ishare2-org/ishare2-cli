@@ -66,7 +66,7 @@ function install_aria2c() {
     else
         echo -e "${GREEN}[+] aria2c already is installed.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         echo -e "${YELLOW}[+] Updating aria2c...${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        if ! apt-get upgrade -y aria2; then
+        if ! apt-get install --only-upgrade aria2; then
             echo -e "${RED}[-] Failed to update aria2c.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
             exit 1
         fi
