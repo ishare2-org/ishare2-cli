@@ -1166,12 +1166,12 @@ function upgrade_ishare2() {
     REMOTE_VALUE=$(curl -s $URL_VERSION)
 
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        echo "${YELLOW}[+] ishare2 $REMOTE_VALUE is currently the newest version available. ${NO_COLOR}"
-        exit 0
+        echo -e "${YELLOW}[+] ishare2 $REMOTE_VALUE is already in the newest version available. ${NO_COLOR}"
+        echo - "${YELLO}[+] Reinstalling latest version of ishare2"
     fi
 
     rm /usr/sbin/ishare2
-    wget -O /usr/sbin/ishare2 $URL_ISHARE2 >/dev/null 2>&1
+    wget -O /usr/sbin/ishare2 $URL_ISHARE2
     # Check if wget threw an error
     if [[ $? -ne 0 ]]; then
         echo "${RED}[-] Error downloading ishare2. Please, check your internet connection. ${NO_COLOR}"
