@@ -1178,7 +1178,7 @@ function upgrade_ishare2() {
     # Make ishare2 executable
     chmod +x /usr/sbin/ishare2
     # Show success message
-    echo "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
+    echo -e "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
 }
 
 function menu_ishare2_upgrade_pnetlab() {
