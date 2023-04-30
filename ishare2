@@ -31,8 +31,27 @@ function set_max_log_lines() {
     fi
 }
 
-function check_aria2() {
-    # Check if aria2c is installed
+function check_config() {
+    # check if config file exists otherwise create it
+    if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
+        create_config
+    fi
+}
+
+function create_config() {
+    echo -e "${YELLOW}[+] Creating ishare2 configuration file...${NO_COLOR}"
+    echo -e "${YELLOW}[+] Please answer the following questions to configure ishare2.${NO_COLOR}"
+    echo -e "${YELLOW}[+] Press enter to use the default value.${NO_COLOR}"
+    echo -e "${YELLOW}[+] Press Ctrl+C to cancel.${NO_COLOR}"
+    echo -e "${YELLOW}[+] Use aria2c for faster downloads?${NO_COLOR}"
+    read -p "[+] (y/n): " -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "USE_ARIA2C=true" >$ISHARE2_DIR/ishare2.conf
+        install_aria2c
+    else
+        echo "USE_ARIA2C=false" >$ISHARE2_DIR/ishare2.conf
+    fi
+}
     if ! command -v aria2c &>/dev/null; then
         echo -e "${YELLOW}[+] aria2c is not installed.${NO_COLOR}"
         echo -e "${YELLOW}[+] Installing aria2c...${NO_COLOR}"
