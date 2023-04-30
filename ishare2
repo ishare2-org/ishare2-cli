@@ -52,18 +52,25 @@ function create_config() {
         echo "USE_ARIA2C=false" >$ISHARE2_DIR/ishare2.conf
     fi
 }
+
+function install_aria2c() {
+    # check if aria2c is installed otherwise install it
     if ! command -v aria2c &>/dev/null; then
         echo -e "${YELLOW}[+] aria2c is not installed.${NO_COLOR}"
+
         echo -e "${YELLOW}[+] Installing aria2c...${NO_COLOR}"
-        if ! apt-get install -y aria2 &>/dev/null; then
+        if ! apt-get install -y aria2; then
             echo -e "${RED}[-] Failed to install aria2c.${NO_COLOR}"
-            echo -e "${RED}[-] ishare2 requires aria2c to work properly.${NO_COLOR}"
-            echo -e "${RED}[-] Please install aria2c manually and try again.${NO_COLOR}"
-            echo -e "Use: ${YELLOW}sudo apt-get install -y aria2${NO_COLOR}"
-            echo -e "${RED}[-] Exiting...${NO_COLOR}"
             exit 1
         fi
         echo -e "${GREEN}[+] Done.${NO_COLOR}"
+    else
+        echo -e "${GREEN}[+] aria2c already is installed.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${YELLOW}[+] Updating aria2c...${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        if ! apt-get upgrade -y aria2; then
+            echo -e "${RED}[-] Failed to update aria2c.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            exit 1
+        fi
     fi
 }
 
@@ -93,21 +100,6 @@ function fetch_sources() {
     echo -e "${GREEN}[+] Done.${NO_COLOR}"
 }
 
-download_file_aria2() {
-    url="$1"
-    output_dir="$2"
-    output_name="$3"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
-    rm -f error.log
-    if aria2c --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir. ${NO_COLOR}"
-        rm -f error.log
-    else
-        echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
-        exit 1
-    fi
-}
-
 download_file_curl() {
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
@@ -115,9 +107,9 @@ download_file_curl() {
     touch $ISHARE2_DIR/tmp/curl_error
     local url="$1"
     local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
     if curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -129,34 +121,68 @@ download_file_curl() {
     fi
 }
 
+download_file() {
+    local url="$1"
+    local output="$2"
+    local options="$3"
+    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
+
+    if [[ $USE_ARIA2C == "true" ]]; then
+        install_aria2c
+    fi
+
+    if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
+        echo -e "${YELLOW} [+] aria2c is installed. Using aria2c for faster downloads.${NO_COLOR}"
+        download_file_aria2 "$url" "$output" "$options"
+    else
+        echo -e "${YELLOW} [+] aria2c is not installed or you chose to use wget.${NO_COLOR}"
+        echo -e "${YELLOW} [+] Using wget${NO_COLOR}"
+        download_file_wget "$url" "$output" "$options"
+    fi
+}
+
+download_file_aria2() {
+    local url="$1"
+    local output_dir="$2"
+    local output_name="$3"
+
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    rm -f error.log
+    if aria2c --download-result=hide --check-certificate=false --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"; then
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir/$output_name. ${NO_COLOR}"
+        rm -f error.log
+    else
+        echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
+        exit 1
+    fi
+}
+
 download_file_wget() {
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
     # Create the file if it does not exist
     touch $ISHARE2_DIR/tmp/wget_error
     local url="$1"
-    local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
-    if wget -q -O "$output" "$url" 2>$ISHARE2_DIR/tmp/wget_error; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
-        rm -f $ISHARE2_DIR/tmp/wget_error
-    else
+    local output_dir="$2"
+    local output_name="$3"
+    if [[ -z "$output_name" ]]; then
+        # if output name is not provided, use the basename of the URL
+        output_name=$(basename "$url")
+    fi
+    local output="$output_dir/$output_name"
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    wget -O "$output" "$url" -q --show-progress --content-disposition
+    # Check if wget command failed
+    if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
         # Read the error message from the wget_error file
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/wget_error)
         # Print the error message
         echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
         exit 1
-    fi
-}
-
-download_file() {
-    # Check if aria2c is installed
-    if command -v aria2c &>/dev/null; then
-        download_file_aria2 "$1" "$2" "$3"
     else
-        path="$2/$3"
-        download_file_wget "$1" "$path"
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        rm -f $ISHARE2_DIR/tmp/wget_error
     fi
 }
 
@@ -201,10 +227,10 @@ function download_files_lists() {
     # If "id_list" file exists, don't download it again unless it is older than 1 day
     if [ -f $ISHARE2_DIR"/id_list" ]; then
         if [ $(find $ISHARE2_DIR"/id_list" -mtime +1) ]; then
-            echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs is older than 1 day. Updating... ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+            echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs is older than 1 day. Updating... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
             download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
         else
-            echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+            echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         fi
     else
         echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs does not exist. Downloading... ${NO_COLOR}"
@@ -232,17 +258,17 @@ fetch_lists() {
     CHECK_DATE=${3:-true} # default value is true
     if [ -f $ISHARE2_DIR"/$TYPE.csv" ]; then
         if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
-            download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
+            echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
         elif [[ "$CHECK_DATE" == "false" ]]; then
             echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
-            download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
+            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
         else
-            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         fi
     else
         echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
-        download_file_wget $URL $ISHARE2_DIR"/$TYPE.csv"
+        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
     fi
 }
 
@@ -1449,20 +1475,20 @@ function download_1_file_bin_or_dynamips() {
     echo -e "$STR $NAME"
     STR="${YELLOW}Size:${NO_COLOR}"
     echo -e "$STR $SIZE $UNIT\n"
-    echo -e "Downloading from $LINK\n"
+    echo -e "${YELLOW}Downloading from:${NO_COLOR} $LINK\n"
 
     if [[ $TYPE = "dynamips" ]]; then
         mkdir -p /opt/unetlab/addons/dynamips
         # set save path and name
         save_path="/opt/unetlab/addons/dynamips"
-        download_file_aria2 "$LINK" "$save_path" "$NAME"
+        download_file "$LINK" "$save_path" "$NAME"
     fi
 
     if [[ $TYPE = "bin" ]]; then
         mkdir -p /opt/unetlab/addons/iol/bin
         # set save path and name
         save_path="/opt/unetlab/addons/iol/bin"
-        download_file_aria2 "$LINK" "$save_path" "$NAME"
+        download_file "$LINK" "$save_path" "$NAME"
     fi
 }
 
@@ -1480,7 +1506,7 @@ function download_1_file_qemu() {
     echo -e "\nFile requested:\n  $NAME - $SIZE $UNIT\n"
 
     save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
-    download_file_aria2 "$LINK" "$save_path" "$NAME"
+    download_file "$LINK" "$save_path" "$NAME"
 }
 
 function download_multiple_files_qemu() {
@@ -1497,7 +1523,7 @@ function download_multiple_files_qemu() {
     for ((c = 1; c <= FILES_COUNTER; c++)); do
         echo -e "\nFile $c/$FILES_COUNTER"
         save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
-        download_file_aria2 "${myArray[c - 1]}" "$save_path"
+        download_file "${myArray[c - 1]}" "$save_path"
     done
 }
 
@@ -2570,8 +2596,8 @@ function selector() {
 function main() {
     check_user_is_root
     set_max_log_lines
-    check_aria2
     set_url_constants
+    check_config
     download_files_lists
     set_yml_template_folder_location
     check_ishare2_version_file_exists
