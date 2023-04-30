@@ -1174,8 +1174,9 @@ function upgrade_ishare2() {
     rm -rf /opt/ishare2/
     download_file_wget $URL_ISHARE2 /usr/sbin/ "ishare2"
 
-    echo "Downloaded latest version of ishare2."
+    echo -e "${GREEN}[+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
     # Make ishare2 executable
+    echo -e "${YELLOW}[+] Setting ishare2 permissions${NO_COLOR}"
     chmod +x /usr/sbin/ishare2
     # Show success message
     echo -e "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
