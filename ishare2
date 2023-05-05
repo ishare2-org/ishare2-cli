@@ -5,7 +5,7 @@
 CHANNEL="alpha" # you can change this to available branches in github.com/pnetlabrepo/ishare2
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v2.0.7-alpha" # Script version
+VERSION="v2.0.8-alpha" # Script version
 
 # Colors
 RED='\033[31m'
@@ -1280,12 +1280,12 @@ function ishare2_gui_install() {
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo -e "${GREEN}Removing previous installation of ishare2 GUI...${NO_COLOR}"
-            rm -rf $ISHARE2_GUI_DIR/*
-            rm -rf $ISHARE2_GUI_DIR/.*
+            rm -rf $ISHARE2_GUI_DIR/* >"$ISHARE2_DIR/ishare2_gui_install.log"
+            rm -rf $ISHARE2_GUI_DIR/.* >"$ISHARE2_DIR/ishare2_gui_install.log"
             # remove systemd service
             echo -e "${YELLOW}[!] Removing ishare2 GUI systemd service...${NO_COLOR}"
-            systemctl disable ishare2_gui.service
-            rm /etc/systemd/system/ishare2_gui.service
+            systemctl disable ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
+            rm /etc/systemd/system/ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
         else
             echo -e "${RED}[-] ishare2 GUI installation was cancelled. ${NO_COLOR}"
             exit 1
@@ -1293,7 +1293,7 @@ function ishare2_gui_install() {
     fi
 
     echo -e "${GREEN}[+] Downloading ishare2 GUI...${NO_COLOR}"
-    download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR/app.zip"
+    download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR" "app.zip"
 
     # unzip
     echo -e "${GREEN}[+] Unzipping ishare2 GUI files...${NO_COLOR}"
