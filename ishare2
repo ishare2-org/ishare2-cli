@@ -35,6 +35,15 @@ function check_config() {
     if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
         create_config
     fi
+function switch_downloader() {
+    # check if config file exists
+    if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
+        echo -e "{$YELLOW}[!] Configuration file does not exist. Please configure ishare2.${NO_COLOR}"
+    fi
+    if [[ ! -s $ISHARE2_DIR/ishare2.conf ]]; then
+        echo -e "${RED}[!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
+    fi
+    create_config
 }
 
 function create_config() {
