@@ -31,7 +31,7 @@ function set_max_log_lines() {
 }
 
 function check_config() {
-    # check if config file exists otherwise create it
+    # check if config file exists
     if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
         create_config
     fi
@@ -2593,6 +2593,8 @@ function selector() {
         show_help_info
     elif [[ "$1" = "test" ]]; then # ishare2 test
         connection_tests
+    elif [[ "$1" = "config" ]]; then # ishare2 downloader
+        switch_downloader
     else # when no args are passed to ishare2
         show_ishare2_usage
     fi
@@ -2600,9 +2602,10 @@ function selector() {
 
 function main() {
     check_user_is_root
+    check_ishare2_dir
+    check_config
     set_max_log_lines
     set_url_constants
-    check_config
     download_files_lists
     set_yml_template_folder_location
     check_ishare2_version_file_exists
