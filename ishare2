@@ -37,7 +37,7 @@ function check_config() {
     fi
     # check if config file is empty
     if [[ ! -s $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "${RED}[!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
+        echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
         create_config
     fi
 }
@@ -45,21 +45,21 @@ function check_config() {
 function switch_downloader() {
     # check if config file exists
     if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "{$YELLOW}[!] Configuration file does not exist. Please configure ishare2.${NO_COLOR}"
+        echo -e "{$YELLOW} [!] Configuration file does not exist. Please configure ishare2.${NO_COLOR}"
     fi
     if [[ ! -s $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "${RED}[!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
+        echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
     fi
     create_config
 }
 
 function create_config() {
-    echo -e "${YELLOW}[+] Creating ishare2 configuration file...${NO_COLOR}"
-    echo -e "${YELLOW}[+] Please answer the following questions to configure ishare2.${NO_COLOR}"
-    echo -e "${YELLOW}[+] Press enter to use the default value.${NO_COLOR}"
-    echo -e "${YELLOW}[+] Press Ctrl+C to cancel.${NO_COLOR}"
-    echo -e "${YELLOW}[+] Use aria2c for faster downloads?${NO_COLOR}"
-    read -p "[+] (y/n): " -r
+    echo -e "${YELLOW} [+] Creating ishare2 configuration file...${NO_COLOR}"
+    echo -e "${YELLOW} [+] Please answer the following questions to configure ishare2.${NO_COLOR}"
+    echo -e "${YELLOW} [+] Press enter to use the default value.${NO_COLOR}"
+    echo -e "${YELLOW} [+] Press Ctrl+C to cancel.${NO_COLOR}"
+    echo -e "${YELLOW} [+] Use aria2c for faster downloads?${NO_COLOR}"
+    read -p " [+] (y/n): " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "USE_ARIA2C=true" >$ISHARE2_DIR/ishare2.conf
         install_aria2c
@@ -68,7 +68,7 @@ function create_config() {
     fi
     # Validate the configuration file
     if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
-        echo -e "${RED}[!] Failed to create configuration file. Please try again.${NO_COLOR}"
+        echo -e "${RED} [!] Failed to create configuration file. Please try again.${NO_COLOR}"
         exit 1
     fi
 }
@@ -76,48 +76,48 @@ function create_config() {
 function install_aria2c() {
     # check if aria2c is installed otherwise install it
     if ! command -v aria2c &>/dev/null; then
-        echo -e "${YELLOW}[+] aria2c is not installed.${NO_COLOR}"
+        echo -e "${YELLOW} [+] aria2c is not installed.${NO_COLOR}"
 
-        echo -e "${YELLOW}[+] Installing aria2c...${NO_COLOR}"
+        echo -e "${YELLOW} [+] Installing aria2c...${NO_COLOR}"
         if ! apt-get install -y aria2; then
-            echo -e "${RED}[-] Failed to install aria2c.${NO_COLOR}"
+            echo -e "${RED} [-] Failed to install aria2c.${NO_COLOR}"
             exit 1
         fi
-        echo -e "${GREEN}[+] Done.${NO_COLOR}"
+        echo -e "${GREEN} [+] Done.${NO_COLOR}"
     else
-        echo -e "${GREEN}[+] aria2c already is installed.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        echo -e "${YELLOW}[+] Updating aria2c...${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] aria2c already is installed.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${YELLOW} [+] Updating aria2c...${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         if ! apt-get install --only-upgrade aria2; then
-            echo -e "${RED}[-] Failed to update aria2c.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            echo -e "${RED} [-] Failed to update aria2c.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
             exit 1
         fi
     fi
 }
 
 function create_ishare2_dir() {
-    echo -e "${YELLOW}[+] Creating ishare2 directory...${NO_COLOR}"
+    echo -e "${YELLOW} [+] Creating ishare2 directory...${NO_COLOR}"
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
         error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
         if [[ $error_message == *"Permission denied"* ]]; then
-            echo -e "${RED}[-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
+            echo -e "${RED} [-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
         else
-            echo -e "${RED}[-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
+            echo -e "${RED} [-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
         fi
         exit 1
     fi
-    echo -e "${GREEN}[+] Done.${NO_COLOR}"
+    echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
 function fetch_sources() {
     check_ishare2_dir
-    echo -e "${YELLOW}[+] Fetching sources...${NO_COLOR}"
+    echo -e "${YELLOW} [+] Fetching sources...${NO_COLOR}"
     curl -s -o $SOURCES https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/sources.list
     # Check if curl command failed
     if [[ ! -f $SOURCES ]]; then
-        echo -e "${RED}[-] Failed to fetch sources.${NO_COLOR}"
+        echo -e "${RED} [-] Failed to fetch sources.${NO_COLOR}"
         exit 1
     fi
-    echo -e "${GREEN}[+] Done.${NO_COLOR}"
+    echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
 download_file_curl() {
@@ -153,10 +153,11 @@ download_file() {
 
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
         echo -e "${YELLOW} [+] aria2c is installed. Using aria2c for faster downloads.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you want to use wget instead, please edit the configuration file running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}\n"
         download_file_aria2 "$url" "$output" "$options"
     else
-        echo -e "${YELLOW} [+] aria2c is not installed or you chose to use wget.${NO_COLOR}"
-        echo -e "${YELLOW} [+] Using wget${NO_COLOR}"
+        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you want to use aria2c instead, please edit the configuration file running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}\n"
         download_file_wget "$url" "$output" "$options"
     fi
 }
@@ -209,22 +210,22 @@ download_file_wget() {
 function set_url_constants() {
     # Check if sources file does not exist
     if [[ ! -f $SOURCES ]]; then
-        echo -e "${YELLOW}[!] Sources file does not exist.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file does not exist.${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is empty
     if [[ ! -s $SOURCES ]]; then
-        echo -e "${YELLOW}[!] Sources file is empty.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file is empty.${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is corrupted
     if ! grep -q "URL_ID_LIST=" $SOURCES; then
-        echo -e "${YELLOW}[!] Sources file is corrupted.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file is corrupted.${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is older than 1 day
     if [[ $(find $SOURCES -mtime +1) ]]; then
-        echo -e "${YELLOW}[!] Sources file is older than 1 day.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file is older than 1 day.${NO_COLOR}"
         fetch_sources
     fi
 
@@ -234,7 +235,7 @@ function set_url_constants() {
 function check_user_is_root() {
     if ! [[ "$(id -u)" == 0 ]]; then
         user=$(whoami)
-        echo -e "${RED}[!] This script requires root privileges to be executed. The current user, "$user", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
+        echo -e "${RED} [!] This script requires root privileges to be executed. The current user, "$user", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
         exit 1
     fi
 }
@@ -388,7 +389,7 @@ function mylabs_get_lab_list_just_for_only_readable_labs() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
 
@@ -442,7 +443,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
 
@@ -618,7 +619,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs_ALL() {
 
     if [[ $N -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
 
@@ -677,7 +678,7 @@ function get_lab_list_just_for_only_readable_labs() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
 
@@ -726,7 +727,7 @@ function install_lab_images_just_for_only_readable_labs() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
 
@@ -898,7 +899,7 @@ function install_lab_images_just_for_only_readable_labs_ALL() {
 
     if [[ $N -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
 
@@ -1187,20 +1188,20 @@ function upgrade_ishare2() {
     REMOTE_VALUE=$(curl -s $URL_VERSION)
 
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        echo -e "${YELLOW}[+] ishare2 $REMOTE_VALUE is already in the newest version available. ${NO_COLOR}"
-        echo -e "${YELLOW}[+] Reinstalling latest version of ishare2${NO_COLOR}"
+        echo -e "${YELLOW} [+] ishare2 $REMOTE_VALUE is already in the newest version available. ${NO_COLOR}"
+        echo -e "${YELLOW} [+] Reinstalling latest version of ishare2${NO_COLOR}"
     fi
 
     rm /usr/sbin/ishare2
     rm -rf /opt/ishare2/
     download_file_wget $URL_ISHARE2 /usr/sbin/ "ishare2"
 
-    echo -e "${GREEN}[+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
+    echo -e "${GREEN} [+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
     # Make ishare2 executable
-    echo -e "${YELLOW}[+] Setting ishare2 permissions${NO_COLOR}"
+    echo -e "${YELLOW} [+] Setting ishare2 permissions${NO_COLOR}"
     chmod +x /usr/sbin/ishare2
     # Show success message
-    echo -e "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
+    echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
 }
 
 function menu_ishare2_upgrade_pnetlab() {
@@ -1290,8 +1291,8 @@ function show_changelog() {
 
 function ishare2_gui_install() {
     ISHARE2_GUI_DIR=/opt/ishare2/gui
-    echo -e "${GREEN}[+] ishare2 GUI is being downloaded and installed. Please, wait until process is done...${NO_COLOR}"
-    echo -e "${YELLOW}[!] Stopping ishare2 GUI service...${NO_COLOR}"
+    echo -e "${GREEN} [+] ishare2 GUI is being downloaded and installed. Please, wait until process is done...${NO_COLOR}"
+    echo -e "${YELLOW} [!] Stopping ishare2 GUI service...${NO_COLOR}"
     systemctl stop ishare2_gui.service
     if [[ ! -d $ISHARE2_GUI_DIR ]]; then
         mkdir -p $ISHARE2_GUI_DIR
@@ -1304,28 +1305,28 @@ function ishare2_gui_install() {
             rm -rf $ISHARE2_GUI_DIR/* >"$ISHARE2_DIR/ishare2_gui_install.log"
             rm -rf $ISHARE2_GUI_DIR/.* >"$ISHARE2_DIR/ishare2_gui_install.log"
             # remove systemd service
-            echo -e "${YELLOW}[!] Removing ishare2 GUI systemd service...${NO_COLOR}"
+            echo -e "${YELLOW} [!] Removing ishare2 GUI systemd service...${NO_COLOR}"
             systemctl disable ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
             rm /etc/systemd/system/ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
         else
-            echo -e "${RED}[-] ishare2 GUI installation was cancelled. ${NO_COLOR}"
+            echo -e "${RED} [-] ishare2 GUI installation was cancelled. ${NO_COLOR}"
             exit 1
         fi
     fi
 
-    echo -e "${GREEN}[+] Downloading ishare2 GUI...${NO_COLOR}"
+    echo -e "${GREEN} [+] Downloading ishare2 GUI...${NO_COLOR}"
     download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR" "app.zip"
 
     # unzip
-    echo -e "${GREEN}[+] Unzipping ishare2 GUI files...${NO_COLOR}"
+    echo -e "${GREEN} [+] Unzipping ishare2 GUI files...${NO_COLOR}"
     unzip -o -q "$ISHARE2_GUI_DIR/app.zip" -d "$ISHARE2_GUI_DIR"
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error unzipping ishare2 GUI. The file may be corrupted. ${NO_COLOR}"
-        echo "${RED}[-] Please check your internet connection and try again. ${NO_COLOR}"
+        echo "${RED} [-] Error unzipping ishare2 GUI. The file may be corrupted. ${NO_COLOR}"
+        echo "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
         exit 1
     fi
     # move files
-    echo -e "${GREEN}[+] Moving files... ${NO_COLOR}"
+    echo -e "${GREEN} [+] Moving files... ${NO_COLOR}"
     mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/* $ISHARE2_GUI_DIR
     # move files starting with a dot if any
     mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/.* $ISHARE2_GUI_DIR
@@ -1333,42 +1334,42 @@ function ishare2_gui_install() {
 
     rm $ISHARE2_GUI_DIR/app.zip
 
-    echo -e "${GREEN}[+] Installing ishare2 GUI requirements...${NO_COLOR}"
+    echo -e "${GREEN} [+] Installing ishare2 GUI requirements...${NO_COLOR}"
     # Make sure pip3 is installed
     apt-get install -y python3-pip
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error installing pip3. ${NO_COLOR}"
-        echo "${RED}[-] Please install pip3 manually and try again. ${NO_COLOR}"
+        echo "${RED} [-] Error installing pip3. ${NO_COLOR}"
+        echo "${RED} [-] Please install pip3 manually and try again. ${NO_COLOR}"
         exit 1
     fi
 
     # Make sure venv is installed
     apt-get install -y python3-venv
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error installing venv. ${NO_COLOR}"
-        echo "${RED}[-] Please install venv manually and try again. ${NO_COLOR}"
-        echo "${RED}[-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
+        echo "${RED} [-] Error installing venv. ${NO_COLOR}"
+        echo "${RED} [-] Please install venv manually and try again. ${NO_COLOR}"
+        echo "${RED} [-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
         exit 1
     fi
 
     # Make venv for ishare2 GUI
     python3 -m venv $ISHARE2_GUI_DIR/venv
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
-        echo "${RED}[-] Please read previous logs for troubleshooting. ${NO_COLOR}"
+        echo "${RED} [-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
+        echo "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
         exit 1
     fi
 
     # Install requirements
     $ISHARE2_GUI_DIR/venv/bin/pip install -r $ISHARE2_GUI_DIR/requirements.txt
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
-        echo "${RED}[-] Please read previous logs for troubleshooting. ${NO_COLOR}"
+        echo "${RED} [-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
+        echo "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
         exit 1
     fi
 
     # Create systemd service to run ishare2 GUI
-    echo -e "${GREEN}[+] Creating systemd service to run ishare2 GUI...${NO_COLOR}"
+    echo -e "${GREEN} [+] Creating systemd service to run ishare2 GUI...${NO_COLOR}"
     cat >/etc/systemd/system/ishare2_gui.service <<EOL
 [Unit]
 Description=ishare2 GUI Web App
@@ -1386,7 +1387,7 @@ WantedBy=multi-user.target
 EOL
 
     # Enable and start ishare2 GUI service
-    echo -e "${GREEN}[+] Enabling and starting ishare2 GUI service...${NO_COLOR}"
+    echo -e "${GREEN} [+] Enabling and starting ishare2 GUI service...${NO_COLOR}"
     read -p "Do you want to start ishare2 GUI on boot? [y/n]: " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -1394,11 +1395,11 @@ EOL
     fi
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
-    echo -e "${GREEN}[!] ishare2 GUI was installed successfully. ${NO_COLOR}"
+    echo -e "${GREEN} [!] ishare2 GUI was installed successfully. ${NO_COLOR}"
     echo -e "${GREEN}You can access ishare2 GUI at: http://<server_ip>:5000 or http://localhost:5000 ${NO_COLOR}"
     echo -e "${GREEN}Additionally, you can use the following commands to manage ishare2 GUI: ${NO_COLOR}"
     echo -e "${GREEN}   ishare2 gui start: Start ishare2 GUI service ${NO_COLOR}"
@@ -1410,8 +1411,8 @@ EOL
 function ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
@@ -1419,8 +1420,8 @@ function ishare2_gui_start() {
 function ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error stopping ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo "${RED} [-] Error stopping ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
@@ -1428,8 +1429,8 @@ function ishare2_gui_stop() {
 function ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED}[-] Error restarting ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo "${RED} [-] Error restarting ishare2 GUI service. ${NO_COLOR}"
+        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
@@ -1811,6 +1812,7 @@ Examples:
 - ishare2 upgrade
 - ishare2 changelog
 - ishare2 test
+- ishare2 config
 - ishare2 help
 
 ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
@@ -1856,10 +1858,10 @@ function tgz_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
@@ -1872,10 +1874,10 @@ function tar_gz_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
@@ -1888,10 +1890,10 @@ function tar_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
@@ -1904,10 +1906,10 @@ function zip_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         unzip -a -j "$file" -d "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
@@ -1925,9 +1927,9 @@ function rar_files_function() {
             apt -qq update >/dev/null 2>&1 && apt -qq install --assume-yes unrar >/dev/null 2>&1
         fi
 
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         unrar e "$file" "$DIR" >/dev/null 2>&1
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
         rm "$file"
     fi
 }
@@ -1941,10 +1943,10 @@ function ova_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         COMPRESSED_FILE=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xvf "$COMPRESSED_FILE" -C "$DIR"
         rm "$COMPRESSED_FILE"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
@@ -2083,7 +2085,7 @@ function check_if_yml_template_is_missing() {
     FULL_TEMPLATE_PATH=$YML_DIR"$TEMPLATE_NAME"$EXTENSION
 
     if ! [[ -e $FULL_TEMPLATE_PATH ]]; then
-        STR="\n ${RED}[-] Template $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
+        STR="\n ${RED} [-] Template $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
         echo -e "$STR\033[0m"
     fi
 }
@@ -2416,23 +2418,23 @@ function fix_permissions() {
 
 function connection_tests() {
     # Header
-    echo -e "${YELLOW}[-] Running connection tests... ${NO_COLOR}"
+    echo -e "${YELLOW} [-] Running connection tests... ${NO_COLOR}"
     # Check if GitHub is reachable
-    echo -e "${YELLOW}[-] Checking if GitHub is reachable... ${NO_COLOR}"
+    echo -e "${YELLOW} [-] Checking if GitHub is reachable... ${NO_COLOR}"
     if ping -q -c 1 -W 1 github.com >/dev/null; then
-        echo -e "${GREEN}[+] GitHub is reachable. ${NO_COLOR}"
+        echo -e "${GREEN} [+] GitHub is reachable. ${NO_COLOR}"
     else
-        echo -e "${RED}[-] GitHub is not reachable ${NO_COLOR}"
+        echo -e "${RED} [-] GitHub is not reachable ${NO_COLOR}"
     fi
     # Check if Google Sheets is reachable
-    echo -e "${YELLOW}[-] Checking if Google Sheets is reachable... ${NO_COLOR}"
+    echo -e "${YELLOW} [-] Checking if Google Sheets is reachable... ${NO_COLOR}"
     if ping -q -c 1 -W 1 docs.google.com >/dev/null; then
-        echo -e "${GREEN}[+] Google Sheets is reachable. ${NO_COLOR}"
+        echo -e "${GREEN} [+] Google Sheets is reachable. ${NO_COLOR}"
     else
-        echo -e "${RED}[-] Google Sheets is not reachable ${NO_COLOR}"
+        echo -e "${RED} [-] Google Sheets is not reachable ${NO_COLOR}"
     fi
     # Checks completed
-    echo -e "${YELLOW}[-] Connection tests completed. ${NO_COLOR}"
+    echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
 }
 
 function selector() {
