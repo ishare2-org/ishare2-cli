@@ -66,6 +66,11 @@ function create_config() {
     else
         echo "USE_ARIA2C=false" >$ISHARE2_DIR/ishare2.conf
     fi
+    # Validate the configuration file
+    if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
+        echo -e "${RED}[!] Failed to create configuration file. Please try again.${NO_COLOR}"
+        exit 1
+    fi
 }
 
 function install_aria2c() {
