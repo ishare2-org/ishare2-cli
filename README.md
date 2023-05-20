@@ -50,13 +50,13 @@ There are different ways of installing `ishare2` in your terminal. Choose one of
 ### wget
 
 ```linux
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/alpha/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 ### curl
 
 ```linux
-curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2\
+curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/alpha/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2\
 ```
 
 ### Manual installation
