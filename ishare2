@@ -259,6 +259,7 @@ function download_files_lists() {
 
             # Check if the file is empty or corrupt
             if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
+                connection_tests
                 echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
                 # Ask the user if he wants to try downloading the file again.
                 # If the user chooses to download the file again, the script will exit.
@@ -280,13 +281,14 @@ function download_files_lists() {
 
         # Check if the file is empty or corrupt
         if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
-            echo -e "${RED} [!] The downloaded file is empty or corrupt. Please check the URL or the file contents.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            echo -e "${RED} [!] The downloaded file is empty or corrupt. Please check file contents.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
             # Handle the error condition as needed
             download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
         fi
     fi
     if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
         echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
+        connection_tests
         # Ask the user if he wants to try downloading the file again.
         # If the user chooses to download the file again, the script will exit.
         read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
@@ -342,6 +344,7 @@ fetch_lists() {
 
         # Check if the file is empty or does not contain valid CSV content
         if [ ! -s $ISHARE2_DIR"/$TYPE.csv" ] || ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
+            connection_tests
             echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
             echo -e "${YELLOW} [!] Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.${NO_COLOR}"
             read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
@@ -367,7 +370,7 @@ validate_csv_file() {
 
         # Check if the file has at least 4 columns and 5 rows
         if [[ $num_columns -ge 4 ]] && [[ $num_rows -ge 5 ]]; then
-        return 0 # Valid CSV file
+            return 0 # Valid CSV file
         else
             echo -e "${RED} [!] The file is missing columns or rows.${NO_COLOR}"
             return 1 # Invalid CSV file
@@ -2516,6 +2519,12 @@ function connection_tests() {
         echo -e "${GREEN} [+] Google Sheets is reachable. ${NO_COLOR}"
     else
         echo -e "${RED} [-] Google Sheets is not reachable ${NO_COLOR}"
+    fi
+    # Check if labhub.eu.org is reachable
+    if ping -q -c 1 -W 1 labhub.eu.org >/dev/null; then
+        echo -e "${GREEN} [+] labhub.eu.org is reachable. ${NO_COLOR}"
+    else
+        echo -e "${RED} [-] labhub.eu.org is not reachable ${NO_COLOR}"
     fi
     # Checks completed
     echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
