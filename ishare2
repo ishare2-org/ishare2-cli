@@ -61,10 +61,16 @@ function create_config() {
     echo -e "${YELLOW} [+] Use aria2c for faster downloads?${NO_COLOR}"
     read -p " [+] (y/n): " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW} [!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >$ISHARE2_DIR/ishare2.conf
         install_aria2c
+        echo "Press any key to continue..."
+        read -n 1
     else
+        echo -e "${YELLOW} [!] You can enable aria2c later by running: ishare2 config${NO_COLOR}"
         echo "USE_ARIA2C=false" >$ISHARE2_DIR/ishare2.conf
+        echo "Press any key to continue..."
+        read -n 1
     fi
     # Validate the configuration file
     if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
