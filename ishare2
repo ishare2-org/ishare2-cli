@@ -216,22 +216,22 @@ download_file_wget() {
 function set_url_constants() {
     # Check if sources file does not exist
     if [[ ! -f $SOURCES ]]; then
-        echo -e "${YELLOW} [!] Sources file does not exist.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file does not exist. Downloading...${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is empty
     if [[ ! -s $SOURCES ]]; then
-        echo -e "${YELLOW} [!] Sources file is empty.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file is empty. Updating...${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is corrupted
     if ! grep -q "URL_ID_LIST=" $SOURCES; then
-        echo -e "${YELLOW} [!] Sources file is corrupted.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file is corrupted. Updating...${NO_COLOR}"
         fetch_sources
     fi
     # Check if sources file is older than 1 day
     if [[ $(find $SOURCES -mtime +1) ]]; then
-        echo -e "${YELLOW} [!] Sources file is older than 1 day.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Sources file is older than 1 day. Updating...${NO_COLOR}"
         fetch_sources
     fi
 
