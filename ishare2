@@ -40,6 +40,8 @@ function check_config() {
         echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
         create_config
     fi
+    # check if config file is valid
+    validate_conf_file
 }
 
 function switch_downloader() {
