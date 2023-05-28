@@ -2,7 +2,7 @@
 #October, 2022
 # Constants
 # ishare2 configuration
-CHANNEL="main" # you can change this to available branches in github.com/pnetlabrepo/ishare2
+CHANNEL="alpha" # you can change this to available branches in github.com/pnetlabrepo/ishare2
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
 VERSION="v2.1.0-alpha" # Script version
