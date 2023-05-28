@@ -72,6 +72,22 @@ function create_config() {
         echo "Press any key to continue..."
         read -n 1
     fi
+
+    # Ask for the channel value
+    echo -e "${YELLOW} [+] Select the channel:${NO_COLOR}"
+    echo "  1) main"
+    echo "  2) alpha"
+    read -p " [+] Enter the channel number (default: 1): " -r
+    case $REPLY in
+    2)
+        CHANNEL="alpha"
+        ;;
+    *)
+        CHANNEL="main"
+        ;;
+    esac
+    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
+
     # Validate the configuration file
     if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
         echo -e "${RED} [!] Failed to create configuration file. Please try again.${NO_COLOR}"
