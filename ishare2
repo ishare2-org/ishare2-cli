@@ -361,10 +361,17 @@ validate_csv_file() {
 
     # Validate if the file content matches the expected CSV format
     if [[ $(file -b --mime-type "$file_path") == text/csv ]]; then
-        # Optionally, you can perform further checks on the CSV content here
-        # For example, checking if required columns or headers are present
+        # Count the number of columns and rows in the CSV file
+        local num_columns=$(awk -F, '{print NF; exit}' "$file_path")
+        local num_rows=$(wc -l <"$file_path")
 
+        # Check if the file has at least 4 columns and 5 rows
+        if [[ $num_columns -ge 4 ]] && [[ $num_rows -ge 5 ]]; then
         return 0 # Valid CSV file
+        else
+            echo -e "${RED} [!] The file is missing columns or rows.${NO_COLOR}"
+            return 1 # Invalid CSV file
+        fi
     else
         return 1 # Invalid CSV file
     fi
