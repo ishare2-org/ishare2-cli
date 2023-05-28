@@ -256,13 +256,49 @@ function download_files_lists() {
         if [ $(find $ISHARE2_DIR"/id_list" -mtime +1) ]; then
             echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs is older than 1 day. Updating... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
             download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+
+            # Check if the file is empty or corrupt
+            if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
+                echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
+                # Ask the user if he wants to try downloading the file again.
+                # If the user chooses to download the file again, the script will exit.
+                read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
+                echo ""
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+                else
+                    exit 1
+                fi
+
+            fi
         else
             echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         fi
     else
         echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs does not exist. Downloading... ${NO_COLOR}"
         download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+
+        # Check if the file is empty or corrupt
+        if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
+            echo -e "${RED} [!] The downloaded file is empty or corrupt. Please check the URL or the file contents.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            # Handle the error condition as needed
+            download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+        fi
     fi
+    if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
+        echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
+        # Ask the user if he wants to try downloading the file again.
+        # If the user chooses to download the file again, the script will exit.
+        read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+        else
+            exit 1
+        fi
+
+    fi
+
     # Source the id_list file
     source $ISHARE2_DIR"/id_list"
     # Define the URLs
@@ -283,6 +319,7 @@ fetch_lists() {
     TYPE=$1
     URL=$2
     CHECK_DATE=${3:-true} # default value is true
+
     if [ -f $ISHARE2_DIR"/$TYPE.csv" ]; then
         if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
             echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
@@ -293,9 +330,43 @@ fetch_lists() {
         else
             echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         fi
+
+        # Check if the file is empty or does not contain valid CSV content
+        if [ ! -s $ISHARE2_DIR"/$TYPE.csv" ] || ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
+            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
+            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        fi
     else
         echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+
+        # Check if the file is empty or does not contain valid CSV content
+        if [ ! -s $ISHARE2_DIR"/$TYPE.csv" ] || ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
+            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
+            echo -e "${YELLOW} [!] Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.${NO_COLOR}"
+            read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
+            echo ""
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+            else
+                exit 1
+            fi
+        fi
+    fi
+}
+
+# Function to validate if a file is in valid CSV format
+validate_csv_file() {
+    local file_path=$1
+
+    # Validate if the file content matches the expected CSV format
+    if [[ $(file -b --mime-type "$file_path") == text/csv ]]; then
+        # Optionally, you can perform further checks on the CSV content here
+        # For example, checking if required columns or headers are present
+
+        return 0 # Valid CSV file
+    else
+        return 1 # Invalid CSV file
     fi
 }
 
