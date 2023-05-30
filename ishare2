@@ -410,6 +410,7 @@ fetch_lists() {
         if ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
             echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
             download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+            echo "Validation result: validate_csv_file $ISHARE2_DIR/$TYPE.csv check 1" >>$ISHARE2_DIR/logs.txt
         fi
     else
         echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
@@ -417,6 +418,7 @@ fetch_lists() {
         if ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
             echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
             download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+            echo "Validation result: validate_csv_file $ISHARE2_DIR/$TYPE.csv check 2" >>$ISHARE2_DIR/logs.txt
         fi
     fi
 }
