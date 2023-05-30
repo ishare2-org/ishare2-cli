@@ -425,9 +425,12 @@ validate_csv_file() {
 
     # Check if the file exists
     if [[ ! -f "$file_path" ]]; then
-        echo -e "${RED} [!] The CSV file does not exist.${NO_COLOR}"
+        echo -e "${RED} [!] The file does not exist: $file_path ${NO_COLOR}"
         return 1 # Invalid CSV file
     fi
+
+    # Log the file path and validation process
+    echo "Validating file: $file_path"
 
     # Validate if the file content matches the expected CSV format
     if [[ $(file -b --mime-type "$file_path") == text/csv ]]; then
@@ -435,14 +438,20 @@ validate_csv_file() {
         local num_columns=$(awk -F, '{print NF; exit}' "$file_path")
         local num_rows=$(wc -l <"$file_path")
 
+        # Log the number of columns and rows
+        echo "Number of columns: $num_columns"
+        echo "Number of rows: $num_rows"
+
         # Check if the file has at least 4 columns and 5 rows
         if [[ $num_columns -ge 4 ]] && [[ $num_rows -ge 5 ]]; then
+            echo "File is a valid CSV."
             return 0 # Valid CSV file
         else
             echo -e "${RED} [!] The file is missing columns or rows.${NO_COLOR}"
             return 1 # Invalid CSV file
         fi
     else
+        echo -e "${RED} [!] The file is not in CSV format.${NO_COLOR}"
         return 1 # Invalid CSV file
     fi
 }
