@@ -414,20 +414,6 @@ fetch_lists() {
     else
         echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-
-        # Check if the file is empty or does not contain valid CSV content
-        if [ ! -s $ISHARE2_DIR"/$TYPE.csv" ] || ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
-            connection_tests
-            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.${NO_COLOR}"
-            read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
-            echo ""
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-            else
-                exit 1
-            fi
-        fi
     fi
 }
 
