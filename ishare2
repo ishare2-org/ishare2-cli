@@ -395,20 +395,16 @@ fetch_lists() {
     URL=$2
     CHECK_DATE=${3:-true} # default value is true
 
-    if [ -f $ISHARE2_DIR"/$TYPE.csv" ]; then
-        if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        elif [[ "$CHECK_DATE" == "false" ]]; then
-            echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        else
-            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        fi
-    else
-        echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
+    if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
+        echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+    elif [[ "$CHECK_DATE" == "false" ]]; then
+        echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
+        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+    else
+        echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
     fi
+
     # use validate_csv_file function to validate the file, it will return 0 if the file is valid
     if validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
         echo -e "${GREEN} [+] The list of $TYPE images is valid. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
