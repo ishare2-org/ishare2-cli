@@ -405,27 +405,29 @@ fetch_lists() {
         else
             echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         fi
-
-        # Check if the file is empty or does not contain valid CSV content
-        if ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
-            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-            echo "Validation result: validate_csv_file $ISHARE2_DIR/$TYPE.csv check 1" >>$ISHARE2_DIR/logs.txt
-        fi
     else
         echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        if ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
-            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-            echo "Validation result: validate_csv_file $ISHARE2_DIR/$TYPE.csv check 2" >>$ISHARE2_DIR/logs.txt
-        fi
+    fi
+    # use validate_csv_file function to validate the file, it will return 0 if the file is valid
+    if validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
+        echo -e "${GREEN} [+] The list of $TYPE images is valid. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    else
+        echo -e "${RED} [!] The list of $TYPE images is invalid. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        # Handle the error condition as needed
+        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
     fi
 }
 
 # Function to validate if a file is in valid CSV format
 validate_csv_file() {
     local file_path=$1
+
+    # Check if the file exists
+    if [[ ! -f "$file_path" ]]; then
+        echo -e "${RED} [!] The CSV file does not exist.${NO_COLOR}"
+        return 1 # Invalid CSV file
+    fi
 
     # Validate if the file content matches the expected CSV format
     if [[ $(file -b --mime-type "$file_path") == text/csv ]]; then
