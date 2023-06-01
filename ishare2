@@ -398,58 +398,51 @@ fetch_lists() {
     if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
         echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
     elif [[ "$CHECK_DATE" == "false" ]]; then
         echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
     else
         echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
     fi
-
-    # use validate_csv_file function to validate the file, it will return 0 if the file is valid
-    if validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
-        echo -e "${GREEN} [+] The list of $TYPE images is valid. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-    else
-        echo -e "${RED} [!] The list of $TYPE images is invalid. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        # Handle the error condition as needed
-        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-    fi
 }
 
-# Function to validate if a file is in valid CSV format
-validate_csv_file() {
-    local file_path=$1
+check_file_corruption() {
+    DIR=$1
+    FILENAME=$2
 
-    # Check if the file exists
-    if [[ ! -f "$file_path" ]]; then
-        echo -e "${RED} [!] The file does not exist: $file_path ${NO_COLOR}"
-        return 1 # Invalid CSV file
+    # Check if the file is empty
+    if [ ! -s "$DIR/$FILENAME" ]; then
+        echo -e "${RED} [!] The file $FILENAME is empty or corrupted. ${NO_COLOR}"
+        read -p "Do you want to download the file again? (y/n): " choice
+        case $choice in
+        [Yy]*)
+            download_file_wget $URL $DIR "$FILENAME"
+            check_file_corruption $DIR "$FILENAME"
+            ;;
+        *) ;;
+        esac
+        return
     fi
 
-    # Log the file path and validation process
-    echo "Validating file: $file_path"
-
-    # Validate if the file content matches the expected CSV format
-    if [[ $(file -b --mime-type "$file_path") == text/csv ]]; then
-        # Count the number of columns and rows in the CSV file
-        local num_columns=$(awk -F, '{print NF; exit}' "$file_path")
-        local num_rows=$(wc -l <"$file_path")
-
-        # Log the number of columns and rows
-        echo "Number of columns: $num_columns"
-        echo "Number of rows: $num_rows"
-
-        # Check if the file has at least 4 columns and 5 rows
-        if [[ $num_columns -ge 4 ]] && [[ $num_rows -ge 5 ]]; then
-            echo "File is a valid CSV."
-            return 0 # Valid CSV file
-        else
-            echo -e "${RED} [!] The file is missing columns or rows.${NO_COLOR}"
-            return 1 # Invalid CSV file
-        fi
-    else
-        echo -e "${RED} [!] The file is not in CSV format.${NO_COLOR}"
-        return 1 # Invalid CSV file
+    # Check the minimum number of columns and rows
+    num_columns=$(awk -F',' 'NR==1{print NF}' "$DIR/$FILENAME")
+    num_rows=$(wc -l <"$DIR/$FILENAME")
+    if [ "$num_columns" -lt 4 ] || [ "$num_rows" -lt 5 ]; then
+        echo -e "${RED} [!] The file $FILENAME is corrupted. ${NO_COLOR}"
+        read -p "Do you want to download the file again? (y/n): " choice
+        case $choice in
+        [Yy]*)
+            download_file_wget $URL $DIR "$FILENAME"
+            check_file_corruption $DIR "$FILENAME"
+            ;;
+        *) ;;
+        esac
+        return
     fi
+
+    echo -e "${GREEN} [+] The file $FILENAME is valid. ${NO_COLOR}"
 }
 
 manual_sources_update() {
