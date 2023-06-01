@@ -153,6 +153,8 @@ validate_conf_file() {
 }
 
 function install_aria2c() {
+    # unlock apt
+    unlock_dpkg
     # check if aria2c is installed otherwise install it
     if ! command -v aria2c &>/dev/null; then
         echo -e "${YELLOW} [+] aria2c is not installed.${NO_COLOR}"
@@ -171,6 +173,42 @@ function install_aria2c() {
             exit 1
         fi
     fi
+}
+
+function unlock_dpkg() {
+    # Check if apt is running
+    if pgrep apt >/dev/null 2>&1; then
+        echo "apt is currently running. Would you like to attempt unlocking dpkg? (y/n)"
+        read -r answer
+
+        if [[ $answer == "y" || $answer == "Y" ]]; then
+            echo "Trying to kill the apt process..."
+
+            # Attempt to kill apt process
+            killall -r '^(apt|dpkg)$' >/dev/null 2>&1
+
+            # Wait for the process to terminate
+            sleep 5
+
+            # Check if apt process is still running
+            if pgrep apt >/dev/null 2>&1; then
+                echo "Killing apt process failed. Exiting..."
+                exit 1
+            fi
+        else
+            echo "Skipping dpkg unlocking. Exiting..."
+            exit 0
+        fi
+    fi
+
+    # Remove lock files
+    sudo rm /var/lib/dpkg/lock >/dev/null 2>&1
+    sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
+    # Remove lock files for apt frontend
+    sudo rm /var/lib/dpkg/lock-frontend
+    sudo rm /var/cache/apt/archives/lock
+
+    echo "Lock files removed successfully."
 }
 
 function create_ishare2_dir() {
