@@ -158,10 +158,20 @@ function install_aria2c() {
     # check if aria2c is installed otherwise install it
     if ! command -v aria2c &>/dev/null; then
         echo -e "${YELLOW} [+] aria2c is not installed.${NO_COLOR}"
+        echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
+        if ! apt-get update; then
+            echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
+            exit 1
+        fi
 
         echo -e "${YELLOW} [+] Installing aria2c...${NO_COLOR}"
         if ! apt-get install -y aria2; then
             echo -e "${RED} [-] Failed to install aria2c.${NO_COLOR}"
+            exit 1
+        fi
+        echo -e "${YELLOW} [+] Installing unrar...${NO_COLOR}"
+        if ! apt-get install -y unrar; then
+            echo -e "${RED} [-] Failed to install unrar.${NO_COLOR}"
             exit 1
         fi
         echo -e "${GREEN} [+] Done.${NO_COLOR}"
