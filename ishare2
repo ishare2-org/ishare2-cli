@@ -395,7 +395,16 @@ fetch_lists() {
     URL=$2
     CHECK_DATE=${3:-true} # default value is true
 
-    if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
+    FILE_PATH="$ISHARE2_DIR/$TYPE.csv"
+
+    if [ ! -f "$FILE_PATH" ]; then
+        echo -e "${YELLOW} [!] The list of $TYPE images does not exist. Downloading ${NO_COLOR}"
+        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
+        return
+    fi
+
+    if [[ "$CHECK_DATE" == "true" ]] && [ $(find "$FILE_PATH" -mtime +1) ]; then
         echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
         check_file_corruption $ISHARE2_DIR "$TYPE.csv"
