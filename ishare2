@@ -40,6 +40,8 @@ function check_config() {
         echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
         create_config
     fi
+    # check if config file is valid
+    validate_conf_file
 }
 
 function switch_downloader() {
@@ -72,11 +74,82 @@ function create_config() {
         echo "Press any key to continue..."
         read -n 1
     fi
+
+    # Ask for the channel value
+    echo -e "${YELLOW} [+] Select the channel:${NO_COLOR}"
+    echo "  1) main"
+    echo "  2) alpha"
+    read -p " [+] Enter the channel number (default: 1): " -r
+    case $REPLY in
+    2)
+        CHANNEL="alpha"
+        ;;
+    *)
+        CHANNEL="main"
+        ;;
+    esac
+    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
+
     # Validate the configuration file
     if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
         echo -e "${RED} [!] Failed to create configuration file. Please try again.${NO_COLOR}"
         exit 1
     fi
+    remove_duplicates
+}
+
+remove_duplicates() {
+    local config_file="$ISHARE2_DIR/ishare2.conf"
+
+    # Check if the configuration file exists
+    if [ ! -f "$config_file" ]; then
+        echo -e "${RED} [!] Configuration file does not exist.${NO_COLOR}"
+        return
+    fi
+
+    # Remove duplicate lines from the configuration file
+    awk '!seen[$0]++' "$config_file" >"$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+    echo -e "${GREEN} [+] Duplicates removed from the configuration file.${NO_COLOR}"
+}
+
+validate_conf_file() {
+    local config_file="$ISHARE2_DIR/ishare2.conf"
+
+    # Check if the configuration file exists
+    if [ ! -f "$config_file" ]; then
+        echo -e "${RED} [!] Configuration file does not exist.${NO_COLOR}"
+        return 1
+    fi
+
+    # Array of allowed variables
+    local allowed_vars=("USE_ARIA2C" "CHANNEL")
+
+    # Read the configuration file line by line and filter out invalid variables
+    local filtered_content=""
+    while IFS= read -r line; do
+        # Skip empty lines and comments
+        if [[ -z "$line" || "$line" == \#* ]]; then
+            continue
+        fi
+
+        # Extract variable name
+        local var_name="${line%%=*}"
+
+        # Check if the variable is allowed
+        if [[ " ${allowed_vars[@]} " =~ " $var_name " ]]; then
+            filtered_content+="$line"$'\n'
+        else
+            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}"
+        fi
+    done <"$config_file"
+
+    # Write the filtered content back to the configuration file
+    echo "$filtered_content" >"$config_file"
+
+    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >$ISHARE2_DIR/logs.txt
+    source "$config_file"
+    return 0
 }
 
 function install_aria2c() {
@@ -259,6 +332,7 @@ function download_files_lists() {
 
             # Check if the file is empty or corrupt
             if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
+                connection_tests
                 echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
                 # Ask the user if he wants to try downloading the file again.
                 # If the user chooses to download the file again, the script will exit.
@@ -280,13 +354,14 @@ function download_files_lists() {
 
         # Check if the file is empty or corrupt
         if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
-            echo -e "${RED} [!] The downloaded file is empty or corrupt. Please check the URL or the file contents.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            echo -e "${RED} [!] The downloaded file is empty or corrupt. Please check file contents.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
             # Handle the error condition as needed
             download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
         fi
     fi
     if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
         echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
+        connection_tests
         # Ask the user if he wants to try downloading the file again.
         # If the user chooses to download the file again, the script will exit.
         read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
@@ -320,54 +395,64 @@ fetch_lists() {
     URL=$2
     CHECK_DATE=${3:-true} # default value is true
 
-    if [ -f $ISHARE2_DIR"/$TYPE.csv" ]; then
-        if [[ "$CHECK_DATE" == "true" ]] && [ $(find $ISHARE2_DIR"/$TYPE.csv" -mtime +1) ]; then
-            echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        elif [[ "$CHECK_DATE" == "false" ]]; then
-            echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        else
-            echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        fi
+    FILE_PATH="$ISHARE2_DIR/$TYPE.csv"
 
-        # Check if the file is empty or does not contain valid CSV content
-        if [ ! -s $ISHARE2_DIR"/$TYPE.csv" ] || ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
-            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
-            download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        fi
-    else
-        echo -e "${YELLOW} [!] The list of images $TYPE does not exist. ${NO_COLOR}"
+    if [ ! -f "$FILE_PATH" ]; then
+        echo -e "${YELLOW} [!] The list of $TYPE images does not exist. Downloading ${NO_COLOR}"
         download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
+        return
+    fi
 
-        # Check if the file is empty or does not contain valid CSV content
-        if [ ! -s $ISHARE2_DIR"/$TYPE.csv" ] || ! validate_csv_file $ISHARE2_DIR"/$TYPE.csv"; then
-            echo -e "${RED} [!] The downloaded file is empty or does not contain valid CSV content.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.${NO_COLOR}"
-            read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
-            echo ""
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-            else
-                exit 1
-            fi
-        fi
+    if [[ "$CHECK_DATE" == "true" ]] && [ $(find "$FILE_PATH" -mtime +1) ]; then
+        echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
+    elif [[ "$CHECK_DATE" == "false" ]]; then
+        echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
+        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
+        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
+    else
+        echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
     fi
 }
 
-# Function to validate if a file is in valid CSV format
-validate_csv_file() {
-    local file_path=$1
+check_file_corruption() {
+    DIR=$1
+    FILENAME=$2
 
-    # Validate if the file content matches the expected CSV format
-    if [[ $(file -b --mime-type "$file_path") == text/csv ]]; then
-        # Optionally, you can perform further checks on the CSV content here
-        # For example, checking if required columns or headers are present
-
-        return 0 # Valid CSV file
-    else
-        return 1 # Invalid CSV file
+    # Check if the file is empty
+    if [ ! -s "$DIR/$FILENAME" ]; then
+        echo -e "${RED} [!] The file $FILENAME is empty or corrupted. ${NO_COLOR}"
+        read -p "Do you want to download the file again? (y/n): " choice
+        case $choice in
+        [Yy]*)
+            download_file_wget $URL $DIR "$FILENAME"
+            check_file_corruption $DIR "$FILENAME"
+            ;;
+        *) ;;
+        esac
+        return
     fi
+
+    # Check the minimum number of columns and rows
+    num_columns=$(head -n 1 "$DIR/$FILENAME" | awk -F',' '{print NF}')
+    num_rows=$(wc -l <"$DIR/$FILENAME")
+
+    if ((num_columns < 4 || num_rows < 5)); then
+        echo -e "${RED} [!] The file $FILENAME is corrupted. ${NO_COLOR}"
+        read -p "Do you want to download the file again? (y/n): " choice
+        case $choice in
+        [Yy]*)
+            download_file_wget $URL $DIR "$FILENAME"
+            check_file_corruption $DIR "$FILENAME"
+            ;;
+        *) ;;
+        esac
+        return
+    fi
+
+    echo -e "${GREEN} [+] The file $FILENAME is valid. ${NO_COLOR}"
 }
 
 manual_sources_update() {
@@ -1893,7 +1978,8 @@ Examples:
 - ishare2 help
 
 ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
-pnetlab: v$PNETLAB_VERSION_USAGE
+Channel: $CHANNEL
+PNetLab: v$PNETLAB_VERSION_USAGE
 ishare2 GUI: $ISHARE2_GUI_VERSION_USAGE$NEW_VERSION_RESULT_FOR_ISHARE2_GUI
 "
 }
@@ -2509,6 +2595,12 @@ function connection_tests() {
         echo -e "${GREEN} [+] Google Sheets is reachable. ${NO_COLOR}"
     else
         echo -e "${RED} [-] Google Sheets is not reachable ${NO_COLOR}"
+    fi
+    # Check if labhub.eu.org is reachable
+    if ping -q -c 1 -W 1 labhub.eu.org >/dev/null; then
+        echo -e "${GREEN} [+] labhub.eu.org is reachable. ${NO_COLOR}"
+    else
+        echo -e "${RED} [-] labhub.eu.org is not reachable ${NO_COLOR}"
     fi
     # Checks completed
     echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
