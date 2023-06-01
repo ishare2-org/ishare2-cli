@@ -436,9 +436,10 @@ check_file_corruption() {
     fi
 
     # Check the minimum number of columns and rows
-    num_columns=$(awk -F',' 'NR==1{print NF}' "$DIR/$FILENAME")
+    num_columns=$(head -n 1 "$DIR/$FILENAME" | awk -F',' '{print NF}')
     num_rows=$(wc -l <"$DIR/$FILENAME")
-    if [ "$num_columns" -lt 4 ] || [ "$num_rows" -lt 5 ]; then
+
+    if ((num_columns < 4 || num_rows < 5)); then
         echo -e "${RED} [!] The file $FILENAME is corrupted. ${NO_COLOR}"
         read -p "Do you want to download the file again? (y/n): " choice
         case $choice in
