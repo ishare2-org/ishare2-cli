@@ -5,7 +5,7 @@
 CHANNEL="main" # you can change this to available branches in github.com/pnetlabrepo/ishare2
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v2.1.0" # Script version
+VERSION="v2.1.2" # Script version
 
 # Colors
 RED='\033[31m'
