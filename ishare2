@@ -1507,8 +1507,15 @@ function ishare2_gui_install() {
 
     if [[ -z "$PYTHON3_11_PATH" ]]; then
         echo "${RED}Error: Python 3.11 is not installed.${NO_COLOR}"
-        echo "${RED}Please install Python 3.11 using the 'install_python3_11_from_ppa' function first.${NO_COLOR}"
-        exit 1
+        echo "${YELLOW}Do you want to install Python 3.11?${NO_COLOR}"
+        read -p "Press [y/n]: " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            install_python3_11_from_ppa
+        else
+            echo "${RED} [-] ishare2 GUI installation was canceled. ${NO_COLOR}"
+            exit 1
+        fi
     fi
 
     echo -e "${GREEN} [+] ishare2 GUI is being downloaded and installed. Please, wait until the process is done...${NO_COLOR}"
