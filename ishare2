@@ -1567,7 +1567,7 @@ function ishare2_gui_install() {
     echo -e "${GREEN} [+] Installing ishare2 GUI requirements...${NO_COLOR}"
     # Make sure pip3 is installed for Python 3.11
     sudo apt-get update
-    sudo apt-get install -y python3.11-pip
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
     if [[ $? -ne 0 ]]; then
         echo "${RED} [-] Error installing pip3 for Python 3.11. ${NO_COLOR}"
         echo "${RED} [-] Please install pip3 manually for Python 3.11 and try again. ${NO_COLOR}"
@@ -2682,6 +2682,7 @@ function connection_tests() {
         echo -e "${RED} [-] Google Sheets is not reachable ${NO_COLOR}"
     fi
     # Check if labhub.eu.org is reachable
+    echo -e "${YELLOW} [-] Checking if labhub.eu.org is reachable... ${NO_COLOR}"
     if ping -q -c 1 -W 1 labhub.eu.org >/dev/null; then
         echo -e "${GREEN} [+] labhub.eu.org is reachable. ${NO_COLOR}"
     else
