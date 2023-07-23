@@ -1419,40 +1419,38 @@ function upgrade_ishare2() {
 }
 
 function menu_ishare2_upgrade_pnetlab() {
-    prompt="Please, select an option: "
+    # Define the menu options
     options=(
-        "(STABLE) Upgrade PNETLab: from 4.2.10 to 5.0.1"
-        "(STABLE) Upgrade PNETLab: from any version to 5.3.11"
-        "(UNSTABLE) Upgrade to / Install PNETLab 6 (ONLY AVAILABLE FOR UBUNTU 20.04)"
+        "Upgrade PNETLab v5"
+        "Upgrade PNETLab v5 Beta"
+        "Upgrade PNETLab v6"
     )
 
-    PS3="$prompt"
+    # Set the prompt for the select menu
+    PS3="Please, select an option: "
+
+    # Print the menu and wait for user input
     select opt in "${options[@]}" "Exit"; do
         case "$REPLY" in
         1)
-            wget -O upgrade.sh "$URL_UPGRADE_PNETLAB_FROM_4_2_10_TO_5_0_1"
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
+            # Upgrade PNETLab v5
+            bash -c "$(curl -sL $URL_PNETLAB_V5)"
             ;;
         2)
-            wget -O upgrade.sh "$URL_UPGRADE_PNETLAB_FROM_any_TO_5_3_11"
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
+            # Upgrade PNETLab v5 Beta
+            bash -c "$(curl -sL $URL_PNETLAB_V5_BETA)"
             ;;
         3)
-            wget --content-disposition -q --show-progress -O upgrade.sh "$URL_UPGRADE_PNETLAB6_INSTALLER"
-            chmod +x upgrade.sh
-            bash upgrade.sh
-            break
+            # Upgrade PNETLab v6
+            bash -c "$(curl -sL $URL_PNETLAB_V6)"
             ;;
         $((${#options[@]} + 1)))
             break
             ;;
         *)
-            STR="Invalid option: Select a number from 1 to 3"
-            echo -e "${RED}$STR${NO_COLOR}"
+            # Invalid option
+            total_options=${#options[@]}
+            echo -e "${RED}Invalid option: Select a number from 1 to $total_options${NO_COLOR}"
             continue
             ;;
         esac
