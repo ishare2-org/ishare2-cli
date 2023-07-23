@@ -1503,25 +1503,35 @@ function show_changelog() {
 
 function ishare2_gui_install() {
     ISHARE2_GUI_DIR=/opt/ishare2/gui
-    echo -e "${GREEN} [+] ishare2 GUI is being downloaded and installed. Please, wait until process is done...${NO_COLOR}"
-    echo -e "${YELLOW} [!] Stopping ishare2 GUI service...${NO_COLOR}"
-    systemctl stop ishare2_gui.service
-    if [[ ! -d $ISHARE2_GUI_DIR ]]; then
-        mkdir -p $ISHARE2_GUI_DIR
+    PYTHON3_11_PATH=$(command -v python3.11)
+
+    if [[ -z "$PYTHON3_11_PATH" ]]; then
+        echo "${RED}Error: Python 3.11 is not installed.${NO_COLOR}"
+        echo "${RED}Please install Python 3.11 using the 'install_python3_11_from_ppa' function first.${NO_COLOR}"
+        exit 1
     fi
-    if [[ -d $ISHARE2_GUI_DIR ]]; then
+
+    echo -e "${GREEN} [+] ishare2 GUI is being downloaded and installed. Please, wait until the process is done...${NO_COLOR}"
+    echo -e "${YELLOW} [!] Stopping ishare2 GUI service...${NO_COLOR}"
+    sudo systemctl stop ishare2_gui.service
+
+    if [[ ! -d "$ISHARE2_GUI_DIR" ]]; then
+        mkdir -p "$ISHARE2_GUI_DIR"
+    fi
+
+    if [[ -d "$ISHARE2_GUI_DIR" ]]; then
         read -p "Found a previous installation of ishare2 GUI. Are you sure you want to remove it? [y/n]: " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo -e "${GREEN}Removing previous installation of ishare2 GUI...${NO_COLOR}"
-            rm -rf $ISHARE2_GUI_DIR/* >"$ISHARE2_DIR/ishare2_gui_install.log"
-            rm -rf $ISHARE2_GUI_DIR/.* >"$ISHARE2_DIR/ishare2_gui_install.log"
-            # remove systemd service
+            echo -e "${GREEN}Removing the previous installation of ishare2 GUI...${NO_COLOR}"
+            sudo rm -rf "$ISHARE2_GUI_DIR"/* >"$ISHARE2_DIR/ishare2_gui_install.log"
+            sudo rm -rf "$ISHARE2_GUI_DIR"/.* >"$ISHARE2_DIR/ishare2_gui_install.log"
+            # Remove systemd service
             echo -e "${YELLOW} [!] Removing ishare2 GUI systemd service...${NO_COLOR}"
-            systemctl disable ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
-            rm /etc/systemd/system/ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
+            sudo systemctl disable ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
+            sudo rm /etc/systemd/system/ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
         else
-            echo -e "${RED} [-] ishare2 GUI installation was cancelled. ${NO_COLOR}"
+            echo -e "${RED} [-] ishare2 GUI installation was canceled. ${NO_COLOR}"
             exit 1
         fi
     fi
@@ -1529,7 +1539,7 @@ function ishare2_gui_install() {
     echo -e "${GREEN} [+] Downloading ishare2 GUI...${NO_COLOR}"
     download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR" "app.zip"
 
-    # unzip
+    # Unzip
     echo -e "${GREEN} [+] Unzipping ishare2 GUI files...${NO_COLOR}"
     unzip -o -q "$ISHARE2_GUI_DIR/app.zip" -d "$ISHARE2_GUI_DIR"
     if [[ $? -ne 0 ]]; then
@@ -1537,35 +1547,37 @@ function ishare2_gui_install() {
         echo "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
         exit 1
     fi
-    # move files
-    echo -e "${GREEN} [+] Moving files... ${NO_COLOR}"
-    mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/* $ISHARE2_GUI_DIR
-    # move files starting with a dot if any
-    mv $ISHARE2_GUI_DIR/ishare2-web-gui-master/.* $ISHARE2_GUI_DIR
-    rmdir $ISHARE2_GUI_DIR/ishare2-web-gui-master
 
-    rm $ISHARE2_GUI_DIR/app.zip
+    # Move files
+    echo -e "${GREEN} [+] Moving files... ${NO_COLOR}"
+    sudo mv "$ISHARE2_GUI_DIR"/ishare2-web-gui-master/* "$ISHARE2_GUI_DIR"
+    # Move files starting with a dot if any
+    sudo mv "$ISHARE2_GUI_DIR"/ishare2-web-gui-master/.* "$ISHARE2_GUI_DIR"
+    sudo rmdir "$ISHARE2_GUI_DIR"/ishare2-web-gui-master
+
+    sudo rm "$ISHARE2_GUI_DIR/app.zip"
 
     echo -e "${GREEN} [+] Installing ishare2 GUI requirements...${NO_COLOR}"
-    # Make sure pip3 is installed
-    apt-get install -y python3-pip
+    # Make sure pip3 is installed for Python 3.11
+    sudo apt-get update
+    sudo apt-get install -y python3.11-pip
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error installing pip3. ${NO_COLOR}"
-        echo "${RED} [-] Please install pip3 manually and try again. ${NO_COLOR}"
+        echo "${RED} [-] Error installing pip3 for Python 3.11. ${NO_COLOR}"
+        echo "${RED} [-] Please install pip3 manually for Python 3.11 and try again. ${NO_COLOR}"
         exit 1
     fi
 
-    # Make sure venv is installed
-    apt-get install -y python3-venv
+    # Make sure venv is installed for Python 3.11
+    sudo apt-get install -y python3.11-venv
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error installing venv. ${NO_COLOR}"
-        echo "${RED} [-] Please install venv manually and try again. ${NO_COLOR}"
+        echo "${RED} [-] Error installing venv for Python 3.11. ${NO_COLOR}"
+        echo "${RED} [-] Please install venv manually for Python 3.11 and try again. ${NO_COLOR}"
         echo "${RED} [-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
         exit 1
     fi
 
     # Make venv for ishare2 GUI
-    python3 -m venv $ISHARE2_GUI_DIR/venv
+    "$PYTHON3_11_PATH" -m venv "$ISHARE2_GUI_DIR/venv"
     if [[ $? -ne 0 ]]; then
         echo "${RED} [-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
         echo "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
@@ -1573,7 +1585,7 @@ function ishare2_gui_install() {
     fi
 
     # Install requirements
-    $ISHARE2_GUI_DIR/venv/bin/pip install -r $ISHARE2_GUI_DIR/requirements.txt
+    "$ISHARE2_GUI_DIR/venv/bin/pip" install -r "$ISHARE2_GUI_DIR/requirements.txt"
     if [[ $? -ne 0 ]]; then
         echo "${RED} [-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
         echo "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
@@ -1603,9 +1615,9 @@ EOL
     read -p "Do you want to start ishare2 GUI on boot? [y/n]: " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        systemctl enable ishare2_gui.service
+        sudo systemctl enable ishare2_gui.service
     fi
-    systemctl start ishare2_gui.service
+    sudo systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
         echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
@@ -1618,6 +1630,22 @@ EOL
     echo -e "${GREEN}   ishare2 gui stop: Stop ishare2 GUI service ${NO_COLOR}"
     echo -e "${GREEN}   ishare2 gui restart: Restart ishare2 GUI service ${NO_COLOR}"
     echo -e "${GREEN}   systemctl ishare2_gui status: Check ishare2 GUI service status ${NO_COLOR}"
+}
+
+function install_python3_11_from_ppa() {
+    # Install the required dependency package
+    sudo apt-get update
+    sudo apt-get install -y software-properties-common
+
+    # Add the deadsnakes PPA to the APT package manager sources list
+    sudo add-apt-repository ppa:deadsnakes/ppa
+
+    # Proceed with the installation of Python 3.11
+    sudo apt-get update
+    sudo apt-get install -y python3.11
+
+    # Verify the installation
+    python3.11 --version
 }
 
 function ishare2_gui_start() {
