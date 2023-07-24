@@ -6,7 +6,7 @@
 # Last Updated: 2023-07-23
 
 # ishare2 configuration
-CHANNEL="main" # you can change this to available branches in github.com/pnetlabrepo/ishare2
+CHANNEL="main" # you can change this to available branches in github.com/ishare-org/ishare2-cli
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
 VERSION="v2.1.7" # Script version
@@ -240,7 +240,7 @@ function create_ishare2_dir() {
 function fetch_sources() {
     check_ishare2_dir
     echo -e "${YELLOW} [+] Fetching sources...${NO_COLOR}"
-    curl -s -o $SOURCES https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/sources.list
+    curl -s -o $SOURCES https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list
     # Check if curl command failed
     if [[ ! -f $SOURCES ]]; then
         echo -e "${RED} [-] Failed to fetch sources.${NO_COLOR}"
