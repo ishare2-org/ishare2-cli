@@ -2310,6 +2310,7 @@ function php_files_function() {
 }
 
 function vmdk_files_function() {
+    install_qemu_tools
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2323,6 +2324,16 @@ function vmdk_files_function() {
         /opt/qemu/bin/qemu-img convert -p -f vmdk -O qcow2 "$VMDK_FILE" "$DIR"/hda.qcow2
         echo "File converted successfully"
         rm "$VMDK_FILE"
+    fi
+}
+
+function install_qemu_tools() {
+    apt update
+    apt install -y qemu-utils
+    # check if qemu-img is installed
+    if ! [[ -e /opt/qemu/bin/qemu-img ]]; then
+        echo -e "${RED} [-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
+        exit 1
     fi
 }
 
