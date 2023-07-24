@@ -1572,34 +1572,34 @@ function ishare2_gui_install() {
     # Check if pip3.11 is installed and check version pip3.11 -V
     pip3.11 -V
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error installing pip3.11. ${NO_COLOR}"
-        echo "${RED} [-] Please install pip3.11 manually and try again. ${NO_COLOR}"
-        echo "${RED} [-] You can find more information here: https://pip.pypa.io/en/stable/installing/ ${NO_COLOR}"
+        echo -e "${RED} [-] Error installing pip3.11. ${NO_COLOR}"
+        echo -e "${RED} [-] Please install pip3.11 manually and try again. ${NO_COLOR}"
+        echo -e "${RED} [-] You can find more information here: https://pip.pypa.io/en/stable/installing/ ${NO_COLOR}"
         exit 1
     fi
 
     # Make sure venv is installed for Python 3.11
     sudo apt install -y python3.11-venv
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error installing venv for Python 3.11. ${NO_COLOR}"
-        echo "${RED} [-] Please install venv manually for Python 3.11 and try again. ${NO_COLOR}"
-        echo "${RED} [-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
+        echo -e "${RED} [-] Error installing venv for Python 3.11. ${NO_COLOR}"
+        echo -e "${RED} [-] Please install venv manually for Python 3.11 and try again. ${NO_COLOR}"
+        echo -e "${RED} [-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
         exit 1
     fi
 
     # Make venv for ishare2 GUI
-    "$PYTHON3_11_PATH" -m venv "$ISHARE2_GUI_DIR/venv"
+    python3.11 -m venv "$ISHARE2_GUI_DIR/venv"
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
-        echo "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
+        echo -e "${RED} [-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
+        echo -e "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
         exit 1
     fi
 
     # Install requirements
     "$ISHARE2_GUI_DIR/venv/bin/pip" install -r "$ISHARE2_GUI_DIR/requirements.txt"
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
-        echo "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
+        echo -e "${RED} [-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
+        echo -e "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
         exit 1
     fi
 
@@ -1630,8 +1630,8 @@ EOL
     fi
     sudo systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
     echo -e "${GREEN} [!] ishare2 GUI was installed successfully. ${NO_COLOR}"
@@ -1662,8 +1662,8 @@ function install_python3_11_from_ppa() {
 function ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
@@ -1671,8 +1671,8 @@ function ishare2_gui_start() {
 function ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error stopping ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED} [-] Error stopping ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
@@ -1680,8 +1680,8 @@ function ishare2_gui_stop() {
 function ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error restarting ishare2 GUI service. ${NO_COLOR}"
-        echo "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED} [-] Error restarting ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
