@@ -2582,23 +2582,27 @@ function filter_bin() {
     NAME_TO_SEARCH_FOR=$1
 
     FILENAME=$ISHARE2_DIR"/BIN.csv"
+    cp $FILENAME search.csv
+
+    # remove column headers from csv file
+    sed -i '1d' search.csv
 
     FLAG_TO_SHOW_RESULTS_BIN=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"; then
-            CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
+        if grep -q "$NAME_TO_SEARCH_FOR" "search.csv"; then
+            CMD=$(grep "$NAME_TO_SEARCH_FOR" "search.csv")
             FLAG_TO_SHOW_RESULTS_BIN=1
             break
         fi
-    done <$FILENAME
+    done <search.csv
 
     if [[ $FLAG_TO_SHOW_RESULTS_BIN -eq 1 ]]; then
-        echo "Number, Name, Link, Size, Unit" >new.csv
-        echo "$CMD" >new.csv
+        echo "Number, Name, Link, Size, Unit" >search.csv
+        echo "$CMD" >>search.csv
         echo -e
-        echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' new.csv | column -t
+        echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' search.csv | column -t
 
-        RESULTS_NUMBER=$(cat <new.csv | wc -l)
+        RESULTS_NUMBER=$(cat <search.csv | wc -l)
         echo -e "\nNumber of results: $((RESULTS_NUMBER - 1))"
 
         TYPE=BIN
@@ -2606,30 +2610,33 @@ function filter_bin() {
     fi
 
     # Remove csv files
-    rm "$(pwd)"/new.csv >/dev/null 2>&1
+    rm "$(pwd)"/search.csv >/dev/null 2>&1
 }
 
 function filter_dynamips() {
     NAME_TO_SEARCH_FOR=$1
 
     FILENAME=$ISHARE2_DIR"/DYNAMIPS.csv"
+    cp $FILENAME search.csv
+
+    sed -i '1d' search.csv
 
     FLAG_TO_SHOW_RESULTS_DYNAMIPS=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"; then
-            CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
+        if grep -q "$NAME_TO_SEARCH_FOR" "search.csv"; then
+            CMD=$(grep "$NAME_TO_SEARCH_FOR" "search.csv")
             FLAG_TO_SHOW_RESULTS_DYNAMIPS=1
             break
         fi
-    done <$FILENAME
+    done <search.csv
 
     if [[ $FLAG_TO_SHOW_RESULTS_DYNAMIPS -eq 1 ]]; then
-        echo "Number, Name, Link, Size, Unit" >new.csv
-        echo "$CMD" >new.csv
+        echo "Number, Name, Link, Size, Unit" >search.csv
+        echo "$CMD" >>search.csv
         echo -e
-        echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' new.csv | column -t
+        echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' search.csv | column -t
 
-        RESULTS_NUMBER=$(cat <new.csv | wc -l)
+        RESULTS_NUMBER=$(cat <search.csv | wc -l)
         echo -e "\nNumber of results: $((RESULTS_NUMBER - 1))"
 
         TYPE=DYNAMIPS
@@ -2637,29 +2644,32 @@ function filter_dynamips() {
     fi
 
     # Remove csv files
-    rm "$(pwd)"/new.csv >/dev/null 2>&1
+    rm "$(pwd)"/search.csv >/dev/null 2>&1
 }
 
 function filter_qemu() {
     NAME_TO_SEARCH_FOR=$1
 
     FILENAME=$ISHARE2_DIR"/QEMU.csv"
+    cp $FILENAME search.csv
+
+    sed -i '1d' search.csv
 
     FLAG_TO_SHOW_RESULTS_QEMU=0
     while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if grep -q "$NAME_TO_SEARCH_FOR" "$FILENAME"; then
-            CMD=$(grep "$NAME_TO_SEARCH_FOR" "$FILENAME")
+        if grep -q "$NAME_TO_SEARCH_FOR" "search.csv"; then
+            CMD=$(grep "$NAME_TO_SEARCH_FOR" "search.csv")
             FLAG_TO_SHOW_RESULTS_QEMU=1
             break
         fi
-    done <$FILENAME
+    done <search.csv
 
     if [[ $FLAG_TO_SHOW_RESULTS_QEMU -eq 1 ]]; then
-        echo "Number, Name, Size, Unit" >new.csv
-        echo "$CMD" >new.csv
-        echo "$CMD" | awk -F, '{print $1,$2,$3,$4}' new.csv | column -t
+        echo "Number, Name, Size, Unit" >search.csv
+        echo "$CMD" >>search.csv
+        echo "$CMD" | awk -F, '{print $1,$2,$3,$4}' search.csv | column -t
 
-        RESULTS_NUMBER=$(cat <new.csv | wc -l)
+        RESULTS_NUMBER=$(cat <search.csv | wc -l)
         echo -e "\nNumber of results: $((RESULTS_NUMBER - 1))"
 
         TYPE=QEMU
@@ -2667,7 +2677,7 @@ function filter_qemu() {
     fi
 
     # Remove temp csv files
-    rm "$(pwd)"/new.csv >/dev/null 2>&1
+    rm "$(pwd)"/search.csv >/dev/null 2>&1
 }
 
 function fix_permissions() {
