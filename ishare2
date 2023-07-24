@@ -1405,7 +1405,7 @@ function upgrade_ishare2() {
     fi
 
     rm /usr/sbin/ishare2
-    rm -rf /opt/ishare2/
+    rm -rf /opt/ishare2/cli/
     download_file_wget $URL_ISHARE2 /usr/sbin/ "ishare2"
 
     echo -e "${GREEN} [+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
