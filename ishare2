@@ -1568,14 +1568,18 @@ function ishare2_gui_install() {
     # Make sure pip3 is installed for Python 3.11
     sudo apt-get update
     curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+
+    # Check if pip3.11 is installed and check version pip3.11 -V
+    pip3.11 -V
     if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error installing pip3 for Python 3.11. ${NO_COLOR}"
-        echo "${RED} [-] Please install pip3 manually for Python 3.11 and try again. ${NO_COLOR}"
+        echo "${RED} [-] Error installing pip3.11. ${NO_COLOR}"
+        echo "${RED} [-] Please install pip3.11 manually and try again. ${NO_COLOR}"
+        echo "${RED} [-] You can find more information here: https://pip.pypa.io/en/stable/installing/ ${NO_COLOR}"
         exit 1
     fi
 
     # Make sure venv is installed for Python 3.11
-    sudo apt-get install -y python3.11-venv
+    sudo apt install -y python3.11-venv
     if [[ $? -ne 0 ]]; then
         echo "${RED} [-] Error installing venv for Python 3.11. ${NO_COLOR}"
         echo "${RED} [-] Please install venv manually for Python 3.11 and try again. ${NO_COLOR}"
