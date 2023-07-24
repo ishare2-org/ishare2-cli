@@ -2,14 +2,14 @@
 # Date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This script is used to download images from the internet and install them in PNetLab.
-# Version: 2.1.6
+# Version: 2.1.7
 # Last Updated: 2023-07-23
 
 # ishare2 configuration
 CHANNEL="main" # you can change this to available branches in github.com/pnetlabrepo/ishare2
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v2.1.6" # Script version
+VERSION="v2.1.7" # Script version
 
 # Colors
 RED='\033[31m'
