@@ -219,10 +219,8 @@ function unlock_dpkg() {
     sudo rm /var/lib/dpkg/lock >/dev/null 2>&1
     sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
     # Remove lock files for apt frontend
-    sudo rm /var/lib/dpkg/lock-frontend
-    sudo rm /var/cache/apt/archives/lock
-
-    echo "Lock files removed successfully."
+    sudo rm /var/lib/dpkg/lock-frontend >/dev/null 2>&1
+    sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
 }
 
 function create_ishare2_dir() {
