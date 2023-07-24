@@ -1,7 +1,7 @@
-URL_ID_LIST=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/id_list
-URL_VERSION=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/version
-URL_ISHARE2=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/ishare2
-URL_CHANGELOG_MD=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/CHANGELOG.md
+URL_ID_LIST=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/id_list
+URL_VERSION=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/version
+URL_ISHARE2=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/ishare2
+URL_CHANGELOG_MD=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/CHANGELOG.md
 URL_CISCO_IOU_KEYGEN_PY=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/iol/bin/CiscoIOUKeygen.py
 URL_KEEPALIVE_PL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/iol/bin/keepalive.pl
 URL_I86BI_LINUX_L2_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/templates/i86bi_linux_l2/i86bi_linux_l2.yml
