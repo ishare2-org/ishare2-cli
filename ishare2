@@ -62,7 +62,7 @@ function switch_downloader() {
 function create_config() {
     echo -e "${YELLOW} [+] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [+] Please answer the following questions to configure ishare2.${NO_COLOR}"
-    echo -e "${YELLOW} [+] Press enter to use the default value.${NO_COLOR}"
+    echo -e "${YELLOW} [+] Press enter to use the default values which should work out of the box.${NO_COLOR}"
     echo -e "${YELLOW} [+] Press Ctrl+C to cancel.${NO_COLOR}"
     echo -e "${YELLOW} [+] Use aria2c for faster downloads?${NO_COLOR}"
     read -p " [+] (y/n): " -r
@@ -73,7 +73,7 @@ function create_config() {
         echo "Press any key to continue..."
         read -n 1
     else
-        echo -e "${YELLOW} [!] You can enable aria2c later by running: ishare2 config${NO_COLOR}"
+        echo -e "${YELLOW} [!] Using wget is slower than aria2c, however, it is more stable.\nTo enable aria2c, run: ishare2 config and answer yes to this question.${NO_COLOR}"
         echo "USE_ARIA2C=false" >$ISHARE2_DIR/ishare2.conf
         echo "Press any key to continue..."
         read -n 1
@@ -277,16 +277,23 @@ download_file() {
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
 
     if [[ $USE_ARIA2C == "true" ]]; then
-        install_aria2c &>/dev/null
+        # Check if aria2c is installed
+        if ! command -v aria2c &>/dev/null; then
+            echo -e "${RED} [-] Error: aria2c is not installed. Attempting to install it...${NO_COLOR}"
+            install_aria2c >/dev/null
+            # Check if aria2c is installed
+            if ! command -v aria2c &>/dev/null; then
+                echo -e "${RED} [-] Error: aria2c is not installed. Please install it manually and try again.${NO_COLOR}"
+                exit 1
+            else # aria2c is installed
+                echo -e "${GREEN} [+] aria2c has been installed successfully.${NO_COLOR}"
+            fi
+        fi
     fi
 
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
-        echo -e "${YELLOW} [+] aria2c is installed. Using aria2c for faster downloads.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you want to use wget instead, please edit the configuration file running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}\n"
         download_file_aria2 "$url" "$output" "$options"
     else
-        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you want to use aria2c instead, please edit the configuration file running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}\n"
         download_file_wget "$url" "$output" "$options"
     fi
 }
@@ -1747,6 +1754,14 @@ function download_1_file_bin_or_dynamips() {
     STR="${YELLOW}Size:${NO_COLOR}"
     echo -e "$STR $SIZE $UNIT\n"
     echo -e "${YELLOW}Downloading from:${NO_COLOR} $LINK\n"
+    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
+    if [[ $USE_ARIA2C == "true" ]]; then
+        echo -e "${YELLOW} [+] Using aria2c for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
+    else
+        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you want to use wget instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
+    fi
 
     if [[ $TYPE = "dynamips" ]]; then
         mkdir -p /opt/unetlab/addons/dynamips
@@ -1775,6 +1790,14 @@ function download_1_file_qemu() {
 
     echo -e "\n\033[33mFolder requested:\033[0m $FOLDERNAME (""$SIZE"" ""$UNIT"")"
     echo -e "\nFile requested:\n  $NAME - $SIZE $UNIT\n"
+    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
+    if [[ $USE_ARIA2C == "true" ]]; then
+        echo -e "${YELLOW} [+] Using aria2c for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
+    else
+        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you want to use wget instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
+    fi
 
     save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
     download_file "$LINK" "$save_path" "$NAME"
@@ -1790,6 +1813,14 @@ function download_multiple_files_qemu() {
     echo -e "Starting to download $FILES_COUNTER files..."
 
     echo -e "\n\033[33mFolder requested:\033[0m $FOLDERNAME (""$SIZE"" ""$UNIT"")"
+    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
+    if [[ $USE_ARIA2C == "true" ]]; then
+        echo -e "${YELLOW} [+] Using aria2c for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
+    else
+        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
+        echo -e "${YELLOW} [!] If you want to use wget instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
+    fi
 
     for ((c = 1; c <= FILES_COUNTER; c++)); do
         echo -e "\nFile $c/$FILES_COUNTER"
