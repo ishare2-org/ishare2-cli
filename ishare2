@@ -1707,13 +1707,29 @@ function generate_a_new_license() {
 
     if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
 
-    wget -O $PYTHON_FILE $URL_CISCO_IOU_KEYGEN_PY >/dev/null 2>&1
-    python $PYTHON_FILE >/dev/null 2>&1
+    wget -O $PYTHON_FILE $URL_CISCO_IOU_KEYGEN_PY -q
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED} [-] Error downloading CiscoIOUKeygen.py file. ${NO_COLOR}"
+        echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
+        exit 1
+    fi
+    echo -e "${YELLOW} [!] Running CiscoIOUKeygen.py file... ${NO_COLOR}"
+    python $PYTHON_FILE
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED} [-] Error running CiscoIOUKeygen.py file. ${NO_COLOR}"
+        echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
+        exit 1
+    fi
 
     if ! [[ -e $PERL_FILE ]]; then
-        wget -O $PERL_FILE $URL_KEEPALIVE_PL >/dev/null 2>&1
+        wget -O $PERL_FILE $URL_KEEPALIVE_PL -q
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED} [-] Error downloading keepalive.pl file. ${NO_COLOR}"
+            echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
+            exit 1
+        fi
     fi
-    echo "Done"
+    echo -e "${GREEN} [+] IOL license was generated successfully. ${NO_COLOR}"
 }
 
 function download_1_file_bin_or_dynamips() {
