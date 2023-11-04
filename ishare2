@@ -2768,7 +2768,7 @@ function selector() {
                 if [[ "$3" ]]; then
                     pull_qemu "$3" "$4"
                 else
-                    STR="Last parameter not detected"
+                    STR="Last parameter not found"
                     echo -e "${RED}$STR${NO_COLOR}"
                     echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
                 fi
@@ -2777,7 +2777,7 @@ function selector() {
                 if [[ "$3" ]]; then
                     pull_dynamips "$3" "$4"
                 else
-                    STR="Last parameter not detected"
+                    STR="Last parameter not found"
                     echo -e "${RED}$STR${NO_COLOR}"
                     echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
                 fi
@@ -2786,7 +2786,7 @@ function selector() {
                 if [[ "$3" ]]; then
                     pull_bin "$3" "$4"
                 else
-                    STR="Last parameter not detected"
+                    STR="Last parameter not found"
                     echo -e "${RED}$STR${NO_COLOR}"
                     echo -e "Syntax: ishare2 pull bin ${YELLOW}<number>${NO_COLOR}"
                 fi
