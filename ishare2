@@ -255,7 +255,7 @@ function create_ishare2_dir() {
 function fetch_sources() {
     check_ishare2_dir
     echo -e "${YELLOW} [+] Fetching sources...${NO_COLOR}"
-    curl -s -o $SOURCES https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list
+    curl --insecure -o $SOURCES https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list 2>$ISHARE2_DIR/tmp/curl_error
     # Check if curl command failed
     if [[ ! -f $SOURCES ]]; then
         echo -e "${RED} [-] Failed to fetch sources.${NO_COLOR}"
@@ -314,7 +314,7 @@ download_file_aria2() {
     fi
 }
 
-download_file_curl() {
+download_file_curl() { # $1 = url, $2 = output
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
     # Create the file if it does not exist
@@ -357,9 +357,9 @@ download_file_wget() {
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
 
     if [ "$SSL_CHECK" = true ]; then
-        wget -O "$output" "$url" -q --show-progress --content-disposition
+        wget -O "$output" "$url" --show-progress --content-disposition
     else
-        wget -O "$output" "$url" -q --show-progress --content-disposition --no-check-certificate
+        wget -O "$output" "$url" --show-progress --content-disposition --no-check-certificate
     fi
 
     # Check if wget command failed
@@ -371,7 +371,7 @@ download_file_wget() {
         # Read the error message from the wget_error file
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/wget_error)
         # Print the error message
-        echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        echo -e "${RED} [-] Read the logs above for more information. ${NO_COLOR}"
         exit 1
     fi
 }
