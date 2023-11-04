@@ -2,14 +2,14 @@
 # Date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This script is used to download images from the internet and install them in PNetLab.
-# Version: 2.2
+# Version: 2.2.1
 # Last Updated: 2023-04-23
 
 # ishare2 configuration
 CHANNEL="main" # you can change this to available branches in github.com/ishare-org/ishare2-cli
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v2.2" # Script version
+VERSION="v2.2.1" # Script version
 
 # Colors
 RED='\033[31m'
@@ -249,6 +249,15 @@ function create_ishare2_dir() {
         fi
         exit 1
     fi
+    if ! mkdir -p $ISHARE2_DIR/tmp 2>/dev/null; then
+        error_message=$(mkdir -p $ISHARE2_DIR/tmp 2>&1 >/dev/null)
+        if [[ $error_message == *"Permission denied"* ]]; then
+            echo -e "${RED} [-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
+        else
+            echo -e "${RED} [-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
+        fi
+        exit 1
+    fi
     echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
@@ -357,9 +366,9 @@ download_file_wget() {
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
 
     if [ "$SSL_CHECK" = true ]; then
-        wget -O "$output" "$url" --show-progress --content-disposition
+        wget -O "$output" "$url" -q --show-progress --content-disposition
     else
-        wget -O "$output" "$url" --show-progress --content-disposition --no-check-certificate
+        wget -O "$output" "$url" -q --show-progress --content-disposition --no-check-certificate
     fi
 
     # Check if wget command failed
