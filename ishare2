@@ -2919,6 +2919,10 @@ function selector() {
 }
 
 function main() {
+    if [[ "$1" = "test" ]]; then
+        connection_tests
+        exit 0
+    fi
     check_user_is_root
     check_ishare2_dir
     check_config
