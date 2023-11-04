@@ -2684,53 +2684,6 @@ function print_separator() {
     echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
 }
 
-function filter_images() {
-    QUERY=$1
-    TYPES=("QEMU" "DYNAMIPS" "BIN")
-    for TYPE in "${TYPES[@]}"; do
-        search_tables "$TYPE" "$QUERY"
-    done
-}
-
-search_tables() {
-    TYPE=$1
-    NAME_TO_SEARCH_FOR=$2
-
-    FILENAME="$ISHARE2_DIR/${TYPE}.csv"
-    cp "$FILENAME" search.csv
-
-    sed -i '1d' search.csv
-
-    FLAG_TO_SHOW_RESULTS=0
-    while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if grep -q "$NAME_TO_SEARCH_FOR" "search.csv"; then
-            CMD=$(grep "$NAME_TO_SEARCH_FOR" "search.csv")
-            FLAG_TO_SHOW_RESULTS=1
-            break
-        fi
-    done <search.csv
-
-    if [[ $FLAG_TO_SHOW_RESULTS -eq 1 ]]; then
-        print_separator "List of available $TYPE images"
-        if [[ $TYPE = "QEMU" ]]; then
-            echo "Number, Name, Size, Unit" >search.csv
-            echo "$CMD" >>search.csv
-            echo "$CMD" | awk -F, '{print $1,$2,$3,$4}' search.csv | column -t
-        elif [[ $TYPE != "QEMU" ]]; then
-            echo "Number, Name, Link, Size, Unit" >search.csv
-            echo "$CMD" >>search.csv
-            echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' search.csv | column -t
-        fi
-        RESULTS_NUMBER=$(cat <search.csv | wc -l)
-        echo -e "\nTotal results: ${GREEN}$RESULTS_NUMBER${NO_COLOR}"
-
-        echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
-    fi
-
-    # Remove temp csv files
-    rm "$(pwd)"/search.csv >/dev/null 2>&1
-}
-
 function fix_permissions() {
     /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
     if [[ $? -eq 0 ]]; then
