@@ -2729,24 +2729,37 @@ function connection_tests() {
 function selector() {
     case "$1" in
     "search")
-        if [[ "$2" = "all" ]]; then
-            ishare2 search qemu
-            ishare2 search dynamips
-            ishare2 search bin
-            echo " "
-        elif [[ "$2" = "qemu" ]]; then
-            general_available_list QEMU
-        elif [[ "$2" = "dynamips" ]]; then
-            general_available_list DYNAMIPS
-        elif [[ "$2" = "bin" ]]; then
-            general_available_list BIN
-        else
-            if [[ $2 ]]; then
-                filter_images "$2"
+        # Switch case to determine the type of the device to be displayed
+        case "$2" in
+        "qemu" | "iol" | "dynamips")
+            TYPE="${2^^}" # Convert to uppercase
+            display_images "$TYPE"
+            ;;
+        "bin")
+            TYPE="IOL" # Treat "bin" as "iol" in uppercase
+            display_images "$TYPE"
+            ;;
+        "all")
+            for type in "QEMU" "IOL" "DYNAMIPS"; do
+                TYPE="${type^^}" # Convert to uppercase
+                display_images "$TYPE"
+                echo
+            done
+            ;;
+        *)
+            if [ -n "$2" ]; then
+                FILTER="$2"
+                for type in "QEMU" "IOL" "DYNAMIPS"; do
+                    TYPE="${type^^}"
+                    display_images "$TYPE"
+                    echo
+                done
             else
-                msg_available_options_for_ishare2_search
+                echo "Usage: $0 [qemu|iol|dynamips|bin|all]"
+                exit 1
             fi
-        fi
+            ;;
+        esac
         ;;
     "pull")
         if [[ "$2" ]]; then
