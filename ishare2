@@ -1724,19 +1724,32 @@ function ishare2_gui_restart() {
     fi
 }
 
-function general_available_list() {
-    TYPE=$1
-    FILENAME=$ISHARE2_DIR/"$TYPE".csv
+# Display the data for a specific type in a table
+function display_images() {
+    JSON_URL="https://github.com/ishare2-org/mirrors/raw/main/index.gd.json"
+    # Download the JSON and store it in a temporary file
+    curl -sL "$JSON_URL" >temp.json
+    print_separator "Available $TYPE images"
 
-    print_separator "List of available $TYPE images"
+    # Filter rows with jq and keep the table headers
+    data=$(jq -r '(["ID","NAME","SIZE"] | (., map(length*"-"))), (.["'$TYPE'"][] | select(.name | contains("'$FILTER'")) | [.id, .name, .size]) | @tsv' temp.json)
 
-    if [[ $TYPE == "QEMU" ]]; then
-        awk -F, '{print $1,$2,$3,$4}' "$FILENAME" | column -t
-    else # [[ $TYPE == "DYNAMIPS" || $TYPE == "BIN" ]]
-        awk -F, '{print $1,$2,$4,$5}' "$FILENAME" | column -t
+    # Check if there are matching data rows
+    if [ -n "$data" ]; then
+        echo -e "$data" | column -t -s $'\t'
+        # Calculate and display the total count
+        total_count=$(echo "$data" | wc -l)
+        total_count=$((total_count - 2))
+        if [[ $total_count -eq 0 ]]; then
+            echo -e "\n${RED}No $TYPE images found${NO_COLOR}"
+        elif [[ $total_count -eq 1 ]]; then
+            echo -e "\n${GREEN}$total_count $TYPE image found${NO_COLOR}"
+        else
+            echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
+        fi
     fi
 
-    echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
+    rm temp.json
 }
 
 function generate_a_new_license() {
