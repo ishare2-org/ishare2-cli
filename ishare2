@@ -15,6 +15,7 @@ VERSION="v2.1.8" # Script version
 RED='\033[31m'
 YELLOW='\033[1;33m'
 GREEN='\033[32m'
+BLUE='\033[34m'
 NO_COLOR='\033[0m'
 
 function check_ishare2_dir() {
@@ -356,7 +357,7 @@ download_file_wget() {
     echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
 
     if [ "$SSL_CHECK" = true ]; then
-    wget -O "$output" "$url" -q --show-progress --content-disposition
+        wget -O "$output" "$url" -q --show-progress --content-disposition
     else
         wget -O "$output" "$url" -q --show-progress --content-disposition --no-check-certificate
     fi
@@ -417,7 +418,7 @@ function download_files_lists() {
     if [ -f $ISHARE2_DIR"/id_list" ]; then
         if [ $(find $ISHARE2_DIR"/id_list" -mtime +1) ]; then
             echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs is older than 1 day. Updating... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-            download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+            download_file_curl $URL_ID_LIST "$ISHARE2_DIR/id_list"
 
             # Check if the file is empty or corrupt
             if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
@@ -428,7 +429,7 @@ function download_files_lists() {
                 read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
                 echo ""
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+                    download_file_curl $URL_ID_LIST "$ISHARE2_DIR/id_list"
                 else
                     exit 1
                 fi
@@ -439,7 +440,7 @@ function download_files_lists() {
         fi
     else
         echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs does not exist. Downloading... ${NO_COLOR}"
-        download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
+        download_file_curl $URL_ID_LIST "$ISHARE2_DIR/id_list"
 
         # Check if the file is empty or corrupt
         if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
@@ -1436,7 +1437,7 @@ function check_ishare2_version_file_exists() {
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
-    REMOTE_VALUE=$(curl -s $URL_VERSION)
+    REMOTE_VALUE=$(curl -s --insecure $URL_VERSION)
 
     if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         echo -e "${YELLOW} [+] ishare2 $REMOTE_VALUE is already in the newest version available. ${NO_COLOR}"
@@ -1471,15 +1472,15 @@ function menu_ishare2_upgrade_pnetlab() {
         case "$REPLY" in
         1)
             # Upgrade PNETLab v5
-            bash -c "$(curl -sL $URL_PNETLAB_V5)"
+            bash -c "$(curl -sL --insecure $URL_PNETLAB_V5)"
             ;;
         2)
             # Upgrade PNETLab v5 Beta
-            bash -c "$(curl -sL $URL_PNETLAB_V5_BETA)"
+            bash -c "$(curl -sL --insecure $URL_PNETLAB_V5_BETA)"
             ;;
         3)
             # Upgrade PNETLab v6
-            bash -c "$(curl -sL $URL_PNETLAB_V6)"
+            bash -c "$(curl -sL --insecure $URL_PNETLAB_V6)"
             ;;
         $((${#options[@]} + 1)))
             break
@@ -1604,7 +1605,7 @@ function ishare2_gui_install() {
     echo -e "${GREEN} [+] Installing ishare2 GUI requirements...${NO_COLOR}"
     # Make sure pip3 is installed for Python 3.11
     sudo apt-get update
-    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+    curl -sS --insecure https://bootstrap.pypa.io/get-pip.py | python3.11
 
     # Check if pip3.11 is installed and check version pip3.11 -V
     pip3.11 -V
@@ -1727,7 +1728,7 @@ function general_available_list() {
     TYPE=$1
     FILENAME=$ISHARE2_DIR/"$TYPE".csv
 
-    echo -e "\n$TYPE available images list\n"
+    print_separator "List of available $TYPE images"
 
     if [[ $TYPE == "QEMU" ]]; then
         awk -F, '{print $1,$2,$3,$4}' "$FILENAME" | column -t
@@ -1792,7 +1793,7 @@ function download_1_file_bin_or_dynamips() {
         echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
     else
         echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you want to use wget instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
+        echo -e "${YELLOW} [!] If you want to use aria2 instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
     fi
 
     if [[ $TYPE = "dynamips" ]]; then
@@ -2665,9 +2666,9 @@ function print_separator() {
         SEPARATOR+="="
     done
 
-    echo -e "\n\033[1;34m${SEPARATOR}\033[0m"
+    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
     echo -e "\033[1;33m    ${TITLE}    \033[0m"
-    echo -e "\033[1;34m${SEPARATOR}\033[0m\n"
+    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
 }
 
 function filter_images() {
@@ -2697,7 +2698,7 @@ search_tables() {
     done <search.csv
 
     if [[ $FLAG_TO_SHOW_RESULTS -eq 1 ]]; then
-        print_separator "$TYPE"
+        print_separator "List of available $TYPE images"
         if [[ $TYPE = "QEMU" ]]; then
             echo "Number, Name, Size, Unit" >search.csv
             echo "$CMD" >>search.csv
@@ -2708,7 +2709,7 @@ search_tables() {
             echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' search.csv | column -t
         fi
         RESULTS_NUMBER=$(cat <search.csv | wc -l)
-        echo -e "\nNumber of results: $((RESULTS_NUMBER - 1))"
+        echo -e "\nTotal results: ${GREEN}$RESULTS_NUMBER${NO_COLOR}"
 
         echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
     fi
