@@ -9,7 +9,7 @@
 CHANNEL="main" # you can change this to available branches in github.com/ishare-org/ishare2-cli
 ISHARE2_DIR="/opt/ishare2/cli"
 SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v2.1.8" # Script version
+VERSION="v2.2" # Script version
 
 # Colors
 RED='\033[31m'
