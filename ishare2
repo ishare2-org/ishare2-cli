@@ -915,34 +915,10 @@ function install_lab_images_just_for_only_readable_labs() {
         done <$filename4_docker_images
     fi
 
-    STR_BIN="\nDownload BIN images for this lab"
-    echo -e "\033[32m$STR_BIN\033[0m"
-    if [[ BIN_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_iol_images "$file"
-    fi
-
-    STR_DYNAMIPS="\nDownload DYNAMIPS images for this lab"
-    echo -e "\033[32m$STR_DYNAMIPS\033[0m"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_dynamips_images
-    fi
-
-    STR_QEMU="\nDownload QEMU images for this lab"
-    echo -e "\033[32m$STR_QEMU\033[0m"
-    if [[ QEMU_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_qemu_images
-    fi
-
-    STR_DOCKER="\nDownload DOCKER images for this lab"
+    print_separator "Start downloading DOCKER images for this lab"
     echo -e "\033[32m$STR_DOCKER\033[0m"
     if [[ DOCKER_FLAG -eq 1 ]]; then
-        echo -
+        echo -e "${YELLOW}- Nothing to download${NO_COLOR}"
     else
         download_lab_docker_images
     fi
@@ -998,7 +974,6 @@ function install_lab_images_just_for_only_readable_labs_ALL() {
         echo -e "\n\033[32mLab $i/$N\033[0m"
         ishare2 labs "$i"
     done
-
     echo -e "\nDone"
 }
 
@@ -1048,108 +1023,10 @@ function download_lab_iol_images() {
     n=1
     while read -r line; do
         n=$((n + 1))
-
-        BIN_NAME=$line
-        FILENAME=BIN_URL.csv
-        rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-        URL=$BIN_URL
-        wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-        FLAG=0
-
-        corrections_for_bin_images_in_lab_function "$BIN_NAME" "$LAB_PATH"
-
-        while IFS=',' read -r col1 col2 col3 col4 col5; do
-            if [[ "$col2" == "$BIN_NAME" ]]; then
-                FLAG=1
-                NUMBER_TO_DOWNLOAD=$col1
-                ishare2 pull bin "$NUMBER_TO_DOWNLOAD"
-            fi
-        done <$FILENAME
-
-        if [[ "$col2" == "$BIN_NAME" ]]; then
-            FLAG=1
-            NUMBER_TO_DOWNLOAD=$col1
-            ishare2 pull bin "$NUMBER_TO_DOWNLOAD"
         fi
+    done <"$filename1"
 
-        if [[ $FLAG -eq 0 ]]; then
-            STR="(BIN) WARNING: Image $BIN_NAME has not been found"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-    done <$filename1
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-}
-
-function download_lab_dynamips_images() {
-    filename1=/opt/unetlab/labs/dynamips_images.txt
-    n=1
-    while read -r line; do
-        n=$((n + 1))
-
-        DYNAMIPS_NAME=$line
-        FILENAME=DYNAMIPS_URL.csv
-        rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-        URL=$DYNAMIPS_URL
-        wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-        FLAG=0
-        while IFS=',' read -r col1 col2 col3 col4 col5; do
-            if [[ "$col2" == "$DYNAMIPS_NAME" ]]; then
-                FLAG=1
-                NUMBER_TO_DOWNLOAD=$col1
-                ishare2 pull dynamips "$NUMBER_TO_DOWNLOAD"
-            fi
-        done <$FILENAME
-
-        if [[ "$col2" == "$DYNAMIPS_NAME" ]]; then
-            FLAG=1
-            NUMBER_TO_DOWNLOAD=$col1
-            ishare2 pull dynamips "$NUMBER_TO_DOWNLOAD"
-        fi
-
-        if [[ $FLAG -eq 0 ]]; then
-            STR="(DYNAMIPS) WARNING: Image $DYNAMIPS_NAME has not been found"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-    done <$filename1
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-}
-
-function download_lab_qemu_images() {
-    filename1=/opt/unetlab/labs/qemu_images.txt
-    n=1
-    while read -r line; do
-        #echo "Line No. $n : $line"
-        n=$((n + 1))
-
-        QEMU_NAME=$line
-        FILENAME=QEMU_URL.csv
-        rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-        URL=$QEMU_URL
-        wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-        FLAG=0
-
-        corrections_for_qemu_images_in_lab_function "$QEMU_NAME"
-
-        while IFS=',' read -r col1 col2 col3 col4 col5; do
-            if [[ "$col2" == "$QEMU_NAME" ]]; then
-                FLAG=1
-                NUMBER_TO_DOWNLOAD=$col1
-                ishare2 pull qemu "$NUMBER_TO_DOWNLOAD"
-            fi
-        done <$FILENAME
-
-        if [[ "$col2" == "$QEMU_NAME" ]]; then
-            FLAG=1
-            NUMBER_TO_DOWNLOAD=$col1
-            ishare2 pull qemu "$NUMBER_TO_DOWNLOAD"
-        fi
-
-        if [[ $FLAG -eq 0 ]]; then
-            STR="(QEMU) WARNING: Image $QEMU_NAME has not been found"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-    done <$filename1
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
 function check_docker_service_status() {
@@ -2061,7 +1938,7 @@ function check_if_yml_template_is_missing() {
     FULL_TEMPLATE_PATH=$YML_DIR"$TEMPLATE_NAME"$EXTENSION
 
     if ! [[ -e $FULL_TEMPLATE_PATH ]]; then
-        STR="\n ${RED} [-] Template $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
+        STR="\n ${YELLOW}[-] WARN: Template $FULL_TEMPLATE_PATH is missing, so device might not show up in the list of nodes. ${NO_COLOR}"
         echo -e "$STR\033[0m"
     fi
 }
