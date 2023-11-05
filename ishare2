@@ -277,16 +277,9 @@ function create_ishare2_dir() {
     echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
-function fetch_sources() {
-    check_ishare2_dir
-    echo -e "${YELLOW} [+] Fetching sources...${NO_COLOR}"
-    curl --insecure -o $SOURCES https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list 2>$ISHARE2_DIR/tmp/curl_error
-    # Check if curl command failed
-    if [[ ! -f $SOURCES ]]; then
-        echo -e "${RED} [-] Failed to fetch sources.${NO_COLOR}"
-        exit 1
-    fi
-    echo -e "${GREEN} [+] Done.${NO_COLOR}"
+function fetch_json() {
+    # Download the JSON and store it in a temporary file
+    curl -sL "$JSON_URL" >"$TEMP_JSON"
 }
 
 download_file() {
