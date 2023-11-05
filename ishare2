@@ -19,6 +19,21 @@ GREEN='\033[32m'
 BLUE='\033[34m'
 NO_COLOR='\033[0m'
 
+function print_separator() {
+    local TITLE=$1
+    local WIDTH=${#TITLE}
+    local SEPARATOR=""
+
+    # Calculate the required number of '=' characters to create the separator
+    for ((i = 0; i < WIDTH + 8; i++)); do
+        SEPARATOR+="="
+    done
+
+    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
+    echo -e "\033[1;33m    ${TITLE}    \033[0m"
+    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
+}
+
 function check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
     if [[ ! -d $ISHARE2_DIR ]]; then
