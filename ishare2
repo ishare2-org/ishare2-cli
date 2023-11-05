@@ -1859,8 +1859,15 @@ function sh_files_function() {
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         chmod +x "$file"
-        echo -e "\nExecuting $file"
-        bash "$file" "$DIR"
+        echo -e "This image includes a script file: $file"
+        read -p "Do you want to run $file? [y/n]: " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            bash "$file"
+        else
+            echo -e "${YELLOW} [!] $file was not executed. ${NO_COLOR}"
+            echo -e "${YELLOW} [!] WARN: This script file might be needed for the image to work properly. ${NO_COLOR}"
+        fi
     fi
 }
 
