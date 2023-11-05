@@ -1559,7 +1559,6 @@ function ishare2_gui_restart() {
 
 # Display the data for a specific type in a table
 function display_images() {
-    JSON_URL="https://github.com/ishare2-org/mirrors/raw/main/index.gd.json"
     # Download the JSON and store it in a temporary file
     curl -sL "$JSON_URL" >temp.json
     print_separator "Available $TYPE images"
@@ -2048,7 +2047,6 @@ function install_qemu_tools() {
     # check if qemu-img is installed
     if ! [[ -e /opt/qemu/bin/qemu-img ]]; then
         echo -e "${RED} [-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
-        exit 1
     fi
 }
 
@@ -2337,15 +2335,15 @@ function selector() {
         esac
         ;;
     "pull")
-            case "$2" in
+        case "$2" in
         "qemu" | "iol" | "dynamips" | "bin")
             TYPE="${2^^}" # Convert to uppercase
             pull_images "$TYPE" "$3" "$4"
             ;;
         *) # If the type is not specified, print the usage
             echo "Usage: $0 pull [qemu|iol|dynamips|bin] [ID]"
-                ;;
-            esac
+            ;;
+        esac
         ;;
     "installed")
         if [[ "$2" ]]; then
