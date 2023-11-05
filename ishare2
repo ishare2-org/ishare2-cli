@@ -2238,17 +2238,17 @@ function selector() {
                 ;;
             "qemu")
                 echo -e
-                ls -lh -R /opt/unetlab/addons/qemu/
+                tree -hp /opt/unetlab/addons/qemu/
                 echo -e
                 ;;
             "dynamips")
                 echo -e
-                ls -lh -R /opt/unetlab/addons/dynamips/
+                tree -hp /opt/unetlab/addons/dynamips/
                 echo -e
                 ;;
             "bin")
                 echo -e
-                ls -lh -R /opt/unetlab/addons/iol/bin/
+                tree -hp /opt/unetlab/addons/iol/bin/
                 echo -e
                 ;;
             "docker")
