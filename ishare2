@@ -2303,9 +2303,6 @@ function selector() {
     "relicense")
         generate_a_new_license
         ;;
-    "update")
-        manual_sources_update
-        ;;
     "upgrade")
         menu_ishare2_upgrade
         ;;
