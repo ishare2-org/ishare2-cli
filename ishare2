@@ -8,7 +8,8 @@
 # ishare2 configuration
 CHANNEL="main" # you can change this to available branches in github.com/ishare-org/ishare2-cli
 ISHARE2_DIR="/opt/ishare2/cli"
-SOURCES="$ISHARE2_DIR/sources.list"
+JSON_URL="https://github.com/ishare2-org/mirrors/raw/main/index.gd.json"
+TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"
 VERSION="v3.0-alpha" # Script version
 
 # Colors
