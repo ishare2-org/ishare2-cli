@@ -324,7 +324,7 @@ download_file_aria2() {
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir/$output_name. ${NO_COLOR}"
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
         rm -f error.log
     else
         echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
@@ -568,22 +568,22 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
     docker_images=$(grep -Pio 'type="docker".*image="\K[^"]*' "$file" | sort -u)
     echo "$docker_images" >/opt/unetlab/labs/docker_images.txt
 
-    filename1_iol_images=/opt/unetlab/labs/iol_images.txt
-    filename2_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
-    filename3_qemu_images=/opt/unetlab/labs/qemu_images.txt
-    filename4_docker_images=/opt/unetlab/labs/docker_images.txt
+    list_iol_images=/opt/unetlab/labs/iol_images.txt
+    list_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
+    list_qemu_images=/opt/unetlab/labs/qemu_images.txt
+    list_docker_images=/opt/unetlab/labs/docker_images.txt
 
     BIN_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename1_iol_images; then BIN_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_iol_images; then BIN_FLAG=1; fi
 
     DYNAMIPS_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename2_dynamips_images; then DYNAMIPS_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_dynamips_images; then DYNAMIPS_FLAG=1; fi
 
     QEMU_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename3_qemu_images; then QEMU_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_qemu_images; then QEMU_FLAG=1; fi
 
     DOCKER_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename4_docker_images; then DOCKER_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_docker_images; then DOCKER_FLAG=1; fi
 
     echo -e "\nImages found on lab\n"
 
@@ -595,7 +595,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         while read -r line; do
             echo "File $n : $line"
             n=$((n + 1))
-        done <$filename1_iol_images
+        done <$list_iol_images
     fi
 
     echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
@@ -606,7 +606,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         while read -r line; do
             echo "File $n : $line"
             n=$((n + 1))
-        done <$filename2_dynamips_images
+        done <$list_dynamips_images
     fi
 
     echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
@@ -617,7 +617,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         while read -r line; do
             echo "File $n : $line"
             n=$((n + 1))
-        done <$filename3_qemu_images
+        done <$list_qemu_images
     fi
 
     echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
@@ -628,7 +628,7 @@ function mylabs_install_lab_images_just_for_only_readable_labs() {
         while read -r line; do
             echo "File $n : $line"
             n=$((n + 1))
-        done <$filename4_docker_images
+        done <$list_docker_images
     fi
 
     STR_BIN="\nDownload BIN images for this lab"
@@ -860,11 +860,11 @@ function install_lab_images_just_for_only_readable_labs() {
         list_file="/opt/unetlab/labs/${type}_images.txt"
         if ! grep -qv -e '^\s*$' "$list_file"; then
             echo "No ${type} images found"
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
+        else
+            n=1
+            while read -r line; do
+                echo "File $n : $line"
+                n=$((n + 1))
             done <"$list_file"
         fi
     done
@@ -1996,9 +1996,9 @@ function connection_tests() {
         echo -e "${YELLOW} [-] Checking if $service is reachable... ${NO_COLOR}"
         if ping -q -c 5 -W 5 "${SERVICES[$service]}" >/dev/null; then
             echo -e "${GREEN} [+] $service is reachable. ${NO_COLOR}"
-    else
+        else
             echo -e "${RED} [-] $service is not reachable ${NO_COLOR}"
-    fi
+        fi
     done
 
     # Checks completed
