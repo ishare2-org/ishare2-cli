@@ -762,7 +762,7 @@ function get_lab_list_just_for_only_readable_labs() {
     echo "Labs in plain text: ${#readableLabsArray[@]}"
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
+        STR="No readable labs were found so we cannot download images for any lab"
         echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
@@ -782,17 +782,16 @@ function get_lab_list_just_for_only_readable_labs() {
 
 function install_lab_images_just_for_only_readable_labs() {
     NUMBER=$1
-
-    LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
+    LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
 
     if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder Your labs from PNETLab Store has not been found"
-        echo "This folder is created when a lab from PNETLab Store is downloaded"
+        echo "\"Your labs from PNETLab Store\" directory has not been found"
+        echo "This folder is automatically created when a lab from PNETLab Store is downloaded"
         exit 0
     fi
 
     if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at PNETLab Store folder in server"
+        echo "No labs were found at PNETLab Store folder in server"
         exit 0
     fi
 
@@ -811,7 +810,7 @@ function install_lab_images_just_for_only_readable_labs() {
     done
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
+        STR="No readable labs were found so we cannot download images for any lab"
         echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
@@ -832,94 +831,56 @@ function install_lab_images_just_for_only_readable_labs() {
 
     file=${readableLabsArray[$((NUMBER - 1))]}
     echo -e "File selected: $file"
+    TYPES=(iol dynamips qemu docker)
+    for type in "${TYPES[@]}"; do
+        images=$(grep -Pio "type=\"$type\".*image=\"\K[^\"]*" "$file" | sort -u)
+        echo "$images" >/opt/unetlab/labs/"$type"_images.txt
+    done
 
-    #echo -e "\nIOL images"
-    iol_images=$(grep -Pio 'type="iol".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$iol_images"
-    echo "$iol_images" >/opt/unetlab/labs/iol_images.txt
-
-    #echo -e "\nDynamips images"
-    dynamips_images=$(grep -Pio 'type="dynamips".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$dynamips_images"
-    echo "$dynamips_images" >/opt/unetlab/labs/dynamips_images.txt
-
-    #echo -e "\nQemu images"
-    qemu_images=$(grep -Pio 'type="qemu".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$qemu_images"
-    echo "$qemu_images" >/opt/unetlab/labs/qemu_images.txt
-
-    #echo -e "\nDocker images"
-    docker_images=$(grep -Pio 'type="docker".*image="\K[^"]*' "$file" | sort -u)
-    echo "$docker_images" >/opt/unetlab/labs/docker_images.txt
-
-    filename1_iol_images=/opt/unetlab/labs/iol_images.txt
-    filename2_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
-    filename3_qemu_images=/opt/unetlab/labs/qemu_images.txt
-    filename4_docker_images=/opt/unetlab/labs/docker_images.txt
+    list_iol_images=/opt/unetlab/labs/iol_images.txt
+    list_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
+    list_qemu_images=/opt/unetlab/labs/qemu_images.txt
+    list_docker_images=/opt/unetlab/labs/docker_images.txt
 
     BIN_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename1_iol_images; then BIN_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_iol_images; then BIN_FLAG=1; fi
 
     DYNAMIPS_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename2_dynamips_images; then DYNAMIPS_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_dynamips_images; then DYNAMIPS_FLAG=1; fi
 
     QEMU_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename3_qemu_images; then QEMU_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_qemu_images; then QEMU_FLAG=1; fi
 
     DOCKER_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename4_docker_images; then DOCKER_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_docker_images; then DOCKER_FLAG=1; fi
 
-    echo -e "\nImages found on lab"
-
-    echo -e "${GREEN}--- bin images ---${NO_COLOR}"
-    if [[ BIN_FLAG -eq 1 ]]; then
-        echo No bin images found
+    print_separator "List of images found on lab"
+    for type in "${TYPES[@]}"; do
+        print_separator "List of ${type^^} images"
+        list_file="/opt/unetlab/labs/${type}_images.txt"
+        if ! grep -qv -e '^\s*$' "$list_file"; then
+            echo "No ${type} images found"
     else
         n=1
         while read -r line; do
             echo "File $n : $line"
             n=$((n + 1))
-        done <$filename1_iol_images
-    fi
+            done <"$list_file"
+        fi
+    done
 
-    echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
-        echo No dynamips images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename2_dynamips_images
-    fi
-
-    echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
-    if [[ QEMU_FLAG -eq 1 ]]; then
-        echo No qemu images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename3_qemu_images
-    fi
-
-    echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
-    if [[ DOCKER_FLAG -eq 1 ]]; then
-        echo No docker images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename4_docker_images
-    fi
+    TYPES=(iol dynamips qemu)
+    for type in "${TYPES[@]}"; do
+        print_separator "Start downloading ${type^^} images for this lab"
+        pull_lab_images "$file" "$type"
+    done
 
     print_separator "Start downloading DOCKER images for this lab"
     echo -e "\033[32m$STR_DOCKER\033[0m"
     if [[ DOCKER_FLAG -eq 1 ]]; then
         echo -e "${YELLOW}- Nothing to download${NO_COLOR}"
     else
+        echo "Docker images"
         download_lab_docker_images
     fi
 
