@@ -2134,102 +2134,108 @@ function corrections_for_dynamips_images() {
     fi
 }
 
-function pull_qemu() {
-    PARAMETER=$1
-    OVERWRITE=$2
+function pull_images() {
+    IMAGE_TYPE=$1
+    IMAGE_ID=$2
+    OVERWRITE=$3
 
-    if [[ $PARAMETER = "all" ]]; then
-        echo "Feature not available for qemu images due to large size"
-        exit 0
+    # 0. Check parameters
+    # Check if IMAGE_ID is not empty and is a number
+    if [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]]; then
+        echo -e "Syntax:\nishare2 pull [type] [ID]"
+        echo "type: bin, qemu or dynamips"
+        echo -e "ID: [1-9999]\n"
+        echo "Example: ishare2 pull qemu 4"
+        echo "Example: ishare2 pull dynamips 5"
+        echo -e "Example: ishare2 pull bin 6"
+        exit 1
     fi
 
-    QEMU_NUMBER=$PARAMETER
-    FILENAME=$ISHARE2_DIR"/QEMU.csv"
+    if [ "$IMAGE_TYPE" = "BIN" ]; then
+        IMAGE_TYPE="IOL"
+    else
+        IMAGE_TYPE="$1"
+    fi
+    local download_urls
+    local download_path # Pending: implement corrections_for_qemu_images function with new JSON structure
+    local image_name
+    local image_size
 
-    FLAG=0
-    declare -a myArray=()
-    while IFS=',' read -r col1 col2 col3 col4 col5 col6 col7 col8 col9 col10 col11 col12 col13 col14 col15 col16; do
-        if [[ "$col1" = "$QEMU_NUMBER" ]]; then
-            FLAG=1
+    # 1. Fetch the JSON file
+    fetch_json
 
-            #NUMBER=$col1
-            FOLDERNAME=$col2
-            SIZE=$col3
-            UNIT=$col4
-            FILE1NAME=$col5
-            FILE1LINK=$col6
-            FILE2NAME=$col7
-            FILE2LINK=$col8
-            FILE3NAME=$col9
-            FILE3LINK=$col10
-            FILE4NAME=$col11
-            FILE4LINK=$col12
-            FILE5NAME=$col13
-            FILE5LINK=$col14
-            FILE6NAME=$col15
-            FILE6LINK=$col16
+    # Extract the download URLs, path, name, and size for the specified type and ID
+    download_urls=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_links[]' "$TEMP_JSON")
+    download_path=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_path' "$TEMP_JSON")
+    image_name=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .name' "$TEMP_JSON")
+    image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .size' "$TEMP_JSON")
 
-            corrections_for_qemu_images
-            count_elements_to_download_for_qemu_images
+    # 2. Download the image(s) for the specified type and ID
+    # Skip download if the image is already installed
+    FOLDERNAME="$image_name"
+    IMAGE_TYPE_LOWER=$(echo "$IMAGE_TYPE" | tr '[:upper:]' '[:lower:]')
+
+    case "$IMAGE_TYPE" in
+    "QEMU")
+        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$FOLDERNAME"
+        if [ -d "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+            echo "Folder $FOLDERNAME already exists in server for Type: $IMAGE_TYPE"
+            exit 1
         fi
-    done <$FILENAME
+        ;;
+    "BIN" | "IOL")
+        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/bin/$image_name"
+        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+            echo "File $image_name already exists in server for Type: $IMAGE_TYPE. Use --overwrite to overwrite it"
+            exit 1
+        fi
+        ;;
+    "DYNAMIPS")
+        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$image_name"
+        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+            echo "File $image_name already exists in server for Type: $IMAGE_TYPE. Use --overwrite to overwrite it"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Invalid image type: $IMAGE_TYPE"
+        exit 1
+        ;;
+    esac
 
-    if [[ "$col1" = "$QEMU_NUMBER" ]]; then
-        FLAG=1
+    if [ -n "$download_urls" ]; then
+        echo "Downloading image for Type: $IMAGE_TYPE, ID: $IMAGE_ID"
+        echo "Download Path: $download_path"
+        echo "Image Name: $image_name"
+        echo "Image Size: $image_size"
+        # Create the directory if it doesn't exist
+        mkdir -p "$download_path"
 
-        #NUMBER=$col1
-        FOLDERNAME=$col2
-        SIZE=$col3
-        UNIT=$col4
-        FILE1NAME=$col5
-        FILE1LINK=$col6
-        FILE2NAME=$col7
-        FILE2LINK=$col8
-        FILE3NAME=$col9
-        FILE3LINK=$col10
-        FILE4NAME=$col11
-        FILE4LINK=$col12
-        FILE5NAME=$col13
-        FILE5LINK=$col14
-        FILE6NAME=$col15
-        FILE6LINK=$col16
+        # Iterate through the download URLs and download each file
+        case $IMAGE_TYPE in
+        "QEMU")
+            for download_url in $download_urls; do
+                download_file "$download_url" "$download_path"
+            done
+            ;;
+        "BIN" | "DYNAMIPS" | "IOL")
+            for download_url in $download_urls; do
+                download_file "$download_url" "$download_path"/$image_name
+            done
+            ;;
+        *)
+            echo "Something went wrong"
+            ;;
+        esac
 
-        corrections_for_qemu_images
-        count_elements_to_download_for_qemu_images
+        echo "Download complete."
+    else
+        echo "Image not found for Type: $IMAGE_TYPE, ID: $IMAGE_ID"
     fi
 
-    # Remove csv file
-    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-
-    if [[ $FLAG = 1 ]]; then
-        if [[ -d /opt/unetlab/addons/qemu/"$FOLDERNAME" && "$OVERWRITE" != "--overwrite" ]]; then
-            echo -e "Folder $FOLDERNAME already exists in server. Use --overwrite to overwrite it."
-            exit 0
-        fi
-
-        mkdir -p /opt/unetlab/addons/qemu/"$FOLDERNAME"/
-
-        #1. Download file requested
-        if [[ $FILES_COUNTER -eq 1 ]]; then
-            download_1_file_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "$FILE1NAME" "$FILE1LINK"
-
-            #2. Move file to /opt/unetlab/addons/qemu/<folder>
-            # mv "$FILE1NAME" /opt/unetlab/addons/qemu/"$FOLDERNAME"/"$FILE1NAME"
-            # ^ No longer needed since it will be downloaded to the correct folder with aria2c -d
-        fi
-
-        if [[ $FILES_COUNTER -gt 1 ]]; then
-            #echo $FILES_COUNTER
-            download_multiple_files_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "${myArray[@]}"
-
-            #2. Move files to /opt/unetlab/addons/qemu/<folder>
-            #Files moved to qemu directory when "download_multiple_files_qemu" is called
-            #Achieved by using -P parameter in wget
-        fi
-
-        #3. Extensions
-
-        # Decompress files section
+    # 3. Handle downloaded files if TYPE is QEMU
+    if [ "$IMAGE_TYPE" = "QEMU" ]; then
+        # 3.1. Extract archives
         tgz_files_function "$FOLDERNAME"
         tar_gz_files_function "$FOLDERNAME"
         tar_files_function "$FOLDERNAME"
@@ -2238,7 +2244,7 @@ function pull_qemu() {
         ova_files_function "$FOLDERNAME"
         iso_files_function "$FOLDERNAME"
 
-        # Treat files section
+        # 3.2. Handle other files
         yml_files_function "$FOLDERNAME"
         txt_files_function "$FOLDERNAME"
         sh_files_function "$FOLDERNAME"
@@ -2246,36 +2252,11 @@ function pull_qemu() {
         php_files_function "$FOLDERNAME"
         vmdk_files_function "$FOLDERNAME"
 
-        # 4. Show if .yml template is missing
+        # 3.3. Show if .yml templates are missing
         check_if_yml_template_is_missing "$FOLDERNAME"
-
-        # 5. Apply fix permissions command
+        # 3.4. Apply fix permissions command
         fix_permissions
-    else
-        echo -e "${RED}Error: ${NC}No image found with number $QEMU_NUMBER"
-        echo -e "Use ${GREEN}ishare2 search qemu${NC} to search for an image"
-        # get user input y or n
-        read -p "Do you want to search for the image? [y/n] " -n 1 -r
-        echo -e # (optional) move to a new line after user input
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            ishare2 search qemu
-        fi
     fi
-}
-
-function print_separator() {
-    local TITLE=$1
-    local WIDTH=${#TITLE}
-    local SEPARATOR=""
-
-    # Calculate the required number of '=' characters to create the separator
-    for ((i = 0; i < WIDTH + 8; i++)); do
-        SEPARATOR+="="
-    done
-
-    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
-    echo -e "\033[1;33m    ${TITLE}    \033[0m"
-    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
 }
 
 function fix_permissions() {
