@@ -2764,7 +2764,7 @@ function selector() {
                     echo
                 done
             else
-                echo "Usage: $0 [qemu|iol|dynamips|bin|all]"
+                echo "Usage: $0 [qemu|iol|dynamips|all]"
                 exit 1
             fi
             ;;
