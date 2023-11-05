@@ -2337,42 +2337,15 @@ function selector() {
         esac
         ;;
     "pull")
-        if [[ "$2" ]]; then
             case "$2" in
-            "qemu")
-                if [[ "$3" ]]; then
-                    pull_qemu "$3" "$4"
-                else
-                    STR="Last parameter not found"
-                    echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
-                fi
-                ;;
-            "dynamips")
-                if [[ "$3" ]]; then
-                    pull_dynamips "$3" "$4"
-                else
-                    STR="Last parameter not found"
-                    echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
-                fi
-                ;;
-            "bin")
-                if [[ "$3" ]]; then
-                    pull_bin "$3" "$4"
-                else
-                    STR="Last parameter not found"
-                    echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "Syntax: ishare2 pull bin ${YELLOW}<number>${NO_COLOR}"
-                fi
-                ;;
-            *)
-                msg_incorrect_argument_or_no_arg_for_ishare2_pull
+        "qemu" | "iol" | "dynamips" | "bin")
+            TYPE="${2^^}" # Convert to uppercase
+            pull_images "$TYPE" "$3" "$4"
+            ;;
+        *) # If the type is not specified, print the usage
+            echo "Usage: $0 pull [qemu|iol|dynamips|bin] [ID]"
                 ;;
             esac
-        else
-            msg_incorrect_argument_or_no_arg_for_ishare2_pull
-        fi
         ;;
     "installed")
         if [[ "$2" ]]; then
