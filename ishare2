@@ -1908,7 +1908,6 @@ function php_files_function() {
 }
 
 function vmdk_files_function() {
-    install_qemu_tools
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1917,6 +1916,7 @@ function vmdk_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         VMDK_FILE=$(ls "${DIR}"/*"$EXTENSION")
+        install_qemu_tools
 
         echo -e "\nConverting .vmdk to .qcow2. It might take a while..."
         /opt/qemu/bin/qemu-img convert -p -f vmdk -O qcow2 "$VMDK_FILE" "$DIR"/hda.qcow2
@@ -2102,7 +2102,7 @@ function pull_images() {
             ;;
         "BIN" | "DYNAMIPS" | "IOL")
             for download_url in $download_urls; do
-                download_file "$download_url" "$download_path"/$image_name
+                download_file "$download_url" "$download_path" "$image_name"
             done
             ;;
         *)
