@@ -2267,41 +2267,28 @@ function fix_permissions() {
 }
 
 function connection_tests() {
+    # Define an associative array with service names and their respective IP addresses or domains
+    declare -A SERVICES=(
+        ["GitHub"]="github.com"
+        ["GitHub Raw Files"]="raw.githubusercontent.com"
+        ["LabHub (Onedrive)"]="labhub.eu.org"
+        ["LabHub (Google Drive)"]="drive.labhub.eu.org"
+        ["Google DNS"]="8.8.8.8"
+    )
+
     # Header
     echo -e "${YELLOW} [-] Running connection tests... ${NO_COLOR}"
-    # Check if GitHub is reachable
-    echo -e "${YELLOW} [-] Checking if GitHub is reachable... ${NO_COLOR}"
-    if ping -q -c 5 -W 5 github.com >/dev/null; then
-        echo -e "${GREEN} [+] GitHub is reachable. ${NO_COLOR}"
+
+    # Loop through the services and check their reachability
+    for service in "${!SERVICES[@]}"; do
+        echo -e "${YELLOW} [-] Checking if $service is reachable... ${NO_COLOR}"
+        if ping -q -c 5 -W 5 "${SERVICES[$service]}" >/dev/null; then
+            echo -e "${GREEN} [+] $service is reachable. ${NO_COLOR}"
     else
-        echo -e "${RED} [-] GitHub is not reachable ${NO_COLOR}"
+            echo -e "${RED} [-] $service is not reachable ${NO_COLOR}"
     fi
-    if ping -q -c 5 -W 5 raw.githubusercontent.com >/dev/null; then
-        echo -e "${GREEN} [+] raw.githubusercontent.com is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] raw.githubusercontent.com is not reachable ${NO_COLOR}"
-    fi
-    # Check if labhub.eu.org is reachable
-    echo -e "${YELLOW} [-] Checking if labhub.eu.org is reachable... ${NO_COLOR}"
-    if ping -q -c 5 -W 5 labhub.eu.org >/dev/null; then
-        echo -e "${GREEN} [+] labhub.eu.org is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] labhub.eu.org is not reachable ${NO_COLOR}"
-    fi
-    # Check if drive.labhub.eu.org is reachable
-    echo -e "${YELLOW} [-] Checking if drive.labhub.eu.org is reachable... ${NO_COLOR}"
-    if ping -q -c 5 -W 5 drive.labhub.eu.org >/dev/null; then
-        echo -e "${GREEN} [+] drive.labhub.eu.org is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] drive.labhub.eu.org is not reachable ${NO_COLOR}"
-    fi
-    # Check if 8.8.8.8 is reachable
-    echo -e "${YELLOW} [-] Checking if Google DNS is reachable... ${NO_COLOR}"
-    if ping -q -c 5 -W 5 8.8.8.8 >/dev/null; then
-        echo -e "${GREEN} [+] Google DNS is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] Google DNS is not reachable ${NO_COLOR}"
-    fi
+    done
+
     # Checks completed
     echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
 }
