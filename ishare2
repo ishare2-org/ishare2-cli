@@ -1016,13 +1016,34 @@ function corrections_for_bin_images_in_lab_function() {
     fi
 }
 
-function download_lab_iol_images() {
-    LAB_PATH=$1
+function pull_lab_images() {
+    # Pending to implement: corrections_for_bin_images_in_lab_function "$IMAGE_NAME" "$LAB_PATH"
+    # Pending to implement: corrections_for_qemu_images_in_lab_function "$QEMU_NAME"
+    LAB_PATH="$1"
+    IMAGE_TYPE="$2"
+    IMAGE_TYPE_UPPERCASE=$(echo "$IMAGE_TYPE" | tr '[:lower:]' '[:upper:]')
 
-    filename1=/opt/unetlab/labs/iol_images.txt
+    filename1="/opt/unetlab/labs/${IMAGE_TYPE}_images.txt"
     n=1
     while read -r line; do
         n=$((n + 1))
+        IMAGE_NAME="$line"
+        if [[ -z $IMAGE_NAME ]]; then
+            echo "No $IMAGE_TYPE images found"
+        else
+            fetch_json
+            # Clear the ID variable at the start of each iteration
+            ID=""
+            # Search for the image in the "IOL" section of the JSON file and get the ID
+            ID=$(jq -r --arg image_name "$IMAGE_NAME" '.["'"$IMAGE_TYPE_UPPERCASE"'"][] | select(.name == $image_name) | .id' "$TEMP_JSON")
+
+            if [ -n "$ID" ]; then
+                # The image was found in the "IOL" section of the JSON data
+                echo "Image '$IMAGE_NAME' found in JSON data. ID: $ID"
+                # You can download it or perform other actions here
+            else
+                echo "Image '$IMAGE_NAME' not found in JSON data."
+            fi
         fi
     done <"$filename1"
 
