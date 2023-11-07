@@ -390,7 +390,7 @@ download_file_wget() {
 function check_user_is_root() {
     if ! [[ "$(id -u)" == 0 ]]; then
         user=$(whoami)
-        echo -e "${RED} [!] This script requires root privileges to be executed. The current user, "$user", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
+        echo -e "${RED} [!] This script requires root privileges to be executed. The current user, \"$user\", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
         exit 1
     fi
 }
@@ -407,7 +407,7 @@ function get_server_platform() {
 
 function set_yml_template_folder_location() {
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
-    data_array=($data)
+    data_array=("$data")
     pnetlab_version=${data_array[1]}
 
     if [[ $pnetlab_version == "4.2.10" ]] || [[ $pnetlab_version == "5.0.1" ]]; then
@@ -1077,7 +1077,7 @@ function corrections_for_docker_images_in_lab_function() {
     )
 
     for i in "${array[@]}"; do
-        if [[ $DOCKER_NAME == $i ]]; then
+        if [[ $DOCKER_NAME == "$i" ]]; then
             OLD_FILENAME=$DOCKER_NAME
             NEW_FILENAME=eveng/$DOCKER_NAME
 
@@ -1158,15 +1158,15 @@ function menu_ishare2_upgrade_pnetlab() {
         case "$REPLY" in
         1)
             # Upgrade PNETLab v5
-            bash -c "$(curl -sL --insecure $URL_PNETLAB_V5)"
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5")"
             ;;
         2)
             # Upgrade PNETLab v5 Beta
-            bash -c "$(curl -sL --insecure $URL_PNETLAB_V5_BETA)"
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_BETA")"
             ;;
         3)
             # Upgrade PNETLab v6
-            bash -c "$(curl -sL --insecure $URL_PNETLAB_V6)"
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V6")"
             ;;
         $((${#options[@]} + 1)))
             break
@@ -1220,7 +1220,7 @@ function show_changelog() {
     FILE=/root/CHANGELOG.md
     if [[ -e $FILE ]]; then rm $FILE; fi
 
-    DATA="$(wget -q $URL_CHANGELOG_MD -P /root)"
+    wget -q "$URL_CHANGELOG_MD" -P /root
     head -n 15 $FILE
     rm $FILE
 }
@@ -1368,13 +1368,13 @@ function show_ishare2_usage() {
 
     STR=""
     LOCAL_VALUE=$ISHARE2_VERSION_USAGE
-    REMOTE_VALUE=$(curl -s $URL_VERSION)
+    REMOTE_VALUE=$(curl -s "$URL_VERSION")
 
     if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
         STR="New ishare2 version available: $REMOTE_VALUE"
     fi
 
-    NEW_VERSION_RESULT=$(echo -e ${YELLOW} $STR ${NO_COLOR})
+    NEW_VERSION_RESULT=$(echo -e "${YELLOW}" "$STR" "${NO_COLOR}")
 
     # For PNETLab
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
@@ -1645,7 +1645,7 @@ function yml_files_function() {
     for ext in "${EXTENSIONS[@]}"; do
         if ls "${DIR}"/*"$ext" &>/dev/null; then
             file=$(ls "${DIR}"/*"$ext" | head -1)
-            cp "$file" $YML_DIR
+            cp "$file" "$YML_DIR"
             break
         fi
     done
@@ -1779,7 +1779,7 @@ function corrections_for_iol_images() {
 
         FILE="$YML_DIR"i86bi_linux_l2.yml
         if ! [[ -e $FILE ]]; then
-            wget -O $FILE $URL_I86BI_LINUX_L2_YML >/dev/null 2>&1
+            wget -O "$FILE" "$URL_I86BI_LINUX_L2_YML" >/dev/null 2>&1
         fi
     fi
 
@@ -1788,7 +1788,7 @@ function corrections_for_iol_images() {
 
         FILE="$YML_DIR"i86bi_linux_l3.yml
         if ! [[ -e $FILE ]]; then
-            wget -O $FILE $URL_I86BI_LINUX_L3_YML >/dev/null 2>&1
+            wget -O "$FILE" "$URL_I86BI_LINUX_L3_YML" >/dev/null 2>&1
         fi
     fi
 }
@@ -1827,13 +1827,13 @@ function corrections_for_dynamips_images() {
     SUBSTRING="c2600"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
         FILE="$YML_DIR"c2600.yml
-        wget -O $FILE $URL_C2600_YML >/dev/null 2>&1
+        wget -O "$FILE" "$URL_C2600_YML" >/dev/null 2>&1
     fi
 
     SUBSTRING="c1760"
     if [[ "$NAME" == *"$SUBSTRING"* ]]; then
         FILE="$YML_DIR"c1760.yml
-        wget -O $FILE $URL_C1760_YML >/dev/null 2>&1
+        wget -O "$FILE" "$URL_C1760_YML" >/dev/null 2>&1
     fi
 }
 
@@ -2191,4 +2191,4 @@ function main() {
     selector "$1" "$2" "$3" "$4"
 }
 
-main $@
+main "$@"
