@@ -172,7 +172,15 @@ validate_conf_file() {
         local var_name="${line%%=*}"
 
         # Check if the variable is allowed
-        if [[ " ${allowed_vars[@]} " =~ " $var_name " ]]; then
+        is_allowed=false
+        for allowed_var in "${allowed_vars[@]}"; do
+            if [[ "$allowed_var" == "$var_name" ]]; then
+                is_allowed=true
+                break
+            fi
+        done
+
+        if $is_allowed; then
             filtered_content+="$line"$'\n'
         else
             echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
@@ -183,6 +191,7 @@ validate_conf_file() {
     echo "$filtered_content" >"$config_file"
 
     echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    # shellcheck source=/opt/ishare2/cli/ishare2.conf
     source "$config_file"
     return 0
 }
