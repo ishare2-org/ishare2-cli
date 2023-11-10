@@ -82,7 +82,7 @@ function switch_downloader() {
 }
 
 function create_config() {
-    echo -e "${YELLOW} [*] Creating ishare2 configuration file...${NO_COLOR}"
+    echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press Ctrl+C to cancel.${NO_COLOR}"
@@ -115,18 +115,30 @@ function create_config() {
     esac
     echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_DIR/ishare2.conf
 
-    # Ask for the channel value
     echo -e "${YELLOW} [+] Choose the update channel.${NO_COLOR}"
-    echo "  1) main"
-    read -p " [+] Enter the update channel option (default: 1): " -r
-    case $REPLY in
-    1)
+    echo " Available branches:"
+    branches=$(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
+
+    # Displaying branches as options
+    i=1
+    for branch in $branches; do
+        echo " $i) $branch"
+        i=$((i + 1))
+    done
+
+    # Ask the user to select a branch
+    read -p " [*] Enter the number of the branch you want to use (default: main): " -r
+    if [[ -z $REPLY ]]; then
+        echo -e "${YELLOW} [!] Using the default branch.${NO_COLOR}"
         CHANNEL="main"
-        ;;
-    *)
+    elif [[ $REPLY -lt 1 || $REPLY -gt $i ]]; then
+        echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
+        CHANNEL=$(echo "$branches" | sed -n "$REPLY"p)
+    else
+        echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
         CHANNEL="main"
-        ;;
-    esac
+    fi
+
     echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
 
     # Validate the configuration file
@@ -136,6 +148,7 @@ function create_config() {
     fi
     remove_duplicates
     validate_conf_file
+    echo -e "${GREEN} [+] Configuration file created successfully.${NO_COLOR}"
 }
 
 remove_duplicates() {
