@@ -1,16 +1,21 @@
 #!/bin/bash
-# Date: October 2022
+# Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
-# Description: This script is used to download images from the internet and install them in PNetLab.
+# Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
 # Version: 3.0-alpha
-# Last Updated: 2023-04-23
+# Last Updated: 2023-11-7 yyyy-mm-dd
 
-# ishare2 configuration
-CHANNEL="main" # you can change this to available branches in github.com/ishare-org/ishare2-cli
-ISHARE2_DIR="/opt/ishare2/cli"
-JSON_URL="https://github.com/ishare2-org/mirrors/raw/main/index.gd.json"
-TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"
-VERSION="v3.0-alpha" # Script version
+# Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
+USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
+SSL_CHECK="true"                                                                    # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
+CHANNEL="alpha"                                                                     # Set to main to use the main channel. Set to beta to use the beta channel.
+JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" # Default JSON URL
+# End of ishare2 configuration
+
+# Initialize variables
+ISHARE2_DIR="/opt/ishare2/cli"            # ishare2 directory
+TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json" # Temporary JSON file
+VERSION="v3.0-alpha"                      # Current version of ishare2
 
 # Colors
 RED='\033[31m'
