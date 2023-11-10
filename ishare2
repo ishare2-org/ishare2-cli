@@ -830,7 +830,7 @@ function corrections_for_docker_images_in_lab_function() {
 
             echo "Changing docker image name inside .unl lab file"
             echo Lab file: "$LAB_PATH"
-            sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+            sed -i -e s+"$OLD_FILENAME"+"$NEW_FILENAME"+g "$LAB_PATH"
             echo -e "Changing: OK\n"
         fi
     done
@@ -840,17 +840,17 @@ function download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
     # Checking docker service status before pull any docker image
-    if check_docker_service_status $1; then # When 0 is returned
+    if check_docker_service_status; then # When 0 is returned
         while read -r line; do
             DOCKER_NAME=$line
 
-            corrections_for_docker_images_in_lab_function $DOCKER_NAME "$LAB_PATH"
+            corrections_for_docker_images_in_lab_function "$DOCKER_NAME" "$LAB_PATH"
 
             STR="Docker requested: "
             echo -e "\033[33m$STR\033[0m $DOCKER_NAME"
 
             docker pull "$DOCKER_NAME"
-        done <$filename1
+        done <"$filename1"
     fi
 
     list_dockers
@@ -875,7 +875,7 @@ function upgrade_ishare2() {
 
     rm /usr/sbin/ishare2
     rm -rf /opt/ishare2/cli/
-    download_file_wget $URL_ISHARE2 /usr/sbin/ "ishare2"
+    download_file_wget "$URL_ISHARE2" /usr/sbin/ "ishare2"
 
     echo -e "${GREEN} [+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
     # Make ishare2 executable
@@ -998,10 +998,9 @@ function ishare2_gui_restart() {
     fi
 }
 
-# Display the data for a specific type in a table
-function display_images() {
+function search_images() {
     # Download the JSON and store it in a temporary file
-    curl -sL "$JSON_URL" >temp.json
+    fetch_json
     print_separator "Available $TYPE images"
 
     # Filter rows with jq and keep the table headers
@@ -1022,10 +1021,10 @@ function display_images() {
         fi
     fi
 
-    rm temp.json
+    rm temp.json >/dev/null 2>&1
 }
 
-function generate_a_new_license() {
+function generate_iourc_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
 
     PYTHON_FILE=$BIN_PATH"CiscoIOUKeygen.py"
@@ -1033,7 +1032,7 @@ function generate_a_new_license() {
 
     if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
 
-    wget -O $PYTHON_FILE $URL_CISCO_IOU_KEYGEN_PY -q
+    wget -O $PYTHON_FILE "$URL_CISCO_IOU_KEYGEN_PY" -q
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error downloading CiscoIOUKeygen.py file. ${NO_COLOR}"
         echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
@@ -1048,7 +1047,7 @@ function generate_a_new_license() {
     fi
 
     if ! [[ -e $PERL_FILE ]]; then
-        wget -O $PERL_FILE $URL_KEEPALIVE_PL -q
+        wget -O $PERL_FILE "$URL_KEEPALIVE_PL" -q
         if [[ $? -ne 0 ]]; then
             echo -e "${RED} [-] Error downloading keepalive.pl file. ${NO_COLOR}"
             echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
@@ -1682,16 +1681,16 @@ function selector() {
         case "$2" in
         "qemu" | "iol" | "dynamips")
             TYPE="${2^^}" # Convert to uppercase
-            display_images "$TYPE"
+            search_images "$TYPE"
             ;;
         "bin")
             TYPE="IOL" # Treat "bin" as "iol" in uppercase
-            display_images "$TYPE"
+            search_images "$TYPE"
             ;;
         "all")
             for type in "QEMU" "IOL" "DYNAMIPS"; do
                 TYPE="${type^^}" # Convert to uppercase
-                display_images "$TYPE"
+                search_images "$TYPE"
                 echo
             done
             ;;
@@ -1700,7 +1699,7 @@ function selector() {
                 FILTER="$2"
                 for type in "QEMU" "IOL" "DYNAMIPS"; do
                     TYPE="${type^^}"
-                    display_images "$TYPE"
+                    search_images "$TYPE"
                     echo
                 done
             else
