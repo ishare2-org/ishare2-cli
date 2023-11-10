@@ -1017,7 +1017,7 @@ function search_images() {
     print_separator "Available $TYPE images"
 
     # Filter rows with jq and keep the table headers
-    data=$(jq -r '(["ID","NAME","SIZE"] | (., map(length*"-"))), (.["'$TYPE'"][] | select(.name | contains("'$FILTER'")) | [.id, .name, .size]) | @tsv' temp.json)
+    data=$(jq -r '(["ID","NAME","SIZE"] | (., map(length*"-"))), (.["'$TYPE'"][] | select(.name | contains("'$FILTER'")) | [.id, .name, .size]) | @tsv' "$TEMP_JSON")
 
     # Check if there are matching data rows
     if [ -n "$data" ]; then
