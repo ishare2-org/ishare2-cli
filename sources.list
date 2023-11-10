@@ -1,4 +1,3 @@
-URL_ID_LIST=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/id_list
 URL_VERSION=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/version
 URL_ISHARE2=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/ishare2
 URL_CHANGELOG_MD=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/CHANGELOG.md
