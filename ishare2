@@ -143,27 +143,27 @@ function create_config() {
     echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_DIR/ishare2.conf
 
     echo -e "${YELLOW} [+] Choose the update channel.${NO_COLOR}"
-    echo " Available branches:"
-    branches=$(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
 
-    # Displaying branches as options
-    i=1
-    for branch in $branches; do
-        echo " $i) $branch"
-        i=$((i + 1))
+    # Get branches as an array instead of a single string with spaces
+    mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
+
+    # Display branches with correct indexing
+    for ((i = 0; i < ${#branches[@]}; i++)); do
+        echo " $((i + 1))) ${branches[i]}"
     done
 
     # Ask the user to select a branch
     read -p " [*] Enter the number of the branch you want to use (default: main): " -r
+
     if [[ -z $REPLY ]]; then
         echo -e "${YELLOW} [!] Using the default branch.${NO_COLOR}"
         CHANNEL="main"
-    elif [[ $REPLY -lt 1 || $REPLY -gt $i ]]; then
-        echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
-        CHANNEL=$(echo "$branches" | sed -n "$REPLY"p)
-    else
+    elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
         echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
         CHANNEL="main"
+    else
+        CHANNEL=${branches[REPLY - 1]}
+        echo -e "${YELLOW} [!] Using the $CHANNEL branch.${NO_COLOR}"
     fi
 
     echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
