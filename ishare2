@@ -910,7 +910,13 @@ function upgrade_ishare2() {
 
     if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
         echo -e "${YELLOW} [+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
-        echo -e "${YELLOW} [+] Reinstalling latest version of ishare2${NO_COLOR}"
+        echo -e "${YELLOW} [+] Do you want to reinstall it? (y/n) ${NO_COLOR}"
+        read -r answer
+        if [[ $answer == "y" || $answer == "Y" ]]; then
+            echo -e "${YELLOW} [+] Reinstalling ishare2... ${NO_COLOR}"
+        else
+            exit 0
+        fi
     fi
 
     rm /usr/sbin/ishare2
