@@ -75,10 +75,10 @@ function fetch_sources() {
 
 # set max log file lines to 1000
 function set_max_log_lines() {
-    if [[ -f $ISHARE2_DIR/logs.txt ]]; then
-        if [[ $(wc -l <"$ISHARE2_DIR/logs.txt") -gt 1000 ]]; then
-            tail -n 1000 $ISHARE2_DIR/logs.txt >$ISHARE2_DIR/tmp.txt
-            mv $ISHARE2_DIR/tmp.txt $ISHARE2_DIR/logs.txt
+    if [[ -f $LOG_FILE ]]; then
+        if [[ $(wc -l <"$LOG_FILE") -gt 1000 ]]; then
+            tail -n 1000 $LOG_FILE >$ISHARE2_DIR/tmp.txt
+            mv $ISHARE2_DIR/tmp.txt $LOG_FILE
         fi
     fi
 }
@@ -190,7 +190,7 @@ remove_duplicates() {
     # Remove duplicate lines from the configuration file
     awk '!seen[$0]++' "$config_file" >"$config_file.tmp" && mv "$config_file.tmp" "$config_file"
 
-    echo -e "${GREEN} [+] Duplicates removed from the configuration file.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${GREEN} [+] Duplicates removed from the configuration file.${NO_COLOR}" >>$LOG_FILE
 }
 
 validate_conf_file() {
@@ -228,14 +228,14 @@ validate_conf_file() {
         if $is_allowed; then
             filtered_content+="$line"$'\n'
         else
-            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>$LOG_FILE
         fi
     done <"$config_file"
 
     # Write the filtered content back to the configuration file
     echo "$filtered_content" >"$config_file"
 
-    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>$LOG_FILE
     # shellcheck source=/opt/ishare2/cli/ishare2.conf
     source "$config_file"
     return 0
@@ -265,10 +265,10 @@ function install_aria2c() {
         fi
         echo -e "${GREEN} [+] Done.${NO_COLOR}"
     else
-        echo -e "${GREEN} [+] aria2c already is installed.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        echo -e "${YELLOW} [+] Updating aria2c...${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] aria2c already is installed.${NO_COLOR}" >>$LOG_FILE
+        echo -e "${YELLOW} [+] Updating aria2c...${NO_COLOR}" >>$LOG_FILE
         if ! apt-get install --only-upgrade aria2; then
-            echo -e "${RED} [-] Failed to update aria2c.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            echo -e "${RED} [-] Failed to update aria2c.${NO_COLOR}" >>$LOG_FILE
             exit 1
         fi
     fi
@@ -386,7 +386,7 @@ download_file_curl() { # $1 = url, $2 = output
     touch $ISHARE2_DIR/tmp/curl_error
     local url="$1"
     local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$LOG_FILE
     if [ "$SSL_CHECK" = true ]; then
         curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error
     else
@@ -394,7 +394,7 @@ download_file_curl() { # $1 = url, $2 = output
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -419,7 +419,7 @@ download_file_wget() {
         output_name=$(basename "$url")
     fi
     local output="$output_dir/$output_name"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$LOG_FILE
 
     if [ "$SSL_CHECK" = true ]; then
         wget -O "$output" "$url" -q --show-progress --content-disposition
@@ -429,7 +429,7 @@ download_file_wget() {
 
     # Check if wget command failed
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -897,7 +897,7 @@ function download_lab_docker_images() {
     count_dockers
 }
 
-function check_ishare2_version_file_exists() {
+function ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
         echo $VERSION >$ISHARE2_DIR/ishare2_version
@@ -906,10 +906,10 @@ function check_ishare2_version_file_exists() {
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
-    REMOTE_VALUE=$(curl -s --insecure $URL_VERSION)
+    UPSTREAM_VERSION=$(curl -s --insecure $URL_VERSION)
 
-    if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        echo -e "${YELLOW} [+] ishare2 $REMOTE_VALUE is already in the newest version available. ${NO_COLOR}"
+    if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
+        echo -e "${YELLOW} [+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
         echo -e "${YELLOW} [+] Reinstalling latest version of ishare2${NO_COLOR}"
     fi
 
@@ -922,7 +922,7 @@ function upgrade_ishare2() {
     echo -e "${YELLOW} [+] Setting ishare2 permissions${NO_COLOR}"
     chmod +x /usr/sbin/ishare2
     # Show success message
-    echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
+    echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
 }
 
 function menu_ishare2_upgrade_pnetlab() {
@@ -1061,7 +1061,7 @@ function search_images() {
         fi
     fi
 
-    rm temp.json >/dev/null 2>&1
+    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
 function generate_iourc_license() {
