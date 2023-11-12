@@ -13,9 +13,7 @@ JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.js
 # End of ishare2 configuration
 
 # Initialize variables
-ISHARE2_DIR="/opt/ishare2/cli"            # ishare2 directory
-TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json" # Temporary JSON file
-VERSION="v3.0-alpha"                      # Current version of ishare2
+SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
 RED='\033[31m'
