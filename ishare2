@@ -45,6 +45,31 @@ function check_ishare2_dir() {
     fi
 }
 
+function fetch_sources() {
+    # Fetch the sources.list from the repository
+    echo "Fetching sources.list from $SOURCES_URL..." >>$LOG_FILE
+    check_ishare2_dir
+    # Cache the sources.list file for 10 minutes
+    if [[ -f $ISHARE2_DIR/sources.list && $(find "$ISHARE2_DIR/sources.list" -mmin -10) ]]; then
+        echo "Using cached sources.list file." >>$LOG_FILE
+    else
+        echo "Downloading sources.list file..." >>$LOG_FILE
+        # Backup the old sources.list file
+        if [[ -f $ISHARE2_DIR/sources.list ]]; then
+            mv $ISHARE2_DIR/sources.list $ISHARE2_DIR/sources.list.bak
+        fi
+        # If download function failed, use the cached sources.list file
+        if ! download_file_curl "$SOURCES_URL" "$ISHARE2_DIR/sources.list"; then
+            echo "Failed to update sources. Using cached sources.list file." >>$LOG_FILE
+            # Restore the old sources.list file
+            mv $ISHARE2_DIR/sources.list.bak $ISHARE2_DIR/sources.list
+        fi
+        echo "Done." >>$LOG_FILE
+    fi
+    # Use sources.list file
+    source $ISHARE2_DIR/sources.list
+}
+
 # set max log file lines to 1000
 function set_max_log_lines() {
     if [[ -f $ISHARE2_DIR/logs.txt ]]; then
