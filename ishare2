@@ -153,14 +153,12 @@ function create_config() {
     done
 
     # Ask the user to select a branch
-    read -p " [*] Enter the number of the branch you want to use (default: main): " -r
+    read -p " [*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
         echo -e "${YELLOW} [!] Using the default branch.${NO_COLOR}"
-        CHANNEL="main"
     elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
         echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
-        CHANNEL="main"
     else
         CHANNEL=${branches[REPLY - 1]}
         echo -e "${YELLOW} [!] Using the $CHANNEL branch.${NO_COLOR}"
