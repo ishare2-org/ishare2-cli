@@ -778,6 +778,23 @@ function install_images_all_labs() {
     echo -e "\nDone"
 }
 
+function pull_all() {
+    TYPE=${1^^}
+    echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
+    # Get the list of all images
+    fetch_json
+    # Get all the IDs for the images of the specified type
+    IDS=$(jq -r --arg type "$TYPE" '.[$type][] | .id' "$TEMP_JSON")
+    # Pull all the images
+    i=1
+    total=$(echo "$IDS" | wc -l)
+    for ID in $IDS; do
+        echo -e "${YELLOW} [+] Pulling image $i/$total...${NO_COLOR}"
+        ishare2 pull ${TYPE,,} $ID
+        i=$((i + 1))
+    done
+}
+
 function pull_lab_images() {
     # Pending to implement: corrections_for_bin_images_in_lab_function "$IMAGE_NAME" "$LAB_PATH"
     # Pending to implement: corrections_for_qemu_images_in_lab_function "$QEMU_NAME"
@@ -1787,6 +1804,12 @@ function selector() {
         case "$2" in
         "qemu" | "iol" | "dynamips" | "bin")
             TYPE="${2^^}" # Convert to uppercase
+            if [[ "$3" ]]; then
+                if [[ "$3" = "all" ]]; then
+                    pull_all "$TYPE"
+                    exit 0
+                fi
+            fi
             pull_images "$TYPE" "$3" "$4"
             ;;
         *) # If the type is not specified, print the usage
