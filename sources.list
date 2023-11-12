@@ -1,6 +1,6 @@
-URL_VERSION=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/version
-URL_ISHARE2=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/ishare2
-URL_CHANGELOG_MD=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/CHANGELOG.md
+URL_VERSION=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version
+URL_ISHARE2=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2
+URL_CHANGELOG_MD=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/CHANGELOG.md
 URL_CISCO_IOU_KEYGEN_PY=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/iol/bin/CiscoIOUKeygen.py
 URL_KEEPALIVE_PL=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/iol/bin/keepalive.pl
 URL_I86BI_LINUX_L2_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/templates/i86bi_linux_l2/i86bi_linux_l2.yml
@@ -10,4 +10,4 @@ URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/tem
 URL_PNETLAB_V5=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/bionic/install_pnetlab_latest_v5.sh
 URL_PNETLAB_V5_BETA=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/bionic/install_pnetlab_v5_testing.sh
 URL_PNETLAB_V6=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh
-URL_ISHARE2_GUI_INSTALL=https://raw.githubusercontent.com/ishare2-org/ishare2/$CHANNEL/ishare2_gui_install.sh
+URL_ISHARE2_GUI_INSTALL=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2_gui_install.sh
