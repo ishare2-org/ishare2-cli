@@ -13,6 +13,7 @@ JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.js
 # End of ishare2 configuration
 
 # Initialize variables
+LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
