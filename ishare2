@@ -1146,32 +1146,32 @@ function show_help_info() {
 
 function show_ishare2_usage() {
     # For ishare2
-    ISHARE2_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_version)
-
-    STR=""
-    LOCAL_VALUE=$ISHARE2_VERSION_USAGE
-    REMOTE_VALUE=$(curl -s "$URL_VERSION")
-
-    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        STR="New ishare2 version available: $REMOTE_VALUE"
+    ISHARE2_VERSION_INFO=$(cat $ISHARE2_DIR/ishare2_version)
+    UPSTREAM_VERSION=$(curl -s "$URL_VERSION")
+    if ! [[ $ISHARE2_VERSION_INFO == "$UPSTREAM_VERSION" ]]; then
+        ISHARE2_VERSION_INFO="$ISHARE2_VERSION_INFO $(echo -e "${YELLOW}Update available: $UPSTREAM_VERSION. Run: ishare2 upgrade${NO_COLOR}")"
+    else
+        ISHARE2_VERSION_INFO="$ISHARE2_VERSION_INFO $(echo -e "${GREEN}Up to date${NO_COLOR}")"
     fi
-
-    NEW_VERSION_RESULT=$(echo -e "${YELLOW}" "$STR" "${NO_COLOR}")
 
     # For PNETLab
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     pnetlab_info=($data)
-    PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
+    if [[ ${#pnetlab_info[@]} -eq 0 ]]; then
+        PNETLAB_INSTALLED=$(echo -e "${RED}PNETLab is not installed.${NO_COLOR}")
+    else
+        PNETLAB_INSTALLED=$(echo -e "${GREEN}PNETLab v${pnetlab_info[1]} is installed.${NO_COLOR}")
+    fi
 
     # For ishare2 GUI
     # ISHARE2_GUI_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_gui_version)
 
     # STR=""
     # LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
-    # REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
+    # UPSTREAM_VERSION=$(curl -s $URL_ISHARE2_GUI_VERSION)
 
-    # if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-    #     STR="New ishare2 GUI version available: $REMOTE_VALUE"
+    # if ! [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
+    #     STR="New ishare2 GUI version available: $UPSTREAM_VERSION"
     # fi
 
     # NEW_VERSION_RESULT_FOR_ISHARE2_GUI=$(echo -e ${YELLOW} $STR ${NO_COLOR})
@@ -1260,10 +1260,9 @@ Examples:
 - ishare2 config
 - ishare2 help
 
-ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
-Channel: $CHANNEL
-PNetLab: v$PNETLAB_VERSION_USAGE
-ishare2 GUI: $ISHARE2_GUI_VERSION_USAGE$NEW_VERSION_RESULT_FOR_ISHARE2_GUI
+ishare2: $ISHARE2_VERSION_INFO
+ishare2 Channel: $CHANNEL
+$PNETLAB_INSTALLED
 "
 }
 
