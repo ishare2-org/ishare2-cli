@@ -168,6 +168,34 @@ function create_config() {
 
     echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
 
+    # Provisional mirror selection feature. Will be replaced with a better solution in the future.
+    # Ask if the user wants to use the default mirror, another mirror or a custom mirror
+    echo -e "${YELLOW} [+] Choose a mirror.${NO_COLOR}"
+    # Show list of mirrors
+    echo " 1) Google Drive mirror"
+    echo " 2) Onedrive mirror"
+    echo " 3) Custom mirror"
+    # Ask the user to select a mirror
+    read -p " [*] Enter the number of the mirror you want to use (default: 1): " -r
+    case $REPLY in
+    2)
+        JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json"
+        echo -e "${YELLOW} [!] Using Onedrive mirror.${NO_COLOR}"
+        ;;
+    3)
+        echo -e "${YELLOW} [+] Enter the URL of the mirror.${NO_COLOR}"
+        read -p " [*] Enter the URL of the mirror you want to use: " -r
+        JSON_URL="$REPLY"
+        echo -e "${YELLOW} [!] Using custom mirror: $JSON_URL.${NO_COLOR}"
+        ;;
+    *)
+        JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json"
+        echo -e "${YELLOW} [!] Using Google Drive mirror.${NO_COLOR}"
+        ;;
+    esac
+
+    echo "JSON_URL=\"$JSON_URL\"" >>$ISHARE2_DIR/ishare2.conf
+
     # Validate the configuration file
     if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
         echo -e "${RED} [!] Failed to create configuration file. Please try again.${NO_COLOR}"
@@ -203,7 +231,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
