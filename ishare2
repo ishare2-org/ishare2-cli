@@ -1891,7 +1891,8 @@ function main() {
     check_config
     set_max_log_lines
     set_yml_template_folder_location
-    check_ishare2_version_file_exists
+    fetch_sources
+    ishare2_version
     selector "$1" "$2" "$3" "$4"
 }
 
