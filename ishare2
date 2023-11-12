@@ -162,6 +162,7 @@ function create_config() {
     else
         CHANNEL=${branches[REPLY - 1]}
         echo -e "${YELLOW} [!] Using the $CHANNEL branch.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
     fi
 
     echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
