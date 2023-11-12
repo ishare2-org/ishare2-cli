@@ -1622,10 +1622,13 @@ function pull_images() {
     esac
 
     if [ -n "$download_urls" ]; then
-        echo "Downloading image for Type: $IMAGE_TYPE, ID: $IMAGE_ID"
-        echo "Download Path: $download_path"
-        echo "Image Name: $image_name"
-        echo "Image Size: $image_size"
+        echo "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID, Size: $image_size, Download URLs: $download_urls, Download Path: $download_path" >>"$LOG_FILE"
+        echo -e "${YELLOW} [!] Downloading Image... ${NO_COLOR}"
+        echo -e "${YELLOW} [i] Image Name: ${NO_COLOR} $image_name"
+        echo -e "${YELLOW} [i] Image Size: ${NO_COLOR} $image_size"
+        echo -e "${YELLOW} [i] Image Type: ${NO_COLOR} $IMAGE_TYPE"
+        echo -e "${YELLOW} [i] Image ID: ${NO_COLOR} $IMAGE_ID"
+        echo -e "${YELLOW} [i] Download path: ${NO_COLOR} $download_path"
         # Create the directory if it doesn't exist
         mkdir -p "$download_path"
 
@@ -1642,11 +1645,11 @@ function pull_images() {
             done
             ;;
         *)
-            echo "Something went wrong"
+            echo "Something went wrong. Invalid image type provided: $IMAGE_TYPE"
             ;;
         esac
 
-        echo "Download complete."
+        echo -e "${GREEN} [+] Download completed for Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID ${NO_COLOR}"
     else
         echo "Image not found for Type: $IMAGE_TYPE, ID: $IMAGE_ID"
     fi
