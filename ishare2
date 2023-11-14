@@ -16,7 +16,7 @@ JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.js
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="v3.0-alpha"                                                                          # Current version of ishare2
+VERSION="v3.1-alpha"                                                                          # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
@@ -780,6 +780,9 @@ function install_images_all_labs() {
 
 function pull_all() {
     TYPE=${1^^}
+    if [[ $TYPE == "BIN" ]]; then
+        TYPE="IOL"
+    fi
     echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
     # Get the list of all images
     fetch_json
@@ -1144,41 +1147,6 @@ function generate_iourc_license() {
         fi
     fi
     echo -e "${GREEN} [+] IOL license was generated successfully. ${NO_COLOR}"
-}
-
-function pull_all_iol_images() {
-    FILENAME="$ISHARE2_DIR/BIN.csv"
-
-    while IFS=',' read -r col1 _ _ _ _; do
-        N=$col1
-    done <$FILENAME
-    N=$col1
-
-    echo "Starting to download $N bin files"
-
-    for ((i = 1; i <= N; i++)); do
-        echo -e "\nFile $i/$N"
-        ishare2 pull bin "$i"
-    done
-
-    echo -e "\nFinished"
-}
-
-function pull_all_dynamips_images() {
-    FILENAME="$ISHARE2_DIR/DYNAMIPS.csv"
-    while IFS=',' read -r col1 _ _ _ _; do
-        N=$col1
-    done <$FILENAME
-    N=$col1
-
-    echo "Starting to download $N dynamips files"
-
-    for ((i = 1; i <= N; i++)); do
-        echo -e "\nFile $i/$N"
-        ishare2 pull dynamips "$i"
-    done
-
-    echo -e "\nFinished"
 }
 
 function show_help_info() {
