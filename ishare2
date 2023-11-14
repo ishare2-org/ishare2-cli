@@ -783,7 +783,26 @@ function pull_all() {
     if [[ $TYPE == "BIN" ]]; then
         TYPE="IOL"
     fi
+    if [[ $TYPE == "QEMU" ]]; then
+        echo -e "${YELLOW} [!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
+        # Enter confirmation text
+        CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
+        # Ask the user to enter the confirmation text
+        read -p " [?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
+        # If the confirmation text is incorrect then exit
+        if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
+            echo -e "${RED} [!] Aborting.${NO_COLOR}"
+            exit 1
+        fi
+    fi
     echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
+    # Ask for conirmation
+    read -p " [?] Are you sure you want to pull all $TYPE images? (y/n): " -r
+    # If reply was no Y or y then exit
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED} [!] Aborting.${NO_COLOR}"
+        exit 1
+    fi
     # Get the list of all images
     fetch_json
     # Get all the IDs for the images of the specified type
