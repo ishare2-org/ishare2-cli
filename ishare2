@@ -268,37 +268,45 @@ validate_conf_file() {
     return 0
 }
 
-function install_aria2c() {
+function install_dependencies() {
     # unlock apt
     unlock_dpkg
-    # check if aria2c is installed otherwise install it
-    if ! command -v aria2c &>/dev/null; then
-        echo -e "${YELLOW} [+] aria2c is not installed.${NO_COLOR}"
+    local packages=("curl" "wget" "jq" "unrar" "tree" "qemu-tools" "unzip")
+    for package in "${packages[@]}"; do
+        install_package "$package"
+    done
+}
+
+install_package() {
+    local package_name=$1
+    # unlock apt
+    unlock_dpkg
+    # check if $package_name is installed otherwise install it
+    if ! command -v "$package_name" &>/dev/null; then
+        echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
         echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
         if ! apt-get update; then
             echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
             exit 1
         fi
 
-        echo -e "${YELLOW} [+] Installing aria2c...${NO_COLOR}"
-        if ! apt-get install -y aria2; then
-            echo -e "${RED} [-] Failed to install aria2c.${NO_COLOR}"
+        echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
+        if ! apt-get install -y "$package_name"; then
+            echo -e "${RED} [-] Failed to install $package_name.${NO_COLOR}"
             exit 1
         fi
-        echo -e "${YELLOW} [+] Installing unrar...${NO_COLOR}"
-        if ! apt-get install -y unrar; then
-            echo -e "${RED} [-] Failed to install unrar.${NO_COLOR}"
-            exit 1
-        fi
-        echo -e "${GREEN} [+] Done.${NO_COLOR}"
     else
-        echo -e "${GREEN} [+] aria2c already is installed.${NO_COLOR}" >>$LOG_FILE
-        echo -e "${YELLOW} [+] Updating aria2c...${NO_COLOR}" >>$LOG_FILE
-        if ! apt-get install --only-upgrade aria2; then
-            echo -e "${RED} [-] Failed to update aria2c.${NO_COLOR}" >>$LOG_FILE
+        echo -e "${GREEN} [+] $package_name already is installed.${NO_COLOR}" >>$LOG_FILE
+        echo -e "${YELLOW} [+] Updating $package_name...${NO_COLOR}" >>$LOG_FILE
+        if ! apt-get install --only-upgrade "$package_name"; then
+            echo -e "${RED} [-] Failed to update $package_name.${NO_COLOR}" >>$LOG_FILE
             exit 1
         fi
     fi
+}
+
+function install_aria2c() {
+    install_package "aria2"
 }
 
 function unlock_dpkg() {
