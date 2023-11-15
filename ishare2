@@ -1788,13 +1788,13 @@ function selector() {
         if [[ "$2" ]]; then
             case "$2" in
             "all")
-                echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
+                print_separator "QEMU"
                 ishare2 installed qemu
-                echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
+                print_separator "DYANMIPS"
                 ishare2 installed dynamips
-                echo -e "${GREEN}----- BIN -----${NO_COLOR}"
+                print_separator "BIN"
                 ishare2 installed bin
-                echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
+                print_separator "DOCKER"
                 ishare2 installed docker
                 ;;
             "qemu")
