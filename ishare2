@@ -362,6 +362,16 @@ function create_ishare2_dir() {
 function fetch_json() {
     # Download the JSON and store it in a temporary file
     curl -sL "$JSON_URL" >"$TEMP_JSON"
+    # Check if curl command failed
+    if [ $? -ne 0 ]; then
+        echo -e "${RED} [-] Failed to download the JSON file. Please check your internet connection.${NO_COLOR}"
+        exit 1
+    fi
+    # Check if the JSON file is valid
+    if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
+        echo -e "${RED} [-] Error: Invalid JSON file. Please check your internet connection.${NO_COLOR}"
+        exit 1
+    fi
 }
 
 download_file() {
