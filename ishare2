@@ -1310,34 +1310,6 @@ $PNETLAB_INSTALLED
 "
 }
 
-function msg_available_options_for_ishare2_search() {
-    echo -e "Available options\n"
-    echo "- ishare2 search all"
-    echo "- ishare2 search qemu"
-    echo "- ishare2 search dynamips"
-    echo "- ishare2 search bin"
-    echo "- ishare2 search <name>"
-    echo "  - ishare2 search vios"
-    echo "  - ishare2 search win-"
-    echo "  - ishare2 search winserver"
-    echo "  - ishare2 search kali"
-    echo "  - ishare2 search mikro"
-    echo "  - ishare2 search forti"
-    echo "  - ishare2 search nxos"
-    echo "  - ishare2 search vmx"
-    echo "  - ishare2 search esxi"
-    echo "  - More <name> options using ishare2 search all"
-}
-
-function msg_incorrect_argument_or_no_arg_for_ishare2_pull() {
-    echo -e "Syntax:\nishare2 pull <type> <number>\n"
-    echo "type: bin, qemu or dynamips"
-    echo -e "number: ishare2 search <type>\n"
-    echo "Example: ishare2 pull qemu 4"
-    echo "Example: ishare2 pull dynamips 5"
-    echo -e "Example: ishare2 pull bin 6"
-}
-
 function tgz_files_function() {
     FOLDERNAME=$1
 
