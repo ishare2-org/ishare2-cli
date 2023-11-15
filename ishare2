@@ -192,6 +192,7 @@ function create_config() {
     remove_duplicates
     validate_conf_file
     echo -e "${GREEN} [+] Configuration file created successfully.${NO_COLOR}"
+    install_dependencies
 }
 
 remove_duplicates() {
