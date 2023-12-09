@@ -5,16 +5,44 @@ ishare2-cli
 </h1>
 
 <h2 align="center">
-A CLI-based tool written in Bash to easily download and manage images in your PNetLab server
+A CLI tool written in Bash to easily download and manage images in your PNetLab server
 </h2>
 
-## Language
+## Table of contents
 
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" title="Bash" alt="Bash" width="40" height="40"/>&nbsp;
+- [Quick start](#quick-start-🚀)
+- [One-line installation](#one-line-installation)
+  - [wget](#wget)
+  - [curl](#curl)
+- [Line by line installation](#line-by-line-installation)
+- [Install by cloning the repository](#install-by-cloning-the-repository)
+- [ishare2 commands](#ishare2-commands)
+- [How to use ishare2](#how-to-use-ishare2)
+  - [Search for images](#search-for-images)
+    - [Search by name](#search-by-name)
+    - [Search by type](#search-by-type)
+  - [Pull images](#pull-images)
+  - [Download all images at once](#download-all-images-at-once)
+  - [Show installed images](#show-installed-images)
+  - [Download images for a lab](#download-images-for-a-lab)
+  - [Download images for a lab using a custom path](#download-images-for-a-lab-using-a-custom-path)
+  - [ishare2 GUI](#ishare2-gui)
+- [Extra features](#extra-features)
+  - [Generate a new iourc license for bin images](#generate-a-new-iourc-license-for-bin-images)
+  - [Upgrade ishare2, ishare2-gui or PNETLab server](#upgrade-ishare2-ishare2-gui-or-pnetlab-server)
+  - [Show the latest changes made to ishare2](#show-the-latest-changes-made-to-ishare2)
+  - [Show useful information](#show-useful-information)
+  - [Test connectivity](#test-connectivity)
+- [Useful information](#useful-information)
+- [See the latest changes on ishare2](#see-the-latest-changes-on-ishare2)
+- [Known limitations](#known-limitations)
+- [Links of interest](#links-of-interest)
+- [Devices credentials](#devices-credentials)
+- [Ask for help](#ask-for-help)
 
-## 🚀 Quick start
+## Quick start 🚀
 
-To start using ishare2, you can use one of the following methods:
+ishare2 is a tool that helps you download and manage images in your network emulators easily. ishare2 can download qemu, dynamips, bin/iol and docker images. It can also download images needed for labs automatically. To get started, use the one of the installation methods below.
 
 ## One-line installation
 
@@ -54,7 +82,7 @@ ishare2
 
 > Note: Run the command as root or using sudo
 >
-### Clone the repository
+## Install by cloning the repository
 
 - Download or clone this repository.
 
@@ -83,7 +111,9 @@ ishare2
 > Note: Run the command as root or using sudo
 >
 
-## Syntax
+## ishare2 commands
+
+ishare2 uses the following syntax to execute different actions, each action is explained in detail below:
 
 ```bash
     ishare2 [action] [param1] [param2]
@@ -112,7 +142,7 @@ ishare2
 
 ## Search for images
 
-### ishare2 search by name
+### Search by name
 
 You can search for images by simply typing the name of the image you want to search for using the following syntax:
 
@@ -330,22 +360,22 @@ ishare2 test
 - **Quota Limits:**  
 You might encounter quota limits when downloading images. If that happens, you can wait a few minutes and try again. If the problem persists, please contact us through our Telegram group. Search the link to the group chat in the channel's pinned message or click the chat icon in the channel's description: [@NetLabHub](https://t.me/NetLabHub) (By not sharing the link here, we avoid spam and bots in the group chat)
 
-## Links
+## Links of interest
 
-- Image files source: [LabHub](https://labhub.eu.org/)
-- Docker images can be found at [hub.docker.com](https://hub.docker.com/)
+- [LabHub](https://labhub.eu.org): Source of images indexed by ishare2. You can also download images from here using your browser.
+- [PNETLab Store](https://user.pnetlab.com/store/labs/view): Download labs for PNETLab.
 
-## Useful resources
+## Devices credentials
 
-Check these links to get information on device credentials
+Visit the following links to see the credentials for devices available in LabHub:
 
 - [Excel file #1: passwords_eve.xlsx](https://labhub.eu.org/UNETLAB%20I/addons/passwords/passwords_eve.xlsx)
 - [Excel file #2: Passwords - QEMU.xls](https://labhub.eu.org/UNETLAB%20II/Passwords%20-%20QEMU.xls)
 - [PNG file: Eve-NG-Linux.png](https://labhub.eu.org/UNETLAB%20II/qemu/Linux/Eve-NG-Linux/Eve-NG-Linux.png)
 
-## Need help?
+## Ask for help
 
-You can get in touch with the community through the following links:  
+You can get help by contacting us through our Telegram group. Search the link to the group chat in the channel's pinned message or click the chat icon in the channel's description: [@NetLabHub](https://t.me/NetLabHub) (By not sharing the link here, we avoid spam and bots in the group chat)
 
-- LabHub Community: [Telegram](https://t.me/NetLabHub)  
+- LabHub Community: [Telegram](https://t.me/NetLabHub)
 - PNETLab Community: [Telegram](https://t.me/pnetlab)
