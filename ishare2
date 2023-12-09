@@ -1423,10 +1423,16 @@ function iso_files_function() {
 
         if ! [[ "${ISO_FILE: -9}" == "cdrom.iso" ]]; then
             mv "$ISO_FILE" "$DIR"/cdrom.iso # Rename file
+            echo -e "${GREEN} [+] ISO file saved as: $DIR/cdrom.iso ${NO_COLOR}"
+        fi
+
+        if ! [[ -e /usr/bin/qemu-img ]]; then
+            echo -e "${YELLOW} [!] qemu-img is not installed. Attempting to install it... ${NO_COLOR}"
+            install_packages "qemu-utils"
         fi
 
         if [[ $FILES_COUNTER -eq 1 ]]; then
-            /opt/qemu/bin/qemu-img create -f qcow2 "$DIR"/virtioa.qcow2 20G
+            qemu-img create -f qcow2 "$DIR"/virtioa.qcow2 20G
         fi
     fi
 }
