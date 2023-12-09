@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. You can upgrade ishare2 to the latest version using `ishare2 upgrade` and then selecting `option 1`
 
+## [v3.2.0] - 2023-Dec-9 (Major release)
+
+1) Refactored: A lot of the ishare2 code was refactored, it can be said that almost all of it was refactored. This was done in order to make the code more readable and easier to maintain.
+2) Added: JSON files are now used to get information about images. This will allow users to get information about images faster and with less errors.
+3) Added: ishare2 now uses a new index file to get information about images that is automatically generated from the LabHub repository.
+
 ## [v2.0.0] - 2023-Apr-21 (Major release)
 
 1) Added: ```ishare2 test``` command. This command will test if services ishare2 depends on are reachable.
