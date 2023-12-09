@@ -1,76 +1,91 @@
 <h1 align="center">
   <img src="https://media1.giphy.com/media/wvQIqJyNBOCjK/giphy.gif" width="100"/>
 
-ishare2
+ishare2-cli
 </h1>
 
 <h2 align="center">
 A CLI-based tool written in Bash to easily download and manage images in your PNetLab server
-
-(and possibly other similar platforms)
-  
-  :star:New: Since v1.5.7, a web app was released to use ishare2 from a web browser.
-  
-  The web app's source code can be found in its GitHub repo: <a href='https://github.com/ishare2-org/ishare2-web-gui'>ishare2 web GUI</a>
 </h2>
 
-## :hammer_and_wrench: Language
+## Language
 
-<div>
-  <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" title="Bash" alt="Bash" width="40" height="40"/>&nbsp;
-</div>
+<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" title="Bash" alt="Bash" width="40" height="40"/>&nbsp;
 
-## 📚 Summary
+## 🚀 Quick start
 
-- [🚀 Installation](#installation)
-- [✅ Syntax](#syntax)
-- [Examples of usage](#examples)
-- [💎 Search for images by type or name](#search)
-  - [ishare2 search by type](#search-type)
-  - [ishare2 search by name](#search-name)
-- [💎 Pull images by image number](#pull)
-- [💎 Pull all images at once](#pull-all)
-- [💎 Show installed images on server](#installed)
-- [💎 Download all images needed for a lab (Default path)](#labs)
-- [💎 Download all images needed for a lab (Customized path)](#mylabs)
-- [💎 Web app to use ishare2 from a web browser](#gui)
-- [💎 Extras](#extras)
-- [💎 Useful information](#useful-information)
-- [💎 Show the latest changes made to ishare2](#changelog)
-- [💎 Upgrade ishare2 and PNETLab VM](#upgrade)
-- [💎 Known limitations](#known-limitations)
-- [Useful links](#links)
-- [Useful resources](#useful-resources)
-- [Need help?](#help)
+To start using ishare2, you can use one of the following methods:
 
-## 🚀 Installation <a id="installation"></a>
-
-There are different ways of installing `ishare2` in your terminal. Choose one of the following options:
+## One-line installation
 
 ### wget
 
-```linux
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2
+```bash
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 ### curl
 
-```linux
-curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/main/ishare2 > /dev/null 2>&1 && chmod +x /usr/sbin/ishare2 && ishare2\
+```bash
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
-### Manual installation
+> Note: Run the command as root or using sudo
+>
+## Line by line installation
 
-- Download the latest version of ishare2 from the GitHub repository.
+1. Download ishare2
+
+```bash
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2
+```
+
+2. Make ishare2 executable
+
+```bash
+chmod +x /usr/sbin/ishare2
+```
+
+3. Run ishare2
+
+```bash
+ishare2
+```
+
+> Note: Run the command as root or using sudo
+>
+### Clone the repository
+
+- Download or clone this repository.
+
+  ```bash
+  git clone https://github.com/ishare2-org/ishare2-cli.git
+  ```
+
 - Copy the file to /usr/sbin/ishare2
-- Make the file executable using `chmod +x /usr/sbin/ishare2`
+  
+  ```bash
+  cp ishare2-cli/ishare2 /usr/sbin/ishare2
+  ```
+
+- Make the file executable using
+  
+    ```bash
+    chmod +x /usr/sbin/ishare2
+    ```
+
 - Run `ishare2` to start using it
+  
+    ```bash
+    ishare2
+    ```
 
-`Note: You can install different versions of ishare2 browsing the releases page or tracking back to previous commits`
+> Note: Run the command as root or using sudo
+>
 
-## ✅ Syntax <a id="syntax"></a>
+## Syntax
 
-```linux
+```bash
     ishare2 [action] [param1] [param2]
 
     action:
@@ -93,137 +108,234 @@ curl -o /usr/sbin/ishare2 https://raw.githubusercontent.com/pnetlabrepo/ishare2/
       number = This number can be obtained using ishare2 search <type>
 ```
 
-## Examples of usage <a id="examples"></a>
+## How to use ishare2
 
-## 💎 Search for images by type or name <a id="search"></a>
+## Search for images
 
-### ishare2 search <type> <a id="search-type"></a>
+### ishare2 search by name
 
-```linux
-# ishare2 search all
-# ishare2 search bin
-# ishare2 search qemu
-# ishare2 search dynamips
+You can search for images by simply typing the name of the image you want to search for using the following syntax:
+
+```bash
+ishare2 search <name> # Example: ishare2 search vios
 ```
 
-### ishare2 search <name> <a id="search-name"></a>
+Searches by name should be done taking into account the naming conventions used by emulators. For example, if you want to search for images of Cisco IOSv, you should use the following command:
 
-Examples:
-
-```linux
-# ishare2 search vios
-# ishare2 search win-
-# ishare2 search winserver
-# ishare2 search kali
-# ishare2 search mikro
-# ishare2 search forti
-# ishare2 search nxos
-# ishare2 search vmx
-# ishare2 search esxi
-# ishare2 search palo
-# ishare2 search Licensed
+```bash
+ishare2 search vios # Will show all Cisco IOSv images available
 ```
 
-`You can search for images by name or by type. If you search by name, you will get all images that match the name you entered. If you search by type, you will get all images of that type`
+For qemu images, you can follow the [conventions used by eve-ng](https://www.eve-ng.net/index.php/documentation/qemu-image-namings/). For example, if you want to search for images of Windows 7, you should use the following command:
 
-## 💎 Pull images by image number <a id="pull"></a>
-
-```linux
-# ishare2 pull bin <number>
-# ishare2 pull qemu <number>
-# ishare2 pull dynamips <number>
+```bash
+ishare2 search win- # Will show all Windows images available
 ```
 
-The image number can be obtained using `ishare2 search <type>` command.
+Other examples:
 
-## 💎 Pull all images at once <a id="pull-all"></a>
-
-```linux
-# ishare2 pull bin all
-# ishare2 pull qemu all (Not available for qemu type due to its large size)
-# ishare2 pull dynamips all
+```bash
+ishare2 search winserver  # Will show all Windows Server images available
+ishare2 search linux      # Will show all Linux images available
+ishare2 search forti      # Will show all Fortinet images available
+ishare2 search palo       # Will show all Palo Alto images available
+ishare2 search Licensed   # Will show all images with keyword "Licensed" in their name
 ```
 
-## 💎 Show installed images on server <a id="installed"></a>
+>Note: You can also also search for images using common keywords for specific Operating Systems.
+>
 
-```linux
-# ishare2 installed all
-# ishare2 installed bin
-# ishare2 installed qemu
-# ishare2 installed dynamips
-# ishare2 installed docker
+### Search by type
+
+You can search for images by type using the following commands:
+
+```bash
+ishare2 search all      # This command will show all available images of all types
+ishare2 search bin      # This command will show all available images of bin/iol type
+ishare2 search qemu     # This command will show all available images of qemu type
+ishare2 search dynamips # This command will show all available images of dynamips type
 ```
 
-## 💎 Download all images needed for a lab (Default path) <a id="labs"></a>
+You can narrow your search by specifying the type of image you are looking for by using the following syntax:
 
-ishare2 can automatically download all images needed for a lab. This feature is available for .unl labs usually downloaded from [PNetLab Store](https://user.pnetlab.com/store/labs/view) or other sources.
-
-```linux
-# ishare2 labs
-# ishare2 labs <number>
-# ishare2 labs all
+```bash
+ishare2 search <type> <name> # Example: ishare2 search bin vios
 ```
 
-`Not available for every lab because some of them are encrypted by lab authors and cannot be read by ishare2`
+For example, if you want to search for images of Cisco IOSv, you should use the following command:
 
-## 💎 Download all images needed for a lab (Customized path) <a id="mylabs"></a>
-
-```linux
-# ishare2 mylabs <path>
-# ishare2 mylabs <path> <number>
-# ishare2 mylabs <path> all
+```bash
+ishare2 search iol vios # Will show all Cisco IOSv images of the type bin/iol available
 ```
 
-## 💎 ishare2 GUI <a id="gui"></a>
+For qemu images, you can do the following:
 
-```linux
-# ishare2 gui install
-
-# ishare2 gui start
-# ishare2 gui stop
-# ishare2 gui restart
+```bash
+ishare2 search qemu win- # Will show all Windows images of the type qemu available
 ```
 
-## 💎 Extras <a id="extras"></a>
+For dynamips images, you can do the following:
 
-```linux
-# ishare2 relicense
-# ishare2 upgrade
-# ishare2 changelog
-# ishare2 help
-# ishare2 test
+```bash
+ishare2 search dynamips c7200 # Will show all Cisco 7200 images of the type dynamips available
 ```
 
-## Useful information <a id="useful-information"></a>
+## Pull images
+
+In order to download images, you have to specify the type of image and id number using the following syntax:
+
+```bash
+ishare2 pull <type> <id>
+```
+
+Syntax for each type:
+
+```bash
+ishare2 pull bin <id>
+ishare2 pull qemu <id>
+ishare2 pull dynamips <id>
+```
+
+>Note: You get the id number from the search results ishare2 displays after running the search command.
+>
+
+## Download all images at once
+
+You can download all images at once using the following syntax:
+
+```bash
+ishare2 pull all <type>
+```
+
+Commands for each type:
+
+```bash
+ishare2 pull bin all      # Will download all bin/iol images available
+ishare2 pull qemu all     # Will download all qemu images available
+ishare2 pull dynamips all # Will download all dynamips images available
+```
+
+>Note: This is not recommended because it will take a long time to download all images, you will use a lot of our bandwidth and you will probably run out of disk space.
+
+## Show installed images
+
+You can see which images are installed on your server using the following commands:
+
+```bash
+ishare2 installed all       # Will show all installed images from all types
+ishare2 installed bin       # Will show all bin/iol images installed
+ishare2 installed qemu      # Will show all qemu images installed
+ishare2 installed dynamips  # Will show all dynamips images installed
+ishare2 installed docker    # Will show all docker images installed
+```
+
+## Download images for a lab
+
+ishare2 can automatically download all images needed for a lab. This feature is available for .unl labs (usually downloaded from the [PNetLab Store](https://user.pnetlab.com/store/labs/view)).
+
+```bash
+ishare2 labs          # Will show all labs available
+ishare2 labs <number> # Will download images for the lab with the specified number
+ishare2 labs all      # Will download images for all labs available
+```
+
+>Note: Feature not available for encrypted labs since ishare2 can't read the contents of those labs.
+>
+
+## Download images for a lab using a custom path
+
+You can specify a custom path for ishare2 to look for labs using the following syntax:
+
+```bash
+ishare2 mylabs <path>           # Will show all labs available in the specified path
+ishare2 mylabs <path> <number>  # Will download images for the lab with the specified number
+ishare2 mylabs <path> all       # Will download images for all labs available in the specified path
+```
+
+## ishare2 GUI
+
+ishare2 has a web app that allows you to use ishare2 in your browser. To use it, you have to install it using the following command:
+
+```bash
+ishare2 gui install
+```
+
+Control the ishare2 GUI service using the following commands:
+
+```bash
+ishare2 gui start
+ishare2 gui stop
+ishare2 gui restart
+ishare2 gui status
+```
+
+## Extra features
+
+We have covered the most important features of ishare2, but there are some extra features that you might find useful:
+
+### Generate a new iourc license for bin images
+
+You can generate a new iourc license for bin images using the following command:
+
+```bash
+ishare2 relicense
+```
+
+This command will generate a new iourc license and restore the needed files to make it work in case you have accidentally deleted them.
+
+### Upgrade ishare2, ishare2-gui or PNETLab server
+
+Use the following command to upgrade ishare2, ishare2-gui or your PNETLab server:
+
+```bash
+ishare2 upgrade
+```
+
+Select the option you want to upgrade and wait for the process to finish.
+
+### Show the latest changes made to ishare2
+
+You can see the latest registered changes made to ishare2 using the following command:
+
+```bash
+ishare2 changelog
+```
+
+### Show useful information
+
+You can see useful information about ishare2 using the following command:
+
+```bash
+ishare2 help
+```
+
+### Test connectivity
+
+You can test if ishare2 online dependencies are reachable using the following command:
+
+```bash
+ishare2 test
+```
+
+## Useful information
 
 [HELP.md](https://github.com/pnetlabrepo/ishare2/blob/main/HELP.md)
 
-## See the latest changes on ishare2 <a id="changelog"></a>
+## See the latest changes on ishare2
 
 [CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
 
-## How to upgrade your PNetLab server <a id="upgrade"></a>
-
-**Important:** Newer versions of PNetLab might be published in PNetLab's official group chat before they are available in ishare2.  
-
-To upgrade your PNETLab server, you can use the following methods:
-
-- Upgrade from v4.2.10 to v5.0.1: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_4.2.10_to_5.0.1)
-- Upgrade from any to v5.3.11: [Instructions](https://github.com/pnetlabrepo/ishare2/tree/main/upgrades/from_any_to_5.3.11)
-
-Note: You can also upgrade PNETLab using `ishare2 upgrade`, then using the `option 2` and finally select an option from list.
-
-## Known limitations <a id="known-limitations"></a>
+## Known limitations
 
 - **Quota Limits:**  
 You might encounter quota limits when downloading images. If that happens, you can wait a few minutes and try again. If the problem persists, please contact us through our Telegram group. Search the link to the group chat in the channel's pinned message or click the chat icon in the channel's description: [@NetLabHub](https://t.me/NetLabHub) (By not sharing the link here, we avoid spam and bots in the group chat)
 
-## 🔗 Links <a id="links"></a>
+## Links
 
 - Image files source: [LabHub](https://labhub.eu.org/)
 - Docker images can be found at [hub.docker.com](https://hub.docker.com/)
 
-## ✨ Useful resources <a id="useful-resources"></a>
+## Useful resources
 
 Check these links to get information on device credentials
 
@@ -231,7 +343,7 @@ Check these links to get information on device credentials
 - [Excel file #2: Passwords - QEMU.xls](https://labhub.eu.org/UNETLAB%20II/Passwords%20-%20QEMU.xls)
 - [PNG file: Eve-NG-Linux.png](https://labhub.eu.org/UNETLAB%20II/qemu/Linux/Eve-NG-Linux/Eve-NG-Linux.png)
 
-## ❓Need help? <a id="help"></a>
+## Need help?
 
 You can get in touch with the community through the following links:  
 
