@@ -267,7 +267,7 @@ function install_dependencies() {
     done
 }
 
-install_package() {
+function install_package() {
     local package_name=$1
     # unlock apt
     unlock_dpkg
