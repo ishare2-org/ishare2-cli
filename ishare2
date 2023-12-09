@@ -302,7 +302,7 @@ function install_aria2c() {
 function unlock_dpkg() {
     # Check if apt is running
     if pgrep apt >/dev/null 2>&1; then
-        echo "apt is currently running. Would you like to attempt unlocking dpkg? (y/n)"
+        echo "apt is currently running. Would you like to attempt unlocking dpkg? This may cause issues with apt if it is still running. Proceed? (y/n)"
         read -r answer
 
         if [[ $answer == "y" || $answer == "Y" ]]; then
@@ -980,7 +980,7 @@ function ishare2_version() {
 
 function upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
-    UPSTREAM_VERSION=$(curl -s --insecure $URL_VERSION)
+    UPSTREAM_VERSION=$(curl -s --insecure "$URL_VERSION")
 
     if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
         echo -e "${YELLOW} [+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
@@ -1007,9 +1007,9 @@ function upgrade_ishare2() {
 function menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
-        "Upgrade PNETLab v5"
-        "Upgrade PNETLab v5 Beta"
-        "Upgrade PNETLab v6"
+        "Upgrade PNETLab v5 STABLE"
+        "Upgrade PNETLab v5 BETA"
+        "Upgrade PNETLab v6 BETA"
     )
 
     # Set the prompt for the select menu
