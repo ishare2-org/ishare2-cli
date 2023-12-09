@@ -1121,6 +1121,10 @@ ishare2_gui_restart() {
 }
 
 search_images() {
+    TYPE=${1^^}
+    if [[ -n $2 ]]; then # If the user passed a filter
+        FILTER=$2
+    fi
     # Download the JSON and store it in a temporary file
     fetch_json
     print_separator "Available $TYPE images"
@@ -1135,11 +1139,11 @@ search_images() {
         total_count=$(echo "$data" | wc -l)
         total_count=$((total_count - 2))
         if [[ $total_count -eq 0 ]]; then
-            echo -e "\n${RED}No $TYPE images found${NO_COLOR}"
+            echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
         elif [[ $total_count -eq 1 ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE image found${NO_COLOR}"
+            echo -e "\n${GREEN}$total_count $TYPE image found for \"$FILTER\"${NO_COLOR}"
         else
-            echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
+            echo -e "\n${GREEN}$total_count $TYPE images found for \"$FILTER\"${NO_COLOR}"
         fi
     fi
 
@@ -1712,15 +1716,16 @@ connection_tests() {
 selector() {
     case "$1" in
     "search")
+        QUERY="$3"
         # Switch case to determine the type of the device to be displayed
         case "$2" in
         "qemu" | "iol" | "dynamips")
             TYPE="${2^^}" # Convert to uppercase
-            search_images "$TYPE"
+            search_images "$TYPE" "$QUERY"
             ;;
         "bin")
             TYPE="IOL" # Treat "bin" as "iol" in uppercase
-            search_images "$TYPE"
+            search_images "$TYPE" "$QUERY"
             ;;
         "all")
             for type in "QEMU" "IOL" "DYNAMIPS"; do
