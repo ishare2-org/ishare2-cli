@@ -1206,21 +1206,6 @@ show_ishare2_usage() {
     else
         PNETLAB_INSTALLED=$(echo -e "${GREEN}PNETLab v${pnetlab_info[1]} is installed.${NO_COLOR}")
     fi
-
-    # For ishare2 GUI
-    # ISHARE2_GUI_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_gui_version)
-
-    # STR=""
-    # LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
-    # UPSTREAM_VERSION=$(curl -s $URL_ISHARE2_GUI_VERSION)
-
-    # if ! [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
-    #     STR="New ishare2 GUI version available: $UPSTREAM_VERSION"
-    # fi
-
-    # NEW_VERSION_RESULT_FOR_ISHARE2_GUI=$(echo -e ${YELLOW} $STR ${NO_COLOR})
-
-    # Message displayed when using ishare2 command
     echo "
 Syntax
 
@@ -1896,6 +1881,7 @@ selector() {
 
 main() {
     if [[ "$1" = "test" ]]; then
+        # Tests without checking if user is root
         connection_tests
         exit 0
     fi
