@@ -721,10 +721,7 @@ install_images_from_lab() {
     rm "$(pwd)"/"$FILENAME" >/dev/null 2>&1
 
     # Remove files
-    rm /opt/unetlab/labs/iol_images.txt
-    rm /opt/unetlab/labs/dynamips_images.txt
-    rm /opt/unetlab/labs/qemu_images.txt
-    rm /opt/unetlab/labs/docker_images.txt
+    rm /opt/unetlab/labs/{iol_images.txt,dynamips_images.txt,qemu_images.txt,docker_images.txt} >/dev/null 2>&1
 }
 
 install_images_all_labs() {
@@ -1183,15 +1180,13 @@ generate_iourc_license() {
 }
 
 show_help_info() {
-    echo -e "1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video"
-    echo -e "\n2) For new files to be uploaded, you can use our Telegram Channel too"
-    echo -e "In this case, you can send or ask for new images to be uploaded"
-    echo -e "\n3) Using \033[32mishare2 upgrade\033[0m will display a menu that allows users to upgrade ishare2 and PNETLab."
-    echo -e "\n4) If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using \033[32mishare2 relicense\033[0m. This will not affect images in there."
-    echo -e "Also, this command when used, will generate a new license file called iourc, needed for bin files"
-    echo -e "\n5) Don't cancel a download. In case you do it, you will have to remove incomplete files or folders manually or use the --overwrite parameter."
-    echo -e "\n6) The main difference between ${YELLOW}ishare2 labs${NO_COLOR} and ${YELLOW}ishare2 mylabs${NO_COLOR} is that, in the first case, the folder used is the one PNETLab creates when you download a lab from the store and in the second case you are able to select any folder you want in order to download labs"
-    echo -e "\nTelegram Channel: https://t.me/NetLabHub"
+    echo -e "- For documentation about ishare2, visit: https://github.com/ishare2-org/ishare2-cli"
+    echo -e "- If you face any issues with ishare2, please report them at @NetLabHub Telegram Group. Attach screenshots and relevant information."
+    echo -e "- You can use ${YELLOW}ishare2 config${NO_COLOR} to change the chosen downloader."
+    echo -e "- If you cancel a download, use the flag: --overwrite to first delete the existing image and then download it again."
+    echo -e "- To submit new images, please use the following Google Form: https://forms.gle/SotrznrN3CmZdg8M8"
+    echo -e "- Telegram Channel: https://t.me/NetLabHub (For announcements and updates)"
+    echo -e "- Email: contact@labhub.eu.org"
 }
 
 show_ishare2_usage() {
@@ -1212,7 +1207,7 @@ show_ishare2_usage() {
     else
         PNETLAB_INSTALLED=$(echo -e "${GREEN}PNETLab v${pnetlab_info[1]} is installed.${NO_COLOR}")
     fi
-    echo "
+    cat <<EOF
 Syntax
 
 ishare2 [action] [param1] [param2] [--overwrite]
@@ -1298,7 +1293,7 @@ Examples:
 ishare2: $ISHARE2_VERSION_INFO
 ishare2 Channel: $CHANNEL
 $PNETLAB_INSTALLED
-"
+EOF
 }
 
 tgz_files_function() {
@@ -1555,14 +1550,17 @@ pull_images() {
     OVERWRITE=$3
 
     # 0. Check parameters
+    # Check if IMAGE_TYPE is not empty
+    if [[ -z "$IMAGE_TYPE" ]]; then
+        echo "Usage: $SCR_NAME pull <type> <id>"
+        echo "Types: qemu, iol, dynamips"
+        echo "Example: $SCR_NAME pull bin <id>"
+        exit 1
+    fi
     # Check if IMAGE_ID is not empty and is a number
     if [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]]; then
-        echo -e "Syntax:\nishare2 pull [type] [ID]"
-        echo "type: bin, qemu or dynamips"
-        echo -e "ID: [1-9999]\n"
-        echo "Example: ishare2 pull qemu 4"
-        echo "Example: ishare2 pull dynamips 5"
-        echo -e "Example: ishare2 pull bin 6"
+        echo "Usage: $SCR_NAME pull ${IMAGE_TYPE,,} <id>"
+        echo "Example: $SCR_NAME pull ${IMAGE_TYPE,,} 1"
         exit 1
     fi
 
@@ -1740,7 +1738,9 @@ selector() {
                     echo
                 done
             else
-                echo "Usage: $0 [qemu|iol|dynamips|all]"
+                echo "Usage: $SCR_NAME search <type> [keyword]"
+                echo "       $SCR_NAME search all"
+                echo "Types: qemu, iol, dynamips"
                 exit 1
             fi
             ;;
@@ -1759,7 +1759,9 @@ selector() {
             pull_images "$TYPE" "$3" "$4"
             ;;
         *) # If the type is not specified, print the usage
-            echo "Usage: $0 pull [qemu|iol|dynamips|bin] [ID]"
+            echo "Usage: $SCR_NAME pull <type> <id>"
+            echo "       $SCR_NAME pull <type> all"
+            echo "Types: qemu, iol, dynamips"
             ;;
         esac
         ;;
@@ -1796,13 +1798,13 @@ selector() {
                 count_dockers
                 ;;
             *)
-                echo -e "Syntax:\n\nishare2 installed <type>"
-                echo -e "${YELLOW}type: all, bin, qemu, dynamips or docker${NO_COLOR}"
+                echo "Usage: $SCR_NAME installed <type>"
+                echo "       $SCR_NAME installed all"
                 ;;
             esac
         else
-            echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
-            echo -e "type: all, bin, qemu, dynamips or docker"
+            echo "Usage: $SCR_NAME installed <type>"
+            echo "       $SCR_NAME installed all"
         fi
         ;;
     "labs")
@@ -1854,20 +1856,15 @@ selector() {
                 ishare2_gui_restart
                 ;;
             *)
-                echo -e "${RED}Bad last argument${NO_COLOR}"
-                echo -e "Syntax:\n\nishare2 gui <option>\n"
-                echo "ishare2 gui download"
-                echo -e "ishare2 gui start"
-                echo -e "ishare2 gui stop"
-                echo -e "ishare2 gui restart"
+                echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+                echo -e "Usage: $SCR_NAME gui <action>"
+                echo -e "Actions: install, start, stop, restart"
                 ;;
             esac
         else
-            echo -e "Syntax:\n\nishare2 gui <option>\n"
-            echo "ishare2 gui download"
-            echo -e "ishare2 gui start"
-            echo -e "ishare2 gui stop"
-            echo -e "ishare2 gui restart"
+            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            echo -e "Usage: $SCR_NAME gui <action>"
+            echo -e "Actions: install, start, stop, restart"
         fi
         ;;
     "help")
