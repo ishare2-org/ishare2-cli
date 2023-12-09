@@ -282,7 +282,7 @@ install_package() {
 
         echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
         if ! apt-get install -y "$package_name"; then
-            echo -e "${RED} [-] Failed to install $package_name.${NO_COLOR}"
+            echo -e "${RED} [-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
             exit 1
         fi
     else
