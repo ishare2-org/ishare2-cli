@@ -26,7 +26,7 @@ GREEN='\033[32m'
 BLUE='\033[34m'
 NO_COLOR='\033[0m'
 
-function print_separator() {
+print_separator() {
     local TITLE=$1
     local WIDTH=${#TITLE}
     local SEPARATOR=""
@@ -41,14 +41,14 @@ function print_separator() {
     echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
 }
 
-function check_ishare2_dir() {
+check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
     if [[ ! -d $ISHARE2_DIR ]]; then
         create_ishare2_dir
     fi
 }
 
-function fetch_sources() {
+fetch_sources() {
     # Fetch the sources.list from the repository
     echo "Fetching sources.list from $SOURCES_URL..." >>$LOG_FILE
     check_ishare2_dir
@@ -61,7 +61,7 @@ function fetch_sources() {
         if [[ -f $ISHARE2_DIR/sources.list ]]; then
             mv $ISHARE2_DIR/sources.list $ISHARE2_DIR/sources.list.bak
         fi
-        # If download function failed, use the cached sources.list file
+        # If download failed, use the cached sources.list file
         if ! download_file_curl "$SOURCES_URL" "$ISHARE2_DIR/sources.list"; then
             echo "Failed to update sources. Using cached sources.list file." >>$LOG_FILE
             # Restore the old sources.list file
@@ -74,7 +74,7 @@ function fetch_sources() {
 }
 
 # set max log file lines to 1000
-function set_max_log_lines() {
+set_max_log_lines() {
     if [[ -f $LOG_FILE ]]; then
         if [[ $(wc -l <"$LOG_FILE") -gt 1000 ]]; then
             tail -n 1000 $LOG_FILE >$ISHARE2_DIR/tmp.txt
@@ -83,7 +83,7 @@ function set_max_log_lines() {
     fi
 }
 
-function check_config() {
+check_config() {
     # check if config file exists
     if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
         create_config
@@ -97,7 +97,7 @@ function check_config() {
     validate_conf_file
 }
 
-function create_config() {
+create_config() {
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
@@ -258,7 +258,7 @@ validate_conf_file() {
     return 0
 }
 
-function install_dependencies() {
+install_dependencies() {
     # unlock apt
     unlock_dpkg
     local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
@@ -267,7 +267,7 @@ function install_dependencies() {
     done
 }
 
-function install_package() {
+install_package() {
     local package_name=$1
     # unlock apt
     unlock_dpkg
@@ -295,11 +295,11 @@ function install_package() {
     fi
 }
 
-function install_aria2c() {
+install_aria2c() {
     install_package "aria2"
 }
 
-function unlock_dpkg() {
+unlock_dpkg() {
     # Check if apt is running
     if pgrep apt >/dev/null 2>&1; then
         echo "apt is currently running. Would you like to attempt unlocking dpkg? This may cause issues with apt if it is still running. Proceed? (y/n)"
@@ -333,7 +333,7 @@ function unlock_dpkg() {
     sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
 }
 
-function create_ishare2_dir() {
+create_ishare2_dir() {
     echo -e "${YELLOW} [+] Creating ishare2 directory...${NO_COLOR}"
     for dir in $ISHARE2_DIR $ISHARE2_DIR/tmp; do
         if ! mkdir -p "$dir" 2>/dev/null; then
@@ -349,7 +349,7 @@ function create_ishare2_dir() {
     echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
-function fetch_json() {
+fetch_json() {
     # Download the JSON and store it in a temporary file
     curl -sL "$JSON_URL" >"$TEMP_JSON"
     # Check if curl command failed
@@ -476,7 +476,7 @@ download_file_wget() {
     fi
 }
 
-function check_user_is_root() {
+check_user_is_root() {
     if ! [[ "$(id -u)" == 0 ]]; then
         user=$(whoami)
         echo -e "${RED} [!] This script requires root privileges to be executed. The current user, \"$user\", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
@@ -484,7 +484,7 @@ function check_user_is_root() {
     fi
 }
 
-function get_server_platform() {
+get_server_platform() {
     grep -q vmx /proc/cpuinfo && echo -n vmx >/opt/unetlab/platform
     grep -q svm /proc/cpuinfo && echo -n svm >/opt/unetlab/platform
 
@@ -494,7 +494,7 @@ function get_server_platform() {
     if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/"; fi
 }
 
-function set_yml_template_folder_location() {
+set_yml_template_folder_location() {
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     data_array=("$data")
     pnetlab_version=${data_array[1]}
@@ -508,7 +508,7 @@ function set_yml_template_folder_location() {
     fi
 }
 
-function list_labs() {
+list_labs() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
         LABS_DIR=$2
@@ -590,7 +590,7 @@ function list_labs() {
     echo -e "\nTo install images for all of the labs, use the following command:\n\033[32m$CMD_TO_EXECUTE_ALL\033[0m"
 }
 
-function install_images_from_lab() {
+install_images_from_lab() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
         LABS_DIR=$2
@@ -721,7 +721,7 @@ function install_images_from_lab() {
     rm /opt/unetlab/labs/docker_images.txt
 }
 
-function install_images_all_labs() {
+install_images_all_labs() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
         LABS_DIR=$2
@@ -786,7 +786,7 @@ function install_images_all_labs() {
     echo -e "\nDone"
 }
 
-function pull_all() {
+pull_all() {
     TYPE=${1^^}
     if [[ $TYPE == "BIN" ]]; then
         TYPE="IOL"
@@ -825,9 +825,9 @@ function pull_all() {
     done
 }
 
-function pull_lab_images() {
-    # Pending to implement: corrections_for_bin_images_in_lab_function "$IMAGE_NAME" "$LAB_PATH"
-    # Pending to implement: corrections_for_qemu_images_in_lab_function "$QEMU_NAME"
+pull_lab_images() {
+    # Pending to implement: corrections_for_bin_images_in_lab_"$IMAGE_NAME" "$LAB_PATH"
+    # Pending to implement: corrections_for_qemu_images_in_lab_"$QEMU_NAME"
     LAB_PATH="$1"
     IMAGE_TYPE="$2"
     IMAGE_TYPE_UPPERCASE=$(echo "$IMAGE_TYPE" | tr '[:lower:]' '[:upper:]')
@@ -860,7 +860,7 @@ function pull_lab_images() {
     rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
-function check_docker_service_status() {
+check_docker_service_status() {
     local status=$(service docker status)
 
     if echo "$status" | grep -q "active (running)"; then
@@ -883,12 +883,12 @@ function check_docker_service_status() {
     fi
 }
 
-function list_dockers() {
+list_dockers() {
     echo -e "\nDocker images in server"
     docker images
 }
 
-function count_dockers() {
+count_dockers() {
     data=$(docker images | wc -l)
     docker_count=$((data - 1))
 
@@ -899,7 +899,7 @@ function count_dockers() {
     fi
 }
 
-function corrections_for_docker_images_in_lab_function() {
+corrections_for_docker_images_in_lab_function() {
     DOCKER_NAME=$1
     LAB_PATH=$2
 
@@ -950,7 +950,7 @@ function corrections_for_docker_images_in_lab_function() {
     done
 }
 
-function download_lab_docker_images() {
+download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
     # Checking docker service status before pull any docker image
@@ -958,7 +958,7 @@ function download_lab_docker_images() {
         while read -r line; do
             DOCKER_NAME=$line
 
-            corrections_for_docker_images_in_lab_function "$DOCKER_NAME" "$LAB_PATH"
+            corrections_for_docker_images_in_lab_"$DOCKER_NAME" "$LAB_PATH"
 
             STR="Docker requested: "
             echo -e "\033[33m$STR\033[0m $DOCKER_NAME"
@@ -971,14 +971,14 @@ function download_lab_docker_images() {
     count_dockers
 }
 
-function ishare2_version() {
+ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
         echo $VERSION >$ISHARE2_DIR/ishare2_version
     fi
 }
 
-function upgrade_ishare2() {
+upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
     UPSTREAM_VERSION=$(curl -s --insecure "$URL_VERSION")
 
@@ -1004,7 +1004,7 @@ function upgrade_ishare2() {
     echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
 }
 
-function menu_ishare2_upgrade_pnetlab() {
+menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
         "Upgrade PNETLab v5 STABLE"
@@ -1043,7 +1043,7 @@ function menu_ishare2_upgrade_pnetlab() {
     done
 }
 
-function menu_ishare2_upgrade() {
+menu_ishare2_upgrade() {
     prompt="Please, select an option: "
     options=(
         "Upgrade ishare2"
@@ -1078,7 +1078,7 @@ function menu_ishare2_upgrade() {
     done
 }
 
-function show_changelog() {
+show_changelog() {
     FILE=/root/CHANGELOG.md
     if [[ -e $FILE ]]; then rm $FILE; fi
 
@@ -1087,10 +1087,10 @@ function show_changelog() {
     rm $FILE
 }
 
-function ishare2_gui_install() {
+ishare2_gui_install() {
     curl -sL "$URL_ISHARE2_GUI_INSTALL" | bash
 }
-function ishare2_gui_start() {
+ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
@@ -1099,7 +1099,7 @@ function ishare2_gui_start() {
     fi
 }
 
-function ishare2_gui_stop() {
+ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error stopping ishare2 GUI service. ${NO_COLOR}"
@@ -1108,7 +1108,7 @@ function ishare2_gui_stop() {
     fi
 }
 
-function ishare2_gui_restart() {
+ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error restarting ishare2 GUI service. ${NO_COLOR}"
@@ -1117,7 +1117,7 @@ function ishare2_gui_restart() {
     fi
 }
 
-function search_images() {
+search_images() {
     # Download the JSON and store it in a temporary file
     fetch_json
     print_separator "Available $TYPE images"
@@ -1143,7 +1143,7 @@ function search_images() {
     rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
-function generate_iourc_license() {
+generate_iourc_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
 
     PYTHON_FILE=$BIN_PATH"CiscoIOUKeygen.py"
@@ -1176,7 +1176,7 @@ function generate_iourc_license() {
     echo -e "${GREEN} [+] IOL license was generated successfully. ${NO_COLOR}"
 }
 
-function show_help_info() {
+show_help_info() {
     echo -e "1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video"
     echo -e "\n2) For new files to be uploaded, you can use our Telegram Channel too"
     echo -e "In this case, you can send or ask for new images to be uploaded"
@@ -1188,7 +1188,7 @@ function show_help_info() {
     echo -e "\nTelegram Channel: https://t.me/NetLabHub"
 }
 
-function show_ishare2_usage() {
+show_ishare2_usage() {
     # For ishare2
     ISHARE2_VERSION_INFO=$(cat $ISHARE2_DIR/ishare2_version)
     UPSTREAM_VERSION=$(curl -s "$URL_VERSION")
@@ -1310,7 +1310,7 @@ $PNETLAB_INSTALLED
 "
 }
 
-function tgz_files_function() {
+tgz_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1326,7 +1326,7 @@ function tgz_files_function() {
     fi
 }
 
-function tar_gz_files_function() {
+tar_gz_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1342,7 +1342,7 @@ function tar_gz_files_function() {
     fi
 }
 
-function tar_files_function() {
+tar_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1358,7 +1358,7 @@ function tar_files_function() {
     fi
 }
 
-function zip_files_function() {
+zip_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1374,7 +1374,7 @@ function zip_files_function() {
     fi
 }
 
-function rar_files_function() {
+rar_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1395,7 +1395,7 @@ function rar_files_function() {
     fi
 }
 
-function ova_files_function() {
+ova_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1411,7 +1411,7 @@ function ova_files_function() {
     fi
 }
 
-function iso_files_function() {
+iso_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1437,7 +1437,7 @@ function iso_files_function() {
     fi
 }
 
-function yml_files_function() {
+yml_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1454,7 +1454,7 @@ function yml_files_function() {
     done
 }
 
-function txt_files_function() {
+txt_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1473,7 +1473,7 @@ function txt_files_function() {
     done
 }
 
-function sh_files_function() {
+sh_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1495,7 +1495,7 @@ function sh_files_function() {
     fi
 }
 
-function png_files_function() {
+png_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1517,7 +1517,7 @@ function png_files_function() {
     fi
 }
 
-function php_files_function() {
+php_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1531,7 +1531,7 @@ function php_files_function() {
     fi
 }
 
-function vmdk_files_function() {
+vmdk_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1549,7 +1549,7 @@ function vmdk_files_function() {
     fi
 }
 
-function install_qemu_tools() {
+install_qemu_tools() {
     apt update
     apt install -y qemu-utils
     # check if qemu-img is installed
@@ -1558,7 +1558,7 @@ function install_qemu_tools() {
     fi
 }
 
-function pull_images() {
+pull_images() {
     IMAGE_TYPE=$1
     IMAGE_ID=$2
     OVERWRITE=$3
@@ -1581,7 +1581,7 @@ function pull_images() {
         IMAGE_TYPE="$1"
     fi
     local download_urls
-    local download_path # Pending: implement corrections_for_qemu_images function with new JSON structure
+    local download_path # Pending: implement corrections_for_qemu_images with new JSON structure
     local image_name
     local image_size
 
@@ -1663,28 +1663,28 @@ function pull_images() {
     # 3. Handle downloaded files if TYPE is QEMU
     if [ "$IMAGE_TYPE" = "QEMU" ]; then
         # 3.1. Extract archives
-        tgz_files_function "$FOLDERNAME"
-        tar_gz_files_function "$FOLDERNAME"
-        tar_files_function "$FOLDERNAME"
-        zip_files_function "$FOLDERNAME"
-        rar_files_function "$FOLDERNAME"
-        ova_files_function "$FOLDERNAME"
-        iso_files_function "$FOLDERNAME"
+        tgz_files_"$FOLDERNAME"
+        tar_gz_files_"$FOLDERNAME"
+        tar_files_"$FOLDERNAME"
+        zip_files_"$FOLDERNAME"
+        rar_files_"$FOLDERNAME"
+        ova_files_"$FOLDERNAME"
+        iso_files_"$FOLDERNAME"
 
         # 3.2. Handle other files
-        yml_files_function "$FOLDERNAME"
-        txt_files_function "$FOLDERNAME"
-        sh_files_function "$FOLDERNAME"
-        png_files_function "$FOLDERNAME"
-        php_files_function "$FOLDERNAME"
-        vmdk_files_function "$FOLDERNAME"
+        yml_files_"$FOLDERNAME"
+        txt_files_"$FOLDERNAME"
+        sh_files_"$FOLDERNAME"
+        png_files_"$FOLDERNAME"
+        php_files_"$FOLDERNAME"
+        vmdk_files_"$FOLDERNAME"
 
         # 3.3. Apply fix permissions command
         fix_permissions
     fi
 }
 
-function fix_permissions() {
+fix_permissions() {
     /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
     if [[ $? -eq 0 ]]; then
         echo -e "\n${GREEN} [+] Fix permissions command has been executed correctly ${NO_COLOR}"
@@ -1693,7 +1693,7 @@ function fix_permissions() {
     fi
 }
 
-function connection_tests() {
+connection_tests() {
     # Define an associative array with service names and their respective IP addresses or domains
     declare -A SERVICES=(
         ["GitHub"]="github.com"
@@ -1720,7 +1720,7 @@ function connection_tests() {
     echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
 }
 
-function selector() {
+selector() {
     case "$1" in
     "search")
         # Switch case to determine the type of the device to be displayed
@@ -1894,7 +1894,7 @@ function selector() {
     esac
 }
 
-function main() {
+main() {
     if [[ "$1" = "test" ]]; then
         connection_tests
         exit 0
