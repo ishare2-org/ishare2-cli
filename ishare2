@@ -261,7 +261,7 @@ validate_conf_file() {
 function install_dependencies() {
     # unlock apt
     unlock_dpkg
-    local packages=("curl" "wget" "jq" "unrar" "tree" "qemu-tools" "unzip")
+    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
     for package in "${packages[@]}"; do
         install_package "$package"
     done
