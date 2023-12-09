@@ -97,17 +97,6 @@ function check_config() {
     validate_conf_file
 }
 
-function switch_downloader() {
-    # check if config file exists
-    if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "{$YELLOW} [!] Configuration file does not exist. Please configure ishare2.${NO_COLOR}"
-    fi
-    if [[ ! -s $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
-    fi
-    create_config
-}
-
 function create_config() {
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
@@ -203,6 +192,7 @@ function create_config() {
     remove_duplicates
     validate_conf_file
     echo -e "${GREEN} [+] Configuration file created successfully.${NO_COLOR}"
+    install_dependencies
 }
 
 remove_duplicates() {
@@ -268,37 +258,45 @@ validate_conf_file() {
     return 0
 }
 
-function install_aria2c() {
+function install_dependencies() {
     # unlock apt
     unlock_dpkg
-    # check if aria2c is installed otherwise install it
-    if ! command -v aria2c &>/dev/null; then
-        echo -e "${YELLOW} [+] aria2c is not installed.${NO_COLOR}"
+    local packages=("curl" "wget" "jq" "unrar" "tree" "qemu-tools" "unzip")
+    for package in "${packages[@]}"; do
+        install_package "$package"
+    done
+}
+
+install_package() {
+    local package_name=$1
+    # unlock apt
+    unlock_dpkg
+    # check if $package_name is installed otherwise install it
+    if ! command -v "$package_name" &>/dev/null; then
+        echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
         echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
         if ! apt-get update; then
             echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
             exit 1
         fi
 
-        echo -e "${YELLOW} [+] Installing aria2c...${NO_COLOR}"
-        if ! apt-get install -y aria2; then
-            echo -e "${RED} [-] Failed to install aria2c.${NO_COLOR}"
+        echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
+        if ! apt-get install -y "$package_name"; then
+            echo -e "${RED} [-] Failed to install $package_name.${NO_COLOR}"
             exit 1
         fi
-        echo -e "${YELLOW} [+] Installing unrar...${NO_COLOR}"
-        if ! apt-get install -y unrar; then
-            echo -e "${RED} [-] Failed to install unrar.${NO_COLOR}"
-            exit 1
-        fi
-        echo -e "${GREEN} [+] Done.${NO_COLOR}"
     else
-        echo -e "${GREEN} [+] aria2c already is installed.${NO_COLOR}" >>$LOG_FILE
-        echo -e "${YELLOW} [+] Updating aria2c...${NO_COLOR}" >>$LOG_FILE
-        if ! apt-get install --only-upgrade aria2; then
-            echo -e "${RED} [-] Failed to update aria2c.${NO_COLOR}" >>$LOG_FILE
+        echo -e "${GREEN} [+] $package_name already is installed.${NO_COLOR}" >>$LOG_FILE
+        echo -e "${YELLOW} [+] Updating $package_name...${NO_COLOR}" >>$LOG_FILE
+        if ! apt-get install --only-upgrade "$package_name"; then
+            echo -e "${RED} [-] Failed to update $package_name.${NO_COLOR}" >>$LOG_FILE
             exit 1
         fi
     fi
+}
+
+function install_aria2c() {
+    install_package "aria2"
 }
 
 function unlock_dpkg() {
@@ -354,6 +352,16 @@ function create_ishare2_dir() {
 function fetch_json() {
     # Download the JSON and store it in a temporary file
     curl -sL "$JSON_URL" >"$TEMP_JSON"
+    # Check if curl command failed
+    if [ $? -ne 0 ]; then
+        echo -e "${RED} [-] Failed to download the JSON file. Please check your internet connection.${NO_COLOR}"
+        exit 1
+    fi
+    # Check if the JSON file is valid
+    if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
+        echo -e "${RED} [-] Error: Invalid JSON file. Please check your internet connection.${NO_COLOR}"
+        exit 1
+    fi
 }
 
 download_file() {
@@ -783,7 +791,26 @@ function pull_all() {
     if [[ $TYPE == "BIN" ]]; then
         TYPE="IOL"
     fi
+    if [[ $TYPE == "QEMU" ]]; then
+        echo -e "${YELLOW} [!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
+        # Enter confirmation text
+        CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
+        # Ask the user to enter the confirmation text
+        read -p " [?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
+        # If the confirmation text is incorrect then exit
+        if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
+            echo -e "${RED} [!] Aborting.${NO_COLOR}"
+            exit 1
+        fi
+    fi
     echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
+    # Ask for conirmation
+    read -p " [?] Are you sure you want to pull all $TYPE images? (y/n): " -r
+    # If reply was no Y or y then exit
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED} [!] Aborting.${NO_COLOR}"
+        exit 1
+    fi
     # Get the list of all images
     fetch_json
     # Get all the IDs for the images of the specified type
@@ -1283,34 +1310,6 @@ $PNETLAB_INSTALLED
 "
 }
 
-function msg_available_options_for_ishare2_search() {
-    echo -e "Available options\n"
-    echo "- ishare2 search all"
-    echo "- ishare2 search qemu"
-    echo "- ishare2 search dynamips"
-    echo "- ishare2 search bin"
-    echo "- ishare2 search <name>"
-    echo "  - ishare2 search vios"
-    echo "  - ishare2 search win-"
-    echo "  - ishare2 search winserver"
-    echo "  - ishare2 search kali"
-    echo "  - ishare2 search mikro"
-    echo "  - ishare2 search forti"
-    echo "  - ishare2 search nxos"
-    echo "  - ishare2 search vmx"
-    echo "  - ishare2 search esxi"
-    echo "  - More <name> options using ishare2 search all"
-}
-
-function msg_incorrect_argument_or_no_arg_for_ishare2_pull() {
-    echo -e "Syntax:\nishare2 pull <type> <number>\n"
-    echo "type: bin, qemu or dynamips"
-    echo -e "number: ishare2 search <type>\n"
-    echo "Example: ishare2 pull qemu 4"
-    echo "Example: ishare2 pull dynamips 5"
-    echo -e "Example: ishare2 pull bin 6"
-}
-
 function tgz_files_function() {
     FOLDERNAME=$1
 
@@ -1789,13 +1788,13 @@ function selector() {
         if [[ "$2" ]]; then
             case "$2" in
             "all")
-                echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
+                print_separator "QEMU"
                 ishare2 installed qemu
-                echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
+                print_separator "DYANMIPS"
                 ishare2 installed dynamips
-                echo -e "${GREEN}----- BIN -----${NO_COLOR}"
+                print_separator "BIN"
                 ishare2 installed bin
-                echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
+                print_separator "DOCKER"
                 ishare2 installed docker
                 ;;
             "qemu")
@@ -1899,7 +1898,7 @@ function selector() {
         connection_tests
         ;;
     "config")
-        switch_downloader
+        create_config
         ;;
     *)
         show_ishare2_usage
