@@ -1558,22 +1558,6 @@ function install_qemu_tools() {
     fi
 }
 
-function check_if_yml_template_is_missing() {
-    FOLDERNAME=$1
-
-    #YML_DIR="/opt/unetlab/html/templates/" # Value getted from set_yml_template_folder_location()
-
-    TEMPLATE_NAME="$(cut -d'-' -f1 <<<"$FOLDERNAME")"
-    EXTENSION=".yml"
-
-    FULL_TEMPLATE_PATH=$YML_DIR"$TEMPLATE_NAME"$EXTENSION
-
-    if ! [[ -e $FULL_TEMPLATE_PATH ]]; then
-        STR="\n ${YELLOW}[-] WARN: Template $FULL_TEMPLATE_PATH is missing, so device might not show up in the list of nodes. ${NO_COLOR}"
-        echo -e "$STR\033[0m"
-    fi
-}
-
 function pull_images() {
     IMAGE_TYPE=$1
     IMAGE_ID=$2
@@ -1695,9 +1679,7 @@ function pull_images() {
         php_files_function "$FOLDERNAME"
         vmdk_files_function "$FOLDERNAME"
 
-        # 3.3. Show if .yml templates are missing
-        check_if_yml_template_is_missing "$FOLDERNAME"
-        # 3.4. Apply fix permissions command
+        # 3.3. Apply fix permissions command
         fix_permissions
     fi
 }
