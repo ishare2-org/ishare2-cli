@@ -26,6 +26,12 @@ GREEN='\033[32m'
 BLUE='\033[34m'
 NO_COLOR='\033[0m'
 
+# Script name
+SCR_NAME_EXEC=$0
+SCR_NAME_EXEC_FP=$(realpath "$0")
+SCR_NAME=$(basename "$SCR_NAME_EXEC")
+SCR_NAME=${SCR_NAME%.*}
+
 print_separator() {
     local TITLE=$1
     local WIDTH=${#TITLE}
