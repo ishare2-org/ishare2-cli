@@ -277,7 +277,7 @@ check_installed() {
     PACKAGE=$1
     # Check if package is installed
     if ! command -v jq &>/dev/null; then
-        echo -e "${RED} [!] WARN: $PACKAGE is not installed.${NO_COLOR}"
+        echo -e "${YELLOW} [!] WARN: $PACKAGE is not installed.${NO_COLOR}"
         install_package "$PACKAGE"
         # Check success of package installation
         if ! command -v "$PACKAGE" &>/dev/null; then
