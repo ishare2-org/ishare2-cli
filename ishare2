@@ -273,6 +273,22 @@ install_dependencies() {
     done
 }
 
+check_installed() {
+    PACKAGE=$1
+    # Check if package is installed
+    if ! command -v jq &>/dev/null; then
+        echo -e "${RED} [!] WARN: $PACKAGE is not installed.${NO_COLOR}"
+        install_package "$PACKAGE"
+        # Check success of package installation
+        if ! command -v "$PACKAGE" &>/dev/null; then
+            echo -e "${RED} [-] Error: Failed to install $PACKAGE.${NO_COLOR}"
+            exit 1
+        else # package is installed
+            echo -e "${GREEN} [+] $PACKAGE has been installed successfully.${NO_COLOR}"
+        fi
+    fi
+}
+
 install_package() {
     local package_name=$1
     # unlock apt
@@ -354,6 +370,7 @@ create_ishare2_dir() {
 }
 
 fetch_json() {
+    check_installed "jq"
     # Download the JSON and store it in a temporary file
     curl -sL "$JSON_URL" >"$TEMP_JSON"
     # Check if curl command failed
