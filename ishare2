@@ -1316,7 +1316,7 @@ $PNETLAB_INSTALLED
 EOF
 }
 
-tgz_files_function() {
+handle_tgz_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1332,7 +1332,7 @@ tgz_files_function() {
     fi
 }
 
-tar_gz_files_function() {
+handle_tar_gz_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1348,7 +1348,7 @@ tar_gz_files_function() {
     fi
 }
 
-tar_files_function() {
+handle_tar_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1364,7 +1364,7 @@ tar_files_function() {
     fi
 }
 
-zip_files_function() {
+handle_zip_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1380,7 +1380,7 @@ zip_files_function() {
     fi
 }
 
-rar_files_function() {
+handle_rar_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1401,7 +1401,7 @@ rar_files_function() {
     fi
 }
 
-ova_files_function() {
+handle_ova_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1417,7 +1417,7 @@ ova_files_function() {
     fi
 }
 
-iso_files_function() {
+handle_iso_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1443,7 +1443,7 @@ iso_files_function() {
     fi
 }
 
-yml_files_function() {
+handle_yml_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1460,7 +1460,7 @@ yml_files_function() {
     done
 }
 
-txt_files_function() {
+handle_txt_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1479,7 +1479,7 @@ txt_files_function() {
     done
 }
 
-sh_files_function() {
+handle_sh_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1501,7 +1501,7 @@ sh_files_function() {
     fi
 }
 
-png_files_function() {
+handle_png_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1523,7 +1523,7 @@ png_files_function() {
     fi
 }
 
-php_files_function() {
+handle_php_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1537,7 +1537,7 @@ php_files_function() {
     fi
 }
 
-vmdk_files_function() {
+handle_vmdk_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1672,21 +1672,21 @@ pull_images() {
     # 3. Handle downloaded files if TYPE is QEMU
     if [ "$IMAGE_TYPE" = "QEMU" ]; then
         # 3.1. Extract archives
-        tgz_files_"$FOLDERNAME"
-        tar_gz_files_"$FOLDERNAME"
-        tar_files_"$FOLDERNAME"
-        zip_files_"$FOLDERNAME"
-        rar_files_"$FOLDERNAME"
-        ova_files_"$FOLDERNAME"
-        iso_files_"$FOLDERNAME"
+        handle_tgz_files "$FOLDERNAME"
+        handle_tar_gz_files "$FOLDERNAME"
+        handle_tar_files "$FOLDERNAME"
+        handle_zip_files "$FOLDERNAME"
+        handle_rar_files "$FOLDERNAME"
+        handle_ova_files "$FOLDERNAME"
+        handle_iso_files "$FOLDERNAME"
 
         # 3.2. Handle other files
-        yml_files_"$FOLDERNAME"
-        txt_files_"$FOLDERNAME"
-        sh_files_"$FOLDERNAME"
-        png_files_"$FOLDERNAME"
-        php_files_"$FOLDERNAME"
-        vmdk_files_"$FOLDERNAME"
+        handle_yml_files "$FOLDERNAME"
+        handle_txt_files "$FOLDERNAME"
+        handle_sh_files "$FOLDERNAME"
+        handle_png_files "$FOLDERNAME"
+        handle_php_files "$FOLDERNAME"
+        handle_vmdk_files "$FOLDERNAME"
 
         # 3.3. Apply fix permissions command
         fix_permissions
