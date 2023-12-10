@@ -1,4 +1,3 @@
-URL_ID_LIST=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/id_list
 URL_VERSION=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version
 URL_ISHARE2=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2
 URL_CHANGELOG_MD=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/CHANGELOG.md
@@ -11,4 +10,4 @@ URL_C1760_YML=https://raw.githubusercontent.com/pnetlabrepo/ishare2/$CHANNEL/tem
 URL_PNETLAB_V5=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/bionic/install_pnetlab_latest_v5.sh
 URL_PNETLAB_V5_BETA=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/bionic/install_pnetlab_v5_testing.sh
 URL_PNETLAB_V6=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh
-URL_GUI_APP_ZIP=https://github.com/ishare2-org/ishare2-web-gui/archive/refs/heads/master.zip
+URL_ISHARE2_GUI_INSTALL=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2_gui_install.sh

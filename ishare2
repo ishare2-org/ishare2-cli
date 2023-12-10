@@ -1,15 +1,23 @@
 #!/bin/bash
-# Date: October 2022
+# Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
-# Description: This script is used to download images from the internet and install them in PNetLab.
-# Version: 2.2.1
-# Last Updated: 2023-04-23
+# Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
+# Version: 3.3-beta-rc
+# Last Updated: 2023-12-09 yyyy-mm-dd
 
-# ishare2 configuration
-CHANNEL="main" # you can change this to available branches in github.com/ishare-org/ishare2-cli
-ISHARE2_DIR="/opt/ishare2/cli"
-SOURCES="$ISHARE2_DIR/sources.list"
-VERSION="v2.2.1" # Script version
+# Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
+USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
+SSL_CHECK="true"                                                                    # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
+CHANNEL="beta"                                                                      # Set to main to use the main channel. Set to beta to use the beta channel.
+JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" # Default JSON URL
+# End of ishare2 configuration
+
+# Initialize variables
+ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
+LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
+TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
+VERSION="v3.3-beta-rc"                                                                        # Current version of ishare2
+SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
 RED='\033[31m'
@@ -18,24 +26,70 @@ GREEN='\033[32m'
 BLUE='\033[34m'
 NO_COLOR='\033[0m'
 
-function check_ishare2_dir() {
+# Script name
+SCR_NAME_EXEC=$0
+SCR_NAME_EXEC_FP=$(realpath "$0")
+SCR_NAME=$(basename "$SCR_NAME_EXEC")
+SCR_NAME=${SCR_NAME%.*}
+
+print_separator() {
+    local TITLE=$1
+    local WIDTH=${#TITLE}
+    local SEPARATOR=""
+
+    # Calculate the required number of '=' characters to create the separator
+    for ((i = 0; i < WIDTH + 8; i++)); do
+        SEPARATOR+="="
+    done
+
+    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
+    echo -e "\033[1;33m    ${TITLE}    \033[0m"
+    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
+}
+
+check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
     if [[ ! -d $ISHARE2_DIR ]]; then
         create_ishare2_dir
     fi
 }
 
+fetch_sources() {
+    # Fetch the sources.list from the repository
+    echo "Fetching sources.list from $SOURCES_URL..." >>$LOG_FILE
+    check_ishare2_dir
+    # Cache the sources.list file for 10 minutes
+    if [[ -f $ISHARE2_DIR/sources.list && $(find "$ISHARE2_DIR/sources.list" -mmin -10) ]]; then
+        echo "Using cached sources.list file." >>$LOG_FILE
+    else
+        echo "Downloading sources.list file..." >>$LOG_FILE
+        # Backup the old sources.list file
+        if [[ -f $ISHARE2_DIR/sources.list ]]; then
+            mv $ISHARE2_DIR/sources.list $ISHARE2_DIR/sources.list.bak
+        fi
+        # If download failed, use the cached sources.list file
+        if ! download_file_curl "$SOURCES_URL" "$ISHARE2_DIR/sources.list"; then
+            echo "Failed to update sources. Using cached sources.list file." >>$LOG_FILE
+            # Restore the old sources.list file
+            mv $ISHARE2_DIR/sources.list.bak $ISHARE2_DIR/sources.list
+        fi
+        echo "Done." >>$LOG_FILE
+    fi
+    # Use sources.list file
+    source $ISHARE2_DIR/sources.list
+}
+
 # set max log file lines to 1000
-function set_max_log_lines() {
-    if [[ -f $ISHARE2_DIR/logs.txt ]]; then
-        if [[ $(wc -l <"$ISHARE2_DIR/logs.txt") -gt 1000 ]]; then
-            tail -n 1000 $ISHARE2_DIR/logs.txt >$ISHARE2_DIR/tmp.txt
-            mv $ISHARE2_DIR/tmp.txt $ISHARE2_DIR/logs.txt
+set_max_log_lines() {
+    if [[ -f $LOG_FILE ]]; then
+        if [[ $(wc -l <"$LOG_FILE") -gt 1000 ]]; then
+            tail -n 1000 $LOG_FILE >$ISHARE2_DIR/tmp.txt
+            mv $ISHARE2_DIR/tmp.txt $LOG_FILE
         fi
     fi
 }
 
-function check_config() {
+check_config() {
     # check if config file exists
     if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
         create_config
@@ -49,19 +103,8 @@ function check_config() {
     validate_conf_file
 }
 
-function switch_downloader() {
-    # check if config file exists
-    if [[ ! -f $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "{$YELLOW} [!] Configuration file does not exist. Please configure ishare2.${NO_COLOR}"
-    fi
-    if [[ ! -s $ISHARE2_DIR/ishare2.conf ]]; then
-        echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
-    fi
-    create_config
-}
-
-function create_config() {
-    echo -e "${YELLOW} [*] Creating ishare2 configuration file...${NO_COLOR}"
+create_config() {
+    echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press Ctrl+C to cancel.${NO_COLOR}"
@@ -94,19 +137,58 @@ function create_config() {
     esac
     echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_DIR/ishare2.conf
 
-    # Ask for the channel value
     echo -e "${YELLOW} [+] Choose the update channel.${NO_COLOR}"
-    echo "  1) main"
-    read -p " [+] Enter the update channel option (default: 1): " -r
+
+    # Get branches as an array instead of a single string with spaces
+    mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
+
+    # Display branches with correct indexing
+    for ((i = 0; i < ${#branches[@]}; i++)); do
+        echo " $((i + 1))) ${branches[i]}"
+    done
+
+    # Ask the user to select a branch
+    read -p " [*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
+
+    if [[ -z $REPLY ]]; then
+        echo -e "${YELLOW} [!] Using the default branch.${NO_COLOR}"
+    elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
+        echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
+    else
+        CHANNEL=${branches[REPLY - 1]}
+        echo -e "${YELLOW} [!] Using the $CHANNEL branch.${NO_COLOR}"
+        echo -e "${YELLOW} [!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
+    fi
+
+    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
+
+    # Provisional mirror selection feature. Will be replaced with a better solution in the future.
+    # Ask if the user wants to use the default mirror, another mirror or a custom mirror
+    echo -e "${YELLOW} [+] Choose a mirror.${NO_COLOR}"
+    # Show list of mirrors
+    echo " 1) Google Drive mirror"
+    echo " 2) Onedrive mirror"
+    echo " 3) Custom mirror"
+    # Ask the user to select a mirror
+    read -p " [*] Enter the number of the mirror you want to use (default: 1): " -r
     case $REPLY in
-    1)
-        CHANNEL="main"
+    2)
+        JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json"
+        echo -e "${YELLOW} [!] Using Onedrive mirror.${NO_COLOR}"
+        ;;
+    3)
+        echo -e "${YELLOW} [+] Enter the URL of the mirror.${NO_COLOR}"
+        read -p " [*] Enter the URL of the mirror you want to use: " -r
+        JSON_URL="$REPLY"
+        echo -e "${YELLOW} [!] Using custom mirror: $JSON_URL.${NO_COLOR}"
         ;;
     *)
-        CHANNEL="main"
+        JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json"
+        echo -e "${YELLOW} [!] Using Google Drive mirror.${NO_COLOR}"
         ;;
     esac
-    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
+
+    echo "JSON_URL=\"$JSON_URL\"" >>$ISHARE2_DIR/ishare2.conf
 
     # Validate the configuration file
     if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
@@ -115,6 +197,8 @@ function create_config() {
     fi
     remove_duplicates
     validate_conf_file
+    echo -e "${GREEN} [+] Configuration file created successfully.${NO_COLOR}"
+    install_dependencies
 }
 
 remove_duplicates() {
@@ -129,7 +213,7 @@ remove_duplicates() {
     # Remove duplicate lines from the configuration file
     awk '!seen[$0]++' "$config_file" >"$config_file.tmp" && mv "$config_file.tmp" "$config_file"
 
-    echo -e "${GREEN} [+] Duplicates removed from the configuration file.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${GREEN} [+] Duplicates removed from the configuration file.${NO_COLOR}" >>$LOG_FILE
 }
 
 validate_conf_file() {
@@ -142,7 +226,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
@@ -156,58 +240,75 @@ validate_conf_file() {
         local var_name="${line%%=*}"
 
         # Check if the variable is allowed
-        if [[ " ${allowed_vars[@]} " =~ " $var_name " ]]; then
+        is_allowed=false
+        for allowed_var in "${allowed_vars[@]}"; do
+            if [[ "$allowed_var" == "$var_name" ]]; then
+                is_allowed=true
+                break
+            fi
+        done
+
+        if $is_allowed; then
             filtered_content+="$line"$'\n'
         else
-            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>$LOG_FILE
         fi
     done <"$config_file"
 
     # Write the filtered content back to the configuration file
     echo "$filtered_content" >"$config_file"
 
-    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>$LOG_FILE
+    # shellcheck source=/opt/ishare2/cli/ishare2.conf
     source "$config_file"
     return 0
 }
 
-function install_aria2c() {
+install_dependencies() {
     # unlock apt
     unlock_dpkg
-    # check if aria2c is installed otherwise install it
-    if ! command -v aria2c &>/dev/null; then
-        echo -e "${YELLOW} [+] aria2c is not installed.${NO_COLOR}"
+    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
+    for package in "${packages[@]}"; do
+        install_package "$package"
+    done
+}
+
+install_package() {
+    local package_name=$1
+    # unlock apt
+    unlock_dpkg
+    # check if $package_name is installed otherwise install it
+    if ! command -v "$package_name" &>/dev/null; then
+        echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
         echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
         if ! apt-get update; then
             echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
             exit 1
         fi
 
-        echo -e "${YELLOW} [+] Installing aria2c...${NO_COLOR}"
-        if ! apt-get install -y aria2; then
-            echo -e "${RED} [-] Failed to install aria2c.${NO_COLOR}"
+        echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
+        if ! apt-get install -y "$package_name"; then
+            echo -e "${RED} [-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
             exit 1
         fi
-        echo -e "${YELLOW} [+] Installing unrar...${NO_COLOR}"
-        if ! apt-get install -y unrar; then
-            echo -e "${RED} [-] Failed to install unrar.${NO_COLOR}"
-            exit 1
-        fi
-        echo -e "${GREEN} [+] Done.${NO_COLOR}"
     else
-        echo -e "${GREEN} [+] aria2c already is installed.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        echo -e "${YELLOW} [+] Updating aria2c...${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        if ! apt-get install --only-upgrade aria2; then
-            echo -e "${RED} [-] Failed to update aria2c.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] $package_name already is installed.${NO_COLOR}" >>$LOG_FILE
+        echo -e "${YELLOW} [+] Updating $package_name...${NO_COLOR}" >>$LOG_FILE
+        if ! apt-get install --only-upgrade "$package_name"; then
+            echo -e "${RED} [-] Failed to update $package_name.${NO_COLOR}" >>$LOG_FILE
             exit 1
         fi
     fi
 }
 
-function unlock_dpkg() {
+install_aria2c() {
+    install_package "aria2"
+}
+
+unlock_dpkg() {
     # Check if apt is running
     if pgrep apt >/dev/null 2>&1; then
-        echo "apt is currently running. Would you like to attempt unlocking dpkg? (y/n)"
+        echo "apt is currently running. Would you like to attempt unlocking dpkg? This may cause issues with apt if it is still running. Proceed? (y/n)"
         read -r answer
 
         if [[ $answer == "y" || $answer == "Y" ]]; then
@@ -238,7 +339,7 @@ function unlock_dpkg() {
     sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
 }
 
-function create_ishare2_dir() {
+create_ishare2_dir() {
     echo -e "${YELLOW} [+] Creating ishare2 directory...${NO_COLOR}"
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
         error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
@@ -249,28 +350,22 @@ function create_ishare2_dir() {
         fi
         exit 1
     fi
-    if ! mkdir -p $ISHARE2_DIR/tmp 2>/dev/null; then
-        error_message=$(mkdir -p $ISHARE2_DIR/tmp 2>&1 >/dev/null)
-        if [[ $error_message == *"Permission denied"* ]]; then
-            echo -e "${RED} [-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
-        else
-            echo -e "${RED} [-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
-        fi
-        exit 1
-    fi
     echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
-function fetch_sources() {
-    check_ishare2_dir
-    echo -e "${YELLOW} [+] Fetching sources...${NO_COLOR}"
-    curl --insecure -o $SOURCES https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list 2>$ISHARE2_DIR/tmp/curl_error
+fetch_json() {
+    # Download the JSON and store it in a temporary file
+    curl -sL "$JSON_URL" >"$TEMP_JSON"
     # Check if curl command failed
-    if [[ ! -f $SOURCES ]]; then
-        echo -e "${RED} [-] Failed to fetch sources.${NO_COLOR}"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED} [-] Failed to download the JSON file. Please check your internet connection.${NO_COLOR}"
         exit 1
     fi
-    echo -e "${GREEN} [+] Done.${NO_COLOR}"
+    # Check if the JSON file is valid
+    if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
+        echo -e "${RED} [-] Error: Invalid JSON file. Please check your internet connection.${NO_COLOR}"
+        exit 1
+    fi
 }
 
 download_file() {
@@ -315,7 +410,7 @@ download_file_aria2() {
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir/$output_name. ${NO_COLOR}"
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
         rm -f error.log
     else
         echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
@@ -330,7 +425,7 @@ download_file_curl() { # $1 = url, $2 = output
     touch $ISHARE2_DIR/tmp/curl_error
     local url="$1"
     local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$LOG_FILE
     if [ "$SSL_CHECK" = true ]; then
         curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error
     else
@@ -338,7 +433,7 @@ download_file_curl() { # $1 = url, $2 = output
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -363,7 +458,7 @@ download_file_wget() {
         output_name=$(basename "$url")
     fi
     local output="$output_dir/$output_name"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$LOG_FILE
 
     if [ "$SSL_CHECK" = true ]; then
         wget -O "$output" "$url" -q --show-progress --content-disposition
@@ -373,7 +468,7 @@ download_file_wget() {
 
     # Check if wget command failed
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
+        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -385,200 +480,15 @@ download_file_wget() {
     fi
 }
 
-function set_url_constants() {
-    # Check if sources file does not exist
-    if [[ ! -f $SOURCES ]]; then
-        echo -e "${YELLOW} [!] Sources file does not exist. Downloading...${NO_COLOR}"
-        fetch_sources
-    fi
-    # Check if sources file is empty
-    if [[ ! -s $SOURCES ]]; then
-        echo -e "${YELLOW} [!] Sources file is empty. Updating...${NO_COLOR}"
-        fetch_sources
-    fi
-    # Check if sources file is corrupted
-    if ! grep -q "URL_ID_LIST=" $SOURCES; then
-        echo -e "${YELLOW} [!] Sources file is corrupted. Updating...${NO_COLOR}"
-        fetch_sources
-    fi
-    # Check if sources file is older than 1 day
-    if [[ $(find $SOURCES -mtime +1) ]]; then
-        echo -e "${YELLOW} [!] Sources file is older than 1 day. Updating...${NO_COLOR}"
-        fetch_sources
-    fi
-
-    source $SOURCES
-}
-
-function check_user_is_root() {
+check_user_is_root() {
     if ! [[ "$(id -u)" == 0 ]]; then
         user=$(whoami)
-        echo -e "${RED} [!] This script requires root privileges to be executed. The current user, "$user", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
+        echo -e "${RED} [!] This script requires root privileges to be executed. The current user, \"$user\", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
         exit 1
     fi
 }
 
-function download_files_lists() {
-    # Attempt to make ishare2 basic functionality as offline as possible
-    # If files are available locally, use them
-    # If files are not available locally or are too old, download them from the internet
-    # If internet is not available, use the last available version of the files
-    # If "id_list" file exists, don't download it again unless it is older than 1 day
-    if [ -f $ISHARE2_DIR"/id_list" ]; then
-        if [ $(find $ISHARE2_DIR"/id_list" -mtime +1) ]; then
-            echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs is older than 1 day. Updating... ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-            download_file_curl $URL_ID_LIST "$ISHARE2_DIR/id_list"
-
-            # Check if the file is empty or corrupt
-            if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
-                connection_tests
-                echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
-                # Ask the user if he wants to try downloading the file again.
-                # If the user chooses to download the file again, the script will exit.
-                read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
-                echo ""
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    download_file_curl $URL_ID_LIST "$ISHARE2_DIR/id_list"
-                else
-                    exit 1
-                fi
-
-            fi
-        else
-            echo -e "${GREEN} [+] The list of Google Spreadsheets IDs is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        fi
-    else
-        echo -e "${YELLOW} [!] The list of Google Spreadsheets IDs does not exist. Downloading... ${NO_COLOR}"
-        download_file_curl $URL_ID_LIST "$ISHARE2_DIR/id_list"
-
-        # Check if the file is empty or corrupt
-        if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
-            echo -e "${RED} [!] The downloaded file is empty or corrupt. Please check file contents.${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-            # Handle the error condition as needed
-            download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
-        fi
-    fi
-    if [ ! -s $ISHARE2_DIR"/id_list" ] || ! grep -q "GOOGLE=" $ISHARE2_DIR"/id_list" || ! grep -q "BIN=" $ISHARE2_DIR"/id_list" || ! grep -q "QEMU=" $ISHARE2_DIR"/id_list" || ! grep -q "DYNAMIPS=" $ISHARE2_DIR"/id_list"; then
-        echo -e "${RED} [!] The file with the list of IDs is empty or corrupt.${NO_COLOR}\n${YELLOW} Please check your internet connection, a common issue in PNetLab is the DNS resolution if the problem persists, please contact us @NetLabHub on Telegram.\nRun: cat $ISHARE2_DIR/id_list to see the contents of the file.\n ${NO_COLOR}"
-        connection_tests
-        # Ask the user if he wants to try downloading the file again.
-        # If the user chooses to download the file again, the script will exit.
-        read -p "Do you want to try downloading the file again? [y/N] " -n 1 -r
-        echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            download_file_curl $URL_ID_LIST $ISHARE2_DIR"/id_list"
-        else
-            exit 1
-        fi
-
-    fi
-
-    # Source the id_list file
-    source $ISHARE2_DIR"/id_list"
-    # Define the URLs
-    # $GOOGLE is defined in the id_list file. It is the Google Spreadsheets ID
-    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE'/pub?gid='
-    URL_POSTFIX='&single=true&output=csv'
-    # $BIN, $QEMU, $DYNAMIPS are defined in the id_list file. They are the Google Spreadsheets IDs
-    BIN_URL=$URL_PREFIX$BIN$URL_POSTFIX
-    QEMU_URL=$URL_PREFIX$QEMU$URL_POSTFIX
-    DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS$URL_POSTFIX
-    # If csv files /list of images exist, don't download them again unless they are older than 1 day
-    fetch_lists "BIN" $BIN_URL
-    fetch_lists "QEMU" $QEMU_URL
-    fetch_lists "DYNAMIPS" $DYNAMIPS_URL
-}
-
-fetch_lists() {
-    TYPE=$1
-    URL=$2
-    CHECK_DATE=${3:-true} # default value is true
-
-    FILE_PATH="$ISHARE2_DIR/$TYPE.csv"
-
-    if [ ! -f "$FILE_PATH" ]; then
-        echo -e "${YELLOW} [!] The list of $TYPE images does not exist. Downloading ${NO_COLOR}"
-        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
-        return
-    fi
-
-    if [[ "$CHECK_DATE" == "true" ]] && [ $(find "$FILE_PATH" -mtime +1) ]; then
-        echo -e "${YELLOW} [!] The list of $TYPE images is older than 1 day. Updating ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
-    elif [[ "$CHECK_DATE" == "false" ]]; then
-        echo -e "${GREEN} [+] Downloading the list of $TYPE images. ${NO_COLOR}"
-        download_file_wget $URL $ISHARE2_DIR "$TYPE.csv"
-        check_file_corruption $ISHARE2_DIR "$TYPE.csv"
-    else
-        echo -e "${GREEN} [+] The list of $TYPE images is up to date. ${NO_COLOR}" >>$ISHARE2_DIR/logs.txt
-    fi
-}
-
-check_file_corruption() {
-    DIR=$1
-    FILENAME=$2
-
-    # Check if the file is empty
-    if [ ! -s "$DIR/$FILENAME" ]; then
-        echo -e "${RED} [!] The file $FILENAME is empty or corrupted. ${NO_COLOR}"
-        read -p "Do you want to download the file again? (y/n): " choice
-        case $choice in
-        [Yy]*)
-            download_file_wget $URL $DIR "$FILENAME"
-            check_file_corruption $DIR "$FILENAME"
-            ;;
-        *) ;;
-        esac
-        return
-    fi
-
-    # Check the minimum number of columns and rows
-    num_columns=$(head -n 1 "$DIR/$FILENAME" | awk -F',' '{print NF}')
-    num_rows=$(wc -l <"$DIR/$FILENAME")
-
-    if ((num_columns < 4 || num_rows < 5)); then
-        echo -e "${RED} [!] The file $FILENAME is corrupted. ${NO_COLOR}"
-        read -p "Do you want to download the file again? (y/n): " choice
-        case $choice in
-        [Yy]*)
-            download_file_wget $URL $DIR "$FILENAME"
-            check_file_corruption $DIR "$FILENAME"
-            ;;
-        *) ;;
-        esac
-        return
-    fi
-
-    echo -e "${GREEN} [+] The file $FILENAME is valid. ${NO_COLOR}"
-}
-
-manual_sources_update() {
-    echo -e "${YELLOW} [+] Updating the sources file. ${NO_COLOR}"
-    fetch_sources
-    if [ -f $SOURCES ]; then
-        echo -e "${GREEN} [+] The sources file has been updated. ${NO_COLOR}"
-    else
-        echo -e "${RED} [!] The sources file could not be updated. ${NO_COLOR}"
-    fi
-    echo -e "${YELLOW} [+] Updating the lists of images. ${NO_COLOR}"
-    # Source the id_list file
-    source $ISHARE2_DIR"/id_list"
-    # Define the URLs
-    # $GOOGLE is defined in the id_list file. It is the Google Spreadsheets ID
-    URL_PREFIX='https://docs.google.com/spreadsheets/d/e/'$GOOGLE'/pub?gid='
-    URL_POSTFIX='&single=true&output=csv'
-    # $BIN, $QEMU, $DYNAMIPS are defined in the id_list file. They are the Google Spreadsheets IDs
-    BIN_URL=$URL_PREFIX$BIN$URL_POSTFIX
-    QEMU_URL=$URL_PREFIX$QEMU$URL_POSTFIX
-    DYNAMIPS_URL=$URL_PREFIX$DYNAMIPS$URL_POSTFIX
-    fetch_lists "BIN" $BIN_URL false
-    fetch_lists "QEMU" $QEMU_URL false
-    fetch_lists "DYNAMIPS" $DYNAMIPS_URL false
-}
-
-function get_server_platform() {
+get_server_platform() {
     grep -q vmx /proc/cpuinfo && echo -n vmx >/opt/unetlab/platform
     grep -q svm /proc/cpuinfo && echo -n svm >/opt/unetlab/platform
 
@@ -588,9 +498,9 @@ function get_server_platform() {
     if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/"; fi
 }
 
-function set_yml_template_folder_location() {
+set_yml_template_folder_location() {
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
-    data_array=($data)
+    data_array=("$data")
     pnetlab_version=${data_array[1]}
 
     if [[ $pnetlab_version == "4.2.10" ]] || [[ $pnetlab_version == "5.0.1" ]]; then
@@ -602,313 +512,35 @@ function set_yml_template_folder_location() {
     fi
 }
 
-function mylabs_get_lab_list_just_for_only_readable_labs() {
-    LABS_DIR=$1
-
-    # Added some correction when "/" is not found at the end of the provided path (LABS_DIR)
-    if ! [[ ${LABS_DIR: -1} == "/" ]]; then LABS_DIR=$LABS_DIR/; fi
-
-    if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder $LABS_DIR has not been found"
-        echo "Check your full path to the labs"
-        exit 0
-    fi
-
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at $LABS_DIR folder in server"
-        exit 0
-    fi
-
-    counter_all_labs_installed_on_server=0
-    for file in "$LABS_DIR"*; do
-        if [[ -d $file ]]; then continue; fi # Avoiding folders
-        counter_all_lab
-        s_installed_on_server=$((counter_all_labs_installed_on_server + 1))
-    done
-
-    echo -e "Labs inside $LABS_DIR folder in VM: $counter_all_labs_installed_on_server"
-
-    declare -a readableLabsArray=()
-    declare -a authorLabsArray=()
-
-    for file in "$LABS_DIR"*; do
-        if [[ -d $file ]]; then continue; fi # Avoiding folders
-        check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        SUB="encoding"
-        if [[ $check == *"$SUB"* ]]; then
-            readableLabsArray+=("$file")
-            # Get Author name list
-            author_lab_name=$(grep -Pio '.*author="\K[^"]*' "$file" | sort -u)
-            if [[ -z $author_lab_name ]]; then # Author name not specified
-                author_lab_name=N/A
+list_labs() {
+    # Check if the user passed a custom path for Labs directory
+    if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
+        LABS_DIR=$2
+        CUSTOM_PATH_FLAG=1
+        RELATIVE_PATH=$LABS_DIR
+        if [[ ! "$LABS_DIR" == /* ]]; then # If the path is not absolute
+            # Convert the path to absolute
+            LABS_DIR=$(realpath "$LABS_DIR")
+            # Check if the path is a directory and add '/' if it's missing
+            if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
+                LABS_DIR="$LABS_DIR/"
             fi
-            authorLabsArray+=("$author_lab_name")
         fi
-    done
-
-    echo "Labs in plain text: ${#readableLabsArray[@]}"
-
-    if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED} [-]$STR\033[0m"
-        exit 0
+        NOT_FOUND_MESSAGE="Make sure you are passing the correct path to the folder where your labs are located"
+        echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
+    else # Use default path for PNETLab Store
+        LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
+        NOT_FOUND_MESSAGE="This folder is automatically created when a lab from PNETLab Store is downloaded"
     fi
 
-    echo -e "\nList\n"
-
-    counter_for_readable_labs=0
-
-    for f in "${readableLabsArray[@]}"; do
-        counter_for_readable_labs=$((counter_for_readable_labs + 1))
-        echo -e "$counter_for_readable_labs) ${f##*/} - ${authorLabsArray[$((counter_for_readable_labs - 1))]}"
-    done
-
-    STR1="ishare2 mylabs <path> <number>"
-    STR2="ishare2 mylabs <path> all"
-    echo -e "\nTo install images for a specific lab, use the following command:\n\033[32m$STR1\033[0m"
-    echo -e "\nTo install images for all of the labs, use the following command:\n\033[32m$STR2\033[0m"
-}
-
-function mylabs_install_lab_images_just_for_only_readable_labs() {
-    LABS_DIR=$1
-    NUMBER=$2
-
-    # Added some correction when "/" is not found at the end of the provided path (LABS_DIR)
-    if ! [[ ${LABS_DIR: -1} == "/" ]]; then LABS_DIR=$LABS_DIR/; fi
-
     if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder $LABS_DIR has not been found"
-        echo "Check your full path to the labs"
+        echo "\"$LABS_DIR\" directory has not been found"
+        echo "$NOT_FOUND_MESSAGE"
         exit 0
     fi
 
     if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at $LABS_DIR folder in server"
-        exit 0
-    fi
-
-    declare -a readableLabsArray=()
-    for file in "$LABS_DIR"*; do
-        if [[ -d $file ]]; then continue; fi # Avoiding folders
-        check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        SUB="encoding"
-        if [[ $check == *"$SUB"* ]]; then
-            readableLabsArray+=("$file")
-        fi
-    done
-
-    counter_for_readable_labs=0
-    for f in "${readableLabsArray[@]}"; do
-        counter_for_readable_labs=$((counter_for_readable_labs + 1))
-    done
-
-    if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED} [-]$STR\033[0m"
-        exit 0
-    fi
-
-    if [[ $NUMBER -gt $counter_for_readable_labs || $NUMBER -le 0 ]]; then
-        if [[ $counter_for_readable_labs -eq 1 ]]; then
-            STR="Last parameter must be 1 because you have only one lab"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        else
-            STR="Last parameter must be a number between 1 and $counter_for_readable_labs"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-
-        echo -e
-        mylabs_get_lab_list_just_for_only_readable_labs $1
-        exit 0
-    fi
-
-    file=${readableLabsArray[$((NUMBER - 1))]}
-    echo -e "File selected: $file"
-
-    #echo -e "\nIOL images"
-    iol_images=$(grep -Pio 'type="iol".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$iol_images"
-    echo "$iol_images" >/opt/unetlab/labs/iol_images.txt
-
-    #echo -e "\nDynamips images"
-    dynamips_images=$(grep -Pio 'type="dynamips".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$dynamips_images"
-    echo "$dynamips_images" >/opt/unetlab/labs/dynamips_images.txt
-
-    #echo -e "\nQemu images"
-    qemu_images=$(grep -Pio 'type="qemu".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$qemu_images"
-    echo "$qemu_images" >/opt/unetlab/labs/qemu_images.txt
-
-    #echo -e "\nDocker images"
-    docker_images=$(grep -Pio 'type="docker".*image="\K[^"]*' "$file" | sort -u)
-    echo "$docker_images" >/opt/unetlab/labs/docker_images.txt
-
-    filename1_iol_images=/opt/unetlab/labs/iol_images.txt
-    filename2_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
-    filename3_qemu_images=/opt/unetlab/labs/qemu_images.txt
-    filename4_docker_images=/opt/unetlab/labs/docker_images.txt
-
-    BIN_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename1_iol_images; then BIN_FLAG=1; fi
-
-    DYNAMIPS_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename2_dynamips_images; then DYNAMIPS_FLAG=1; fi
-
-    QEMU_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename3_qemu_images; then QEMU_FLAG=1; fi
-
-    DOCKER_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename4_docker_images; then DOCKER_FLAG=1; fi
-
-    echo -e "\nImages found on lab\n"
-
-    echo -e "${GREEN}--- bin images ---${NO_COLOR}"
-    if [[ BIN_FLAG -eq 1 ]]; then
-        echo No bin images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename1_iol_images
-    fi
-
-    echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
-        echo No dynamips images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename2_dynamips_images
-    fi
-
-    echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
-    if [[ QEMU_FLAG -eq 1 ]]; then
-        echo No qemu images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename3_qemu_images
-    fi
-
-    echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
-    if [[ DOCKER_FLAG -eq 1 ]]; then
-        echo No docker images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename4_docker_images
-    fi
-
-    STR_BIN="\nDownload BIN images for this lab"
-    echo -e "\033[32m$STR_BIN\033[0m"
-    if [[ BIN_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_iol_images "$file"
-    fi
-
-    STR_DYNAMIPS="\nDownload DYNAMIPS images for this lab"
-    echo -e "\033[32m$STR_DYNAMIPS\033[0m"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_dynamips_images
-    fi
-
-    STR_QEMU="\nDownload QEMU images for this lab"
-    echo -e "\033[32m$STR_QEMU\033[0m"
-    if [[ QEMU_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_qemu_images
-    fi
-
-    STR_DOCKER="\nDownload DOCKER images for this lab"
-    echo -e "\033[32m$STR_DOCKER\033[0m"
-    if [[ DOCKER_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_docker_images
-    fi
-
-    # Remove csv file
-    rm "$(pwd)"/"$FILENAME" >/dev/null 2>&1
-
-    # Remove files
-    rm /opt/unetlab/labs/iol_images.txt
-    rm /opt/unetlab/labs/dynamips_images.txt
-    rm /opt/unetlab/labs/qemu_images.txt
-    rm /opt/unetlab/labs/docker_images.txt
-}
-
-function mylabs_install_lab_images_just_for_only_readable_labs_ALL() {
-    LABS_DIR=$1
-
-    # Added some correction when "/" is not found at the end of the provided path (LABS_DIR)
-    if ! [[ ${LABS_DIR: -1} == "/" ]]; then LABS_DIR=$LABS_DIR/; fi
-
-    if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder $LABS_DIR has not been found"
-        echo "Check your full path to the labs"
-        exit 0
-    fi
-
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at $LABS_DIR in server"
-        exit 0
-    fi
-
-    declare -a readableLabsArray=()
-    for file in "$LABS_DIR"*; do
-        if [[ -d $file ]]; then continue; fi # Avoiding folders
-        check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        SUB="encoding"
-        if [[ $check == *"$SUB"* ]]; then
-            readableLabsArray+=("$file")
-        fi
-    done
-
-    N=${#readableLabsArray[@]}
-
-    if [[ $N -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED} [-]$STR\033[0m"
-        exit 0
-    fi
-
-    if [[ $N -eq 1 ]]; then
-        echo "Starting to download images for $N lab"
-    else
-        echo "Starting to download images for $N labs"
-    fi
-
-    for ((i = 1; i <= N; i++)); do
-        echo -e "\n\033[32mLab $i/$N\033[0m"
-        ishare2 mylabs $LABS_DIR "$i"
-    done
-
-    echo -e "\nDone"
-}
-
-function get_lab_list_just_for_only_readable_labs() {
-    LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
-
-    if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder Your labs from PNETLab Store has not been found"
-        echo "This folder is created when a lab from PNETLab Store is downloaded"
-        exit 0
-    fi
-
-    if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at PNETLab Store folder in server"
+        echo "No labs found in \"$LABS_DIR\" directory"
         exit 0
     fi
 
@@ -917,7 +549,7 @@ function get_lab_list_just_for_only_readable_labs() {
         counter_all_labs_installed_on_server=$((counter_all_labs_installed_on_server + 1))
     done
 
-    echo -e "Labs inside PNETLab Store folder in VM: $counter_all_labs_installed_on_server"
+    echo -e "Labs currently available in \"$RELATIVE_PATH\" directory: $counter_all_labs_installed_on_server"
 
     declare -a readableLabsArray=()
     declare -a authorLabsArray=()
@@ -938,7 +570,7 @@ function get_lab_list_just_for_only_readable_labs() {
     echo "Labs in plain text: ${#readableLabsArray[@]}"
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
+        STR="No readable labs were found, so images cannot be downloaded for any lab"
         echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
@@ -951,24 +583,46 @@ function get_lab_list_just_for_only_readable_labs() {
         counter_for_readable_labs=$((counter_for_readable_labs + 1))
         echo -e "$counter_for_readable_labs) ${f##*/} - ${authorLabsArray[$((counter_for_readable_labs - 1))]}"
     done
-
-    echo -e "\nTo install images for a specific lab, use the following command:\n\033[32mishare2 labs <number>\033[0m"
-    echo -e "\nTo install images for all of the labs, use the following command:\n\033[32mishare2 labs all\033[0m"
+    if [[ $CUSTOM_PATH_FLAG -eq 1 ]]; then
+        CMD_TO_EXECUTE="ishare2 mylabs $RELATIVE_PATH <number>"
+        CMD_TO_EXECUTE_ALL="ishare2 mylabs $RELATIVE_PATH all"
+    else
+        CMD_TO_EXECUTE="ishare2 labs <number>"
+        CMD_TO_EXECUTE_ALL="ishare2 labs all"
+    fi
+    echo -e "\nTo install images for a specific lab, use the following command:\n\033[32m$CMD_TO_EXECUTE <number>\033[0m"
+    echo -e "\nTo install images for all of the labs, use the following command:\n\033[32m$CMD_TO_EXECUTE_ALL\033[0m"
 }
 
-function install_lab_images_just_for_only_readable_labs() {
-    NUMBER=$1
-
-    LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
+install_images_from_lab() {
+    # Check if the user passed a custom path for Labs directory
+    if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
+        LABS_DIR=$2
+        RELATIVE_PATH=$LABS_DIR
+        if [[ ! "$LABS_DIR" == /* ]]; then # If the path is not absolute
+            # Convert the path to absolute
+            LABS_DIR=$(realpath "$LABS_DIR")
+            # Check if the path is a directory and add '/' if it's missing
+            if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
+                LABS_DIR="$LABS_DIR/"
+            fi
+        fi
+        NUMBER=$3
+        echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
+        echo -e "${BLUE}Lab number:${NO_COLOR} ${YELLOW}$NUMBER${NO_COLOR}"
+    else # Use default path for PNETLab Store
+        LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
+        NUMBER=$1
+    fi
 
     if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder Your labs from PNETLab Store has not been found"
-        echo "This folder is created when a lab from PNETLab Store is downloaded"
+        echo "\"Your labs from PNETLab Store\" directory has not been found"
+        echo "This folder is automatically created when a lab from PNETLab Store is downloaded"
         exit 0
     fi
 
     if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at PNETLab Store folder in server"
+        echo "No labs were found at PNETLab Store folder in server"
         exit 0
     fi
 
@@ -987,7 +641,7 @@ function install_lab_images_just_for_only_readable_labs() {
     done
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
-        STR="No readable labs have been found so there is no way to continue with this command"
+        STR="No readable labs were found so we cannot download images for any lab"
         echo -e "${RED} [-]$STR\033[0m"
         exit 0
     fi
@@ -1002,124 +656,62 @@ function install_lab_images_just_for_only_readable_labs() {
         fi
 
         echo -e
-        get_lab_list_just_for_only_readable_labs
+        list_labs "$1" "$LABS_DIR"
         exit 0
     fi
 
     file=${readableLabsArray[$((NUMBER - 1))]}
     echo -e "File selected: $file"
+    TYPES=(iol dynamips qemu docker)
+    for type in "${TYPES[@]}"; do
+        images=$(grep -Pio "type=\"$type\".*image=\"\K[^\"]*" "$file" | sort -u)
+        echo "$images" >/opt/unetlab/labs/"$type"_images.txt
+    done
 
-    #echo -e "\nIOL images"
-    iol_images=$(grep -Pio 'type="iol".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$iol_images"
-    echo "$iol_images" >/opt/unetlab/labs/iol_images.txt
-
-    #echo -e "\nDynamips images"
-    dynamips_images=$(grep -Pio 'type="dynamips".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$dynamips_images"
-    echo "$dynamips_images" >/opt/unetlab/labs/dynamips_images.txt
-
-    #echo -e "\nQemu images"
-    qemu_images=$(grep -Pio 'type="qemu".*image="\K[^"]*' "$file" | sort -u)
-    #echo "$qemu_images"
-    echo "$qemu_images" >/opt/unetlab/labs/qemu_images.txt
-
-    #echo -e "\nDocker images"
-    docker_images=$(grep -Pio 'type="docker".*image="\K[^"]*' "$file" | sort -u)
-    echo "$docker_images" >/opt/unetlab/labs/docker_images.txt
-
-    filename1_iol_images=/opt/unetlab/labs/iol_images.txt
-    filename2_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
-    filename3_qemu_images=/opt/unetlab/labs/qemu_images.txt
-    filename4_docker_images=/opt/unetlab/labs/docker_images.txt
+    list_iol_images=/opt/unetlab/labs/iol_images.txt
+    list_dynamips_images=/opt/unetlab/labs/dynamips_images.txt
+    list_qemu_images=/opt/unetlab/labs/qemu_images.txt
+    list_docker_images=/opt/unetlab/labs/docker_images.txt
 
     BIN_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename1_iol_images; then BIN_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_iol_images; then BIN_FLAG=1; fi
 
     DYNAMIPS_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename2_dynamips_images; then DYNAMIPS_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_dynamips_images; then DYNAMIPS_FLAG=1; fi
 
     QEMU_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename3_qemu_images; then QEMU_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_qemu_images; then QEMU_FLAG=1; fi
 
     DOCKER_FLAG=0
-    if ! grep -q '[^[:space:]]' $filename4_docker_images; then DOCKER_FLAG=1; fi
+    if ! grep -q '[^[:space:]]' $list_docker_images; then DOCKER_FLAG=1; fi
 
-    echo -e "\nImages found on lab"
+    print_separator "List of images found on lab"
+    for type in "${TYPES[@]}"; do
+        print_separator "List of ${type^^} images"
+        list_file="/opt/unetlab/labs/${type}_images.txt"
+        if ! grep -qv -e '^\s*$' "$list_file"; then
+            echo "No ${type} images found"
+        else
+            n=1
+            while read -r line; do
+                echo "File $n : $line"
+                n=$((n + 1))
+            done <"$list_file"
+        fi
+    done
 
-    echo -e "${GREEN}--- bin images ---${NO_COLOR}"
-    if [[ BIN_FLAG -eq 1 ]]; then
-        echo No bin images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename1_iol_images
-    fi
+    TYPES=(iol dynamips qemu)
+    for type in "${TYPES[@]}"; do
+        print_separator "Start downloading ${type^^} images for this lab"
+        pull_lab_images "$file" "$type"
+    done
 
-    echo -e "\n${GREEN}--- dynamips images ---${NO_COLOR}"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
-        echo No dynamips images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename2_dynamips_images
-    fi
-
-    echo -e "\n${GREEN}--- qemu images ---${NO_COLOR}"
-    if [[ QEMU_FLAG -eq 1 ]]; then
-        echo No qemu images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename3_qemu_images
-    fi
-
-    echo -e "\n${GREEN}--- docker images ---${NO_COLOR}"
-    if [[ DOCKER_FLAG -eq 1 ]]; then
-        echo No docker images found
-    else
-        n=1
-        while read -r line; do
-            echo "File $n : $line"
-            n=$((n + 1))
-        done <$filename4_docker_images
-    fi
-
-    STR_BIN="\nDownload BIN images for this lab"
-    echo -e "\033[32m$STR_BIN\033[0m"
-    if [[ BIN_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_iol_images "$file"
-    fi
-
-    STR_DYNAMIPS="\nDownload DYNAMIPS images for this lab"
-    echo -e "\033[32m$STR_DYNAMIPS\033[0m"
-    if [[ DYNAMIPS_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_dynamips_images
-    fi
-
-    STR_QEMU="\nDownload QEMU images for this lab"
-    echo -e "\033[32m$STR_QEMU\033[0m"
-    if [[ QEMU_FLAG -eq 1 ]]; then
-        echo -
-    else
-        download_lab_qemu_images
-    fi
-
-    STR_DOCKER="\nDownload DOCKER images for this lab"
+    print_separator "Start downloading DOCKER images for this lab"
     echo -e "\033[32m$STR_DOCKER\033[0m"
     if [[ DOCKER_FLAG -eq 1 ]]; then
-        echo -
+        echo -e "${YELLOW}- Nothing to download${NO_COLOR}"
     else
+        echo "Docker images"
         download_lab_docker_images
     fi
 
@@ -1127,23 +719,37 @@ function install_lab_images_just_for_only_readable_labs() {
     rm "$(pwd)"/"$FILENAME" >/dev/null 2>&1
 
     # Remove files
-    rm /opt/unetlab/labs/iol_images.txt
-    rm /opt/unetlab/labs/dynamips_images.txt
-    rm /opt/unetlab/labs/qemu_images.txt
-    rm /opt/unetlab/labs/docker_images.txt
+    rm /opt/unetlab/labs/{iol_images.txt,dynamips_images.txt,qemu_images.txt,docker_images.txt} >/dev/null 2>&1
 }
 
-function install_lab_images_just_for_only_readable_labs_ALL() {
-    LABS_DIR=/opt/unetlab/labs/"Your labs from PNETLab Store/"
+install_images_all_labs() {
+    # Check if the user passed a custom path for Labs directory
+    if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
+        LABS_DIR=$2
+        CUSTOM_PATH_FLAG=1
+        if [[ ! "$LABS_DIR" == /* ]]; then # If the path is not absolute
+            # Convert the path to absolute
+            LABS_DIR=$(realpath "$LABS_DIR")
+            # Check if the path is a directory and add '/' if it's missing
+            if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
+                LABS_DIR="$LABS_DIR/"
+            fi
+        fi
+        NOT_FOUND_MESSAGE="Make sure you are passing the correct path to the folder where your labs are located"
+        echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
+    else # Use default path for PNETLab Store
+        LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
+        NOT_FOUND_MESSAGE="This folder is automatically created when a lab from PNETLab Store is downloaded"
+    fi
 
     if ! [[ -d $LABS_DIR ]]; then
-        echo "Folder Your labs from PNETLab Store has not been found"
-        echo "This folder is created when a lab from PNETLab Store is downloaded"
+        echo "\"$LABS_DIR\" directory has not been found"
+        echo "$NOT_FOUND_MESSAGE"
         exit 0
     fi
 
     if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs found at PNETLab Store folder in server"
+        echo "No labs found in \"$LABS_DIR\" directory"
         exit 0
     fi
 
@@ -1172,189 +778,118 @@ function install_lab_images_just_for_only_readable_labs_ALL() {
 
     for ((i = 1; i <= N; i++)); do
         echo -e "\n\033[32mLab $i/$N\033[0m"
-        ishare2 labs "$i"
+        if [[ $CUSTOM_PATH_FLAG -eq 1 ]]; then
+            install_images_from_lab "mylabs" "$LABS_DIR" "$i"
+        else
+            install_images_from_lab "$i"
+        fi
     done
-
     echo -e "\nDone"
 }
 
-function corrections_for_bin_images_in_lab_function() {
-    BIN_NAME=$1
-    LAB_PATH=$2
-
-    if [[ $BIN_NAME = "i86_Linux-L2-Adventerpisek9-mx.SSA.high_iron_20190423.bin" ]]; then
-        OLD_FILENAME="i86_Linux-L2-Adventerpisek9-mx.SSA.high_iron_20190423.bin"
-        NEW_FILENAME="i86bi_linux_l2-adventerprisek9-ms.SSA.high_iron_20190423.bin"
-        # Bad spelling: 4 errors
-        # 1) i86 should be i86bi (bi is missing)
-        # 2) Adventerpisek9 should be Adventerprisek9 (r letter is missing)
-        # 3) i86_Linux should be i86bi_linux_l2 (L in Linux should be in lowercase, "bi" missing case and change template)
-        # 4) -mx should be -ms (not mx but ms)
-
-        BIN_NAME=$NEW_FILENAME
-        echo -e "\nImage filename changed from:\n$OLD_FILENAME"
-        echo -e "to\n$NEW_FILENAME\n"
-
-        echo "Changing the filename image inside .unl lab file"
-        sed -i -e 's/'$OLD_FILENAME'/'$NEW_FILENAME'/g' "$LAB_PATH"
-        echo -e "Changing: OK\n"
+pull_all() {
+    TYPE=${1^^}
+    if [[ $TYPE == "BIN" ]]; then
+        TYPE="IOL"
     fi
-
-    if [[ $BIN_NAME = "L3-ADVENTERPRISEK9-M-15.4-2T.bin" ]]; then
-        OLD_FILENAME="L3-ADVENTERPRISEK9-M-15.4-2T.bin"
-        NEW_FILENAME="i86bi_linux_l3-L3-ADVENTERPRISEK9-M-15.4-2T.bin"
-        # Bad spelling: 1 error
-        # 1) L3 is not a yml valid template (There is not a L3.yml available)
-        # So, filename must be i86bi_linux_l3 (for i86bi_linux_l3.yml)
-
-        # BIN_NAME="L3-ADVENTERPRISEK9-M-15.4-2T.bin" # This is the old filename to download it in this case
-        # echo -e "\nImage filename changed from:\n$OLD_FILENAME"
-        # echo -e "to\n$NEW_FILENAME\n"
-
-        echo "Changing the filename image inside .unl lab file"
-        sed -i -e 's/'$OLD_FILENAME'/'$NEW_FILENAME'/g' "$LAB_PATH"
-        echo -e "Changing: OK"
+    if [[ $TYPE == "QEMU" ]]; then
+        echo -e "${YELLOW} [!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
+        # Enter confirmation text
+        CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
+        # Ask the user to enter the confirmation text
+        read -p " [?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
+        # If the confirmation text is incorrect then exit
+        if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
+            echo -e "${RED} [!] Aborting.${NO_COLOR}"
+            exit 1
+        fi
     fi
+    echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
+    # Ask for conirmation
+    read -p " [?] Are you sure you want to pull all $TYPE images? (y/n): " -r
+    # If reply was no Y or y then exit
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED} [!] Aborting.${NO_COLOR}"
+        exit 1
+    fi
+    # Get the list of all images
+    fetch_json
+    # Get all the IDs for the images of the specified type
+    IDS=$(jq -r --arg type "$TYPE" '.[$type][] | .id' "$TEMP_JSON")
+    # Pull all the images
+    i=1
+    total=$(echo "$IDS" | wc -l)
+    for ID in $IDS; do
+        echo -e "${YELLOW} [+] Pulling image $i/$total...${NO_COLOR}"
+        ishare2 pull ${TYPE,,} $ID
+        i=$((i + 1))
+    done
 }
 
-function download_lab_iol_images() {
-    LAB_PATH=$1
+pull_lab_images() {
+    # Pending to implement: corrections_for_bin_images_in_lab_"$IMAGE_NAME" "$LAB_PATH"
+    # Pending to implement: corrections_for_qemu_images_in_lab_"$QEMU_NAME"
+    LAB_PATH="$1"
+    IMAGE_TYPE="$2"
+    IMAGE_TYPE_UPPERCASE=$(echo "$IMAGE_TYPE" | tr '[:lower:]' '[:upper:]')
 
-    filename1=/opt/unetlab/labs/iol_images.txt
+    filename1="/opt/unetlab/labs/${IMAGE_TYPE}_images.txt"
     n=1
     while read -r line; do
         n=$((n + 1))
+        IMAGE_NAME="$line"
+        if [[ -z $IMAGE_NAME ]]; then
+            echo "No $IMAGE_TYPE images found"
+        else
+            fetch_json
+            # Clear the ID variable at the start of each iteration
+            ID=""
+            # Search for the image in the "IMAGE_TYPE" section of the JSON file and get the ID
+            ID=$(jq -r --arg image_name "$IMAGE_NAME" '.["'"$IMAGE_TYPE_UPPERCASE"'"][] | select(.name == $image_name) | .id' "$TEMP_JSON")
 
-        BIN_NAME=$line
-        FILENAME=BIN_URL.csv
-        rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-        URL=$BIN_URL
-        wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-        FLAG=0
-
-        corrections_for_bin_images_in_lab_function "$BIN_NAME" "$LAB_PATH"
-
-        while IFS=',' read -r col1 col2 col3 col4 col5; do
-            if [[ "$col2" == "$BIN_NAME" ]]; then
-                FLAG=1
-                NUMBER_TO_DOWNLOAD=$col1
-                ishare2 pull bin "$NUMBER_TO_DOWNLOAD"
+            if [ -n "$ID" ]; then
+                # The image was found in the "IMAGE_TYPE" section of the JSON data
+                echo "Image '$IMAGE_NAME' found in JSON data. ID: $ID"
+                # Download the image
+                ishare2 pull "$IMAGE_TYPE" "$ID"
+            else
+                echo "Image '$IMAGE_NAME' not found in JSON data."
             fi
-        done <$FILENAME
-
-        if [[ "$col2" == "$BIN_NAME" ]]; then
-            FLAG=1
-            NUMBER_TO_DOWNLOAD=$col1
-            ishare2 pull bin "$NUMBER_TO_DOWNLOAD"
         fi
+    done <"$filename1"
 
-        if [[ $FLAG -eq 0 ]]; then
-            STR="(BIN) WARNING: Image $BIN_NAME has not been found"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-    done <$filename1
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
+    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
-function download_lab_dynamips_images() {
-    filename1=/opt/unetlab/labs/dynamips_images.txt
-    n=1
-    while read -r line; do
-        n=$((n + 1))
+check_docker_service_status() {
+    local status=$(service docker status)
 
-        DYNAMIPS_NAME=$line
-        FILENAME=DYNAMIPS_URL.csv
-        rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-        URL=$DYNAMIPS_URL
-        wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-        FLAG=0
-        while IFS=',' read -r col1 col2 col3 col4 col5; do
-            if [[ "$col2" == "$DYNAMIPS_NAME" ]]; then
-                FLAG=1
-                NUMBER_TO_DOWNLOAD=$col1
-                ishare2 pull dynamips "$NUMBER_TO_DOWNLOAD"
-            fi
-        done <$FILENAME
-
-        if [[ "$col2" == "$DYNAMIPS_NAME" ]]; then
-            FLAG=1
-            NUMBER_TO_DOWNLOAD=$col1
-            ishare2 pull dynamips "$NUMBER_TO_DOWNLOAD"
-        fi
-
-        if [[ $FLAG -eq 0 ]]; then
-            STR="(DYNAMIPS) WARNING: Image $DYNAMIPS_NAME has not been found"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-    done <$filename1
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-}
-
-function download_lab_qemu_images() {
-    filename1=/opt/unetlab/labs/qemu_images.txt
-    n=1
-    while read -r line; do
-        #echo "Line No. $n : $line"
-        n=$((n + 1))
-
-        QEMU_NAME=$line
-        FILENAME=QEMU_URL.csv
-        rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-        URL=$QEMU_URL
-        wget --connect-timeout 5 -O $FILENAME "$URL" >/dev/null 2>&1
-        FLAG=0
-
-        corrections_for_qemu_images_in_lab_function "$QEMU_NAME"
-
-        while IFS=',' read -r col1 col2 col3 col4 col5; do
-            if [[ "$col2" == "$QEMU_NAME" ]]; then
-                FLAG=1
-                NUMBER_TO_DOWNLOAD=$col1
-                ishare2 pull qemu "$NUMBER_TO_DOWNLOAD"
-            fi
-        done <$FILENAME
-
-        if [[ "$col2" == "$QEMU_NAME" ]]; then
-            FLAG=1
-            NUMBER_TO_DOWNLOAD=$col1
-            ishare2 pull qemu "$NUMBER_TO_DOWNLOAD"
-        fi
-
-        if [[ $FLAG -eq 0 ]]; then
-            STR="(QEMU) WARNING: Image $QEMU_NAME has not been found"
-            echo -e "${YELLOW}$STR${NO_COLOR}"
-        fi
-    done <$filename1
-    rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-}
-
-function check_docker_service_status() {
-    if service docker status | grep -q "active (running)"; then
-        return 0 # 0 means "no failures"
+    if echo "$status" | grep -q "active (running)"; then
+        return 0
     fi
 
-    if service docker status | grep -q "inactive (dead)"; then
+    if echo "$status" | grep -q "inactive (dead)"; then
         echo -e "${RED}Detected: Docker service is down. Trying to restart it${NO_COLOR}"
         service docker restart
+        status=$(service docker status)
     fi
 
-    if service docker status | grep -q "active (running)"; then
+    if echo "$status" | grep -q "active (running)"; then
         echo -e "${GREEN}Docker service has been restarted successfully${NO_COLOR}"
-        return 0 # 0 means "no failures"
+        return 0
     else
         echo -e "${RED}There was a problem trying to start docker service${NO_COLOR}"
         echo -e "Information about service docker status command:\n"
-        service docker status
-        #return 1 # 1 means failure
+        echo "$status"
     fi
 }
 
-function list_dockers() {
+list_dockers() {
     echo -e "\nDocker images in server"
     docker images
 }
 
-function count_dockers() {
+count_dockers() {
     data=$(docker images | wc -l)
     docker_count=$((data - 1))
 
@@ -1365,7 +900,7 @@ function count_dockers() {
     fi
 }
 
-function corrections_for_docker_images_in_lab_function() {
+corrections_for_docker_images_in_lab_function() {
     DOCKER_NAME=$1
     LAB_PATH=$2
 
@@ -1400,7 +935,7 @@ function corrections_for_docker_images_in_lab_function() {
     )
 
     for i in "${array[@]}"; do
-        if [[ $DOCKER_NAME == $i ]]; then
+        if [[ $DOCKER_NAME == "$i" ]]; then
             OLD_FILENAME=$DOCKER_NAME
             NEW_FILENAME=eveng/$DOCKER_NAME
 
@@ -1410,67 +945,72 @@ function corrections_for_docker_images_in_lab_function() {
 
             echo "Changing docker image name inside .unl lab file"
             echo Lab file: "$LAB_PATH"
-            sed -i -e s+$OLD_FILENAME+$NEW_FILENAME+g "$LAB_PATH"
+            sed -i -e s+"$OLD_FILENAME"+"$NEW_FILENAME"+g "$LAB_PATH"
             echo -e "Changing: OK\n"
         fi
     done
 }
 
-function download_lab_docker_images() {
+download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
     # Checking docker service status before pull any docker image
-    if check_docker_service_status $1; then # When 0 is returned
+    if check_docker_service_status; then # When 0 is returned
         while read -r line; do
             DOCKER_NAME=$line
 
-            corrections_for_docker_images_in_lab_function $DOCKER_NAME "$LAB_PATH"
+            corrections_for_docker_images_in_lab_"$DOCKER_NAME" "$LAB_PATH"
 
             STR="Docker requested: "
             echo -e "\033[33m$STR\033[0m $DOCKER_NAME"
 
             docker pull "$DOCKER_NAME"
-        done <$filename1
+        done <"$filename1"
     fi
 
     list_dockers
     count_dockers
 }
 
-function check_ishare2_version_file_exists() {
+ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
         echo $VERSION >$ISHARE2_DIR/ishare2_version
     fi
 }
 
-function upgrade_ishare2() {
+upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
-    REMOTE_VALUE=$(curl -s --insecure $URL_VERSION)
+    UPSTREAM_VERSION=$(curl -s --insecure "$URL_VERSION")
 
-    if [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        echo -e "${YELLOW} [+] ishare2 $REMOTE_VALUE is already in the newest version available. ${NO_COLOR}"
-        echo -e "${YELLOW} [+] Reinstalling latest version of ishare2${NO_COLOR}"
+    if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
+        echo -e "${YELLOW} [+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
+        echo -e "${YELLOW} [+] Do you want to reinstall it? (y/n) ${NO_COLOR}"
+        read -r answer
+        if [[ $answer == "y" || $answer == "Y" ]]; then
+            echo -e "${YELLOW} [+] Reinstalling ishare2... ${NO_COLOR}"
+        else
+            exit 0
+        fi
     fi
 
     rm /usr/sbin/ishare2
-    rm -rf /opt/ishare2/cli/
-    download_file_wget $URL_ISHARE2 /usr/sbin/ "ishare2"
+    download_file_wget "$URL_ISHARE2" /usr/sbin/ "ishare2"
 
     echo -e "${GREEN} [+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
     # Make ishare2 executable
     echo -e "${YELLOW} [+] Setting ishare2 permissions${NO_COLOR}"
     chmod +x /usr/sbin/ishare2
     # Show success message
-    echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $REMOTE_VALUE ${NO_COLOR}"
+    echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
 }
 
-function menu_ishare2_upgrade_pnetlab() {
+menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
-        "Upgrade PNETLab v5"
-        "Upgrade PNETLab v5 Beta"
-        "Upgrade PNETLab v6"
+        "Upgrade PNETLab v5 STABLE"
+        "Upgrade PNETLab v5 BETA"
+        "Upgrade PNETLab v6 BETA"
     )
 
     # Set the prompt for the select menu
@@ -1481,15 +1021,15 @@ function menu_ishare2_upgrade_pnetlab() {
         case "$REPLY" in
         1)
             # Upgrade PNETLab v5
-            bash -c "$(curl -sL --insecure $URL_PNETLAB_V5)"
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5")"
             ;;
         2)
             # Upgrade PNETLab v5 Beta
-            bash -c "$(curl -sL --insecure $URL_PNETLAB_V5_BETA)"
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_BETA")"
             ;;
         3)
             # Upgrade PNETLab v6
-            bash -c "$(curl -sL --insecure $URL_PNETLAB_V6)"
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V6")"
             ;;
         $((${#options[@]} + 1)))
             break
@@ -1504,7 +1044,7 @@ function menu_ishare2_upgrade_pnetlab() {
     done
 }
 
-function menu_ishare2_upgrade() {
+menu_ishare2_upgrade() {
     prompt="Please, select an option: "
     options=(
         "Upgrade ishare2"
@@ -1539,174 +1079,19 @@ function menu_ishare2_upgrade() {
     done
 }
 
-function show_changelog() {
+show_changelog() {
     FILE=/root/CHANGELOG.md
     if [[ -e $FILE ]]; then rm $FILE; fi
 
-    DATA="$(wget -q $URL_CHANGELOG_MD -P /root)"
+    wget -q "$URL_CHANGELOG_MD" -P /root
     head -n 15 $FILE
     rm $FILE
 }
 
-function ishare2_gui_install() {
-    ISHARE2_GUI_DIR=/opt/ishare2/gui
-    PYTHON3_11_PATH=$(command -v python3.11)
-
-    if [[ -z "$PYTHON3_11_PATH" ]]; then
-        echo -e "${RED}Error: Python 3.11 is not installed.${NO_COLOR}"
-        echo -e "${YELLOW}Do you want to install Python 3.11?${NO_COLOR}"
-        read -p "Press [y/n]: " -n 1 -r
-        echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            install_python3_11_from_ppa
-        else
-            echo -e "${RED} [-] ishare2 GUI installation was canceled. ${NO_COLOR}"
-            exit 1
-        fi
-    fi
-
-    echo -e "${GREEN} [+] ishare2 GUI is being downloaded and installed. Please, wait until the process is done...${NO_COLOR}"
-    echo -e "${YELLOW} [!] Stopping ishare2 GUI service...${NO_COLOR}"
-    sudo systemctl stop ishare2_gui.service
-
-    if [[ ! -d "$ISHARE2_GUI_DIR" ]]; then
-        mkdir -p "$ISHARE2_GUI_DIR"
-    fi
-
-    if [[ -d "$ISHARE2_GUI_DIR" ]]; then
-        read -p "Found a previous installation of ishare2 GUI. Are you sure you want to remove it? [y/n]: " -n 1 -r
-        echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo -e "${GREEN}Removing the previous installation of ishare2 GUI...${NO_COLOR}"
-            sudo rm -rf "$ISHARE2_GUI_DIR"/* >"$ISHARE2_DIR/ishare2_gui_install.log"
-            sudo rm -rf "$ISHARE2_GUI_DIR"/.* >"$ISHARE2_DIR/ishare2_gui_install.log"
-            # Remove systemd service
-            echo -e "${YELLOW} [!] Removing ishare2 GUI systemd service...${NO_COLOR}"
-            sudo systemctl disable ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
-            sudo rm /etc/systemd/system/ishare2_gui.service >"$ISHARE2_DIR/ishare2_gui_install.log"
-        else
-            echo -e "${RED} [-] ishare2 GUI installation was canceled. ${NO_COLOR}"
-            exit 1
-        fi
-    fi
-
-    echo -e "${GREEN} [+] Downloading ishare2 GUI...${NO_COLOR}"
-    download_file_wget "$URL_GUI_APP_ZIP" "$ISHARE2_GUI_DIR" "app.zip"
-
-    # Unzip
-    echo -e "${GREEN} [+] Unzipping ishare2 GUI files...${NO_COLOR}"
-    unzip -o -q "$ISHARE2_GUI_DIR/app.zip" -d "$ISHARE2_GUI_DIR"
-    if [[ $? -ne 0 ]]; then
-        echo "${RED} [-] Error unzipping ishare2 GUI. The file may be corrupted. ${NO_COLOR}"
-        echo "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
-        exit 1
-    fi
-
-    # Move files
-    echo -e "${GREEN} [+] Moving files... ${NO_COLOR}"
-    sudo mv "$ISHARE2_GUI_DIR"/ishare2-web-gui-master/* "$ISHARE2_GUI_DIR"
-    # Move files starting with a dot if any
-    sudo mv "$ISHARE2_GUI_DIR"/ishare2-web-gui-master/.* "$ISHARE2_GUI_DIR"
-    sudo rmdir "$ISHARE2_GUI_DIR"/ishare2-web-gui-master
-
-    sudo rm "$ISHARE2_GUI_DIR/app.zip"
-
-    echo -e "${GREEN} [+] Installing ishare2 GUI requirements...${NO_COLOR}"
-    # Make sure pip3 is installed for Python 3.11
-    sudo apt-get update
-    curl -sS --insecure https://bootstrap.pypa.io/get-pip.py | python3.11
-
-    # Check if pip3.11 is installed and check version pip3.11 -V
-    pip3.11 -V
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error installing pip3.11. ${NO_COLOR}"
-        echo -e "${RED} [-] Please install pip3.11 manually and try again. ${NO_COLOR}"
-        echo -e "${RED} [-] You can find more information here: https://pip.pypa.io/en/stable/installing/ ${NO_COLOR}"
-        exit 1
-    fi
-
-    # Make sure venv is installed for Python 3.11
-    sudo apt install -y python3.11-venv
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error installing venv for Python 3.11. ${NO_COLOR}"
-        echo -e "${RED} [-] Please install venv manually for Python 3.11 and try again. ${NO_COLOR}"
-        echo -e "${RED} [-] You can find more information here: https://docs.python.org/3/library/venv.html ${NO_COLOR}"
-        exit 1
-    fi
-
-    # Make venv for ishare2 GUI
-    python3.11 -m venv "$ISHARE2_GUI_DIR/venv"
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error creating venv for ishare2 GUI. ${NO_COLOR}"
-        echo -e "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
-        exit 1
-    fi
-
-    # Install requirements
-    "$ISHARE2_GUI_DIR/venv/bin/pip" install -r "$ISHARE2_GUI_DIR/requirements.txt"
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error installing ishare2 GUI requirements. ${NO_COLOR}"
-        echo -e "${RED} [-] Please read previous logs for troubleshooting. ${NO_COLOR}"
-        exit 1
-    fi
-
-    # Create systemd service to run ishare2 GUI
-    echo -e "${GREEN} [+] Creating systemd service to run ishare2 GUI...${NO_COLOR}"
-    cat >/etc/systemd/system/ishare2_gui.service <<EOL
-[Unit]
-Description=ishare2 GUI Web App
-After=network.target
-
-[Service]
-User=root
-Group=root
-WorkingDirectory=/opt/ishare2/gui
-ExecStart=/opt/ishare2/gui/venv/bin/uvicorn main:app --workers 4 --host 0.0.0.0 --port 5000
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-    # Enable and start ishare2 GUI service
-    echo -e "${GREEN} [+] Enabling and starting ishare2 GUI service...${NO_COLOR}"
-    read -p "Do you want to start ishare2 GUI on boot? [y/n]: " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        sudo systemctl enable ishare2_gui.service
-    fi
-    sudo systemctl start ishare2_gui.service
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
-        exit 1
-    fi
-    echo -e "${GREEN} [!] ishare2 GUI was installed successfully. ${NO_COLOR}"
-    echo -e "${GREEN}You can access ishare2 GUI at: http://<server_ip>:5000 or http://localhost:5000 ${NO_COLOR}"
-    echo -e "${GREEN}Additionally, you can use the following commands to manage ishare2 GUI: ${NO_COLOR}"
-    echo -e "${GREEN}   ishare2 gui start: Start ishare2 GUI service ${NO_COLOR}"
-    echo -e "${GREEN}   ishare2 gui stop: Stop ishare2 GUI service ${NO_COLOR}"
-    echo -e "${GREEN}   ishare2 gui restart: Restart ishare2 GUI service ${NO_COLOR}"
-    echo -e "${GREEN}   systemctl ishare2_gui status: Check ishare2 GUI service status ${NO_COLOR}"
+ishare2_gui_install() {
+    curl -sL "$URL_ISHARE2_GUI_INSTALL" | bash
 }
-
-function install_python3_11_from_ppa() {
-    # Install the required dependency package
-    sudo apt-get update
-    sudo apt-get install -y software-properties-common
-
-    # Add the deadsnakes PPA to the APT package manager sources list
-    sudo add-apt-repository ppa:deadsnakes/ppa
-
-    # Proceed with the installation of Python 3.11
-    sudo apt-get update
-    sudo apt-get install -y python3.11
-
-    # Verify the installation
-    python3.11 --version
-}
-
-function ishare2_gui_start() {
+ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
@@ -1715,7 +1100,7 @@ function ishare2_gui_start() {
     fi
 }
 
-function ishare2_gui_stop() {
+ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error stopping ishare2 GUI service. ${NO_COLOR}"
@@ -1724,7 +1109,7 @@ function ishare2_gui_stop() {
     fi
 }
 
-function ishare2_gui_restart() {
+ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error restarting ishare2 GUI service. ${NO_COLOR}"
@@ -1733,22 +1118,37 @@ function ishare2_gui_restart() {
     fi
 }
 
-function general_available_list() {
-    TYPE=$1
-    FILENAME=$ISHARE2_DIR/"$TYPE".csv
+search_images() {
+    TYPE=${1^^}
+    if [[ -n $2 ]]; then # If the user passed a filter
+        FILTER=$2
+    fi
+    # Download the JSON and store it in a temporary file
+    fetch_json
+    print_separator "Available $TYPE images"
 
-    print_separator "List of available $TYPE images"
+    # Filter rows with jq and keep the table headers
+    data=$(jq -r '(["ID","NAME","SIZE"] | (., map(length*"-"))), (.["'$TYPE'"][] | select(.name | contains("'$FILTER'")) | [.id, .name, .size]) | @tsv' "$TEMP_JSON")
 
-    if [[ $TYPE == "QEMU" ]]; then
-        awk -F, '{print $1,$2,$3,$4}' "$FILENAME" | column -t
-    else # [[ $TYPE == "DYNAMIPS" || $TYPE == "BIN" ]]
-        awk -F, '{print $1,$2,$4,$5}' "$FILENAME" | column -t
+    # Check if there are matching data rows
+    if [ -n "$data" ]; then
+        echo -e "$data" | column -t -s $'\t'
+        # Calculate and display the total count
+        total_count=$(echo "$data" | wc -l)
+        total_count=$((total_count - 2))
+        if [[ $total_count -eq 0 ]]; then
+            echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
+        elif [[ $total_count -eq 1 ]]; then
+            echo -e "\n${GREEN}$total_count $TYPE image found for \"$FILTER\"${NO_COLOR}"
+        else
+            echo -e "\n${GREEN}$total_count $TYPE images found for \"$FILTER\"${NO_COLOR}"
+        fi
     fi
 
-    echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
+    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
-function generate_a_new_license() {
+generate_iourc_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
 
     PYTHON_FILE=$BIN_PATH"CiscoIOUKeygen.py"
@@ -1756,7 +1156,7 @@ function generate_a_new_license() {
 
     if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
 
-    wget -O $PYTHON_FILE $URL_CISCO_IOU_KEYGEN_PY -q
+    wget -O $PYTHON_FILE "$URL_CISCO_IOU_KEYGEN_PY" -q
     if [[ $? -ne 0 ]]; then
         echo -e "${RED} [-] Error downloading CiscoIOUKeygen.py file. ${NO_COLOR}"
         echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
@@ -1771,7 +1171,7 @@ function generate_a_new_license() {
     fi
 
     if ! [[ -e $PERL_FILE ]]; then
-        wget -O $PERL_FILE $URL_KEEPALIVE_PL -q
+        wget -O $PERL_FILE "$URL_KEEPALIVE_PL" -q
         if [[ $? -ne 0 ]]; then
             echo -e "${RED} [-] Error downloading keepalive.pl file. ${NO_COLOR}"
             echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
@@ -1781,296 +1181,35 @@ function generate_a_new_license() {
     echo -e "${GREEN} [+] IOL license was generated successfully. ${NO_COLOR}"
 }
 
-function download_1_file_bin_or_dynamips() {
-    FILES_COUNTER=$1
-    NAME=$2
-    LINK=$3
-    SIZE=$4
-    UNIT=$5
-    TYPE=$6
-
-    echo -e "Starting to download $FILES_COUNTER file..."
-
-    STR="\n${YELLOW}File requested:${NO_COLOR}"
-    echo -e "$STR $NAME"
-    STR="${YELLOW}Size:${NO_COLOR}"
-    echo -e "$STR $SIZE $UNIT\n"
-    echo -e "${YELLOW}Downloading from:${NO_COLOR} $LINK\n"
-    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
-    if [[ $USE_ARIA2C == "true" ]]; then
-        echo -e "${YELLOW} [+] Using aria2c for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
-    else
-        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you want to use aria2 instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
-    fi
-
-    if [[ $TYPE = "dynamips" ]]; then
-        mkdir -p /opt/unetlab/addons/dynamips
-        # set save path and name
-        save_path="/opt/unetlab/addons/dynamips"
-        download_file "$LINK" "$save_path" "$NAME"
-    fi
-
-    if [[ $TYPE = "bin" ]]; then
-        mkdir -p /opt/unetlab/addons/iol/bin
-        # set save path and name
-        save_path="/opt/unetlab/addons/iol/bin"
-        download_file "$LINK" "$save_path" "$NAME"
-    fi
+show_help_info() {
+    echo -e "- For documentation about ishare2, visit: https://github.com/ishare2-org/ishare2-cli"
+    echo -e "- If you face any issues with ishare2, please report them at @NetLabHub Telegram Group. Attach screenshots and relevant information."
+    echo -e "- You can use ${YELLOW}ishare2 config${NO_COLOR} to change the chosen downloader."
+    echo -e "- If you cancel a download, use the flag: --overwrite to first delete the existing image and then download it again."
+    echo -e "- To submit new images, please use the following Google Form: https://forms.gle/SotrznrN3CmZdg8M8"
+    echo -e "- Telegram Channel: https://t.me/NetLabHub (For announcements and updates)"
+    echo -e "- Email: contact@labhub.eu.org"
 }
 
-function download_1_file_qemu() {
-    FILES_COUNTER=$1
-    FOLDERNAME=$2
-    SIZE=$3
-    UNIT=$4
-    NAME=$5
-    LINK=$6
-
-    echo -e "\nStarting to download $FILES_COUNTER file..."
-
-    echo -e "\n\033[33mFolder requested:\033[0m $FOLDERNAME (""$SIZE"" ""$UNIT"")"
-    echo -e "\nFile requested:\n  $NAME - $SIZE $UNIT\n"
-    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
-    if [[ $USE_ARIA2C == "true" ]]; then
-        echo -e "${YELLOW} [+] Using aria2c for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
-    else
-        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you want to use wget instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
-    fi
-
-    save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
-    download_file "$LINK" "$save_path" "$NAME"
-}
-
-function download_multiple_files_qemu() {
-    FILES_COUNTER=$1
-    FOLDERNAME=$2
-    SIZE=$3
-    UNIT=$4
-    myArray=$5
-
-    echo -e "Starting to download $FILES_COUNTER files..."
-
-    echo -e "\n\033[33mFolder requested:\033[0m $FOLDERNAME (""$SIZE"" ""$UNIT"")"
-    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
-    if [[ $USE_ARIA2C == "true" ]]; then
-        echo -e "${YELLOW} [+] Using aria2c for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you have problems with aria2, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose wget instead of aria2.${NO_COLOR}\n"
-    else
-        echo -e "${YELLOW} [+] Using wget for this download.${NO_COLOR}"
-        echo -e "${YELLOW} [!] If you want to use wget instead, please reconfigure ishare2 running the following command:${NO_COLOR} ${GREEN}ishare2 config${NO_COLOR}${YELLOW} and choose aria2 instead of wget.${NO_COLOR}\n"
-    fi
-
-    for ((c = 1; c <= FILES_COUNTER; c++)); do
-        echo -e "\nFile $c/$FILES_COUNTER"
-        save_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
-        download_file "${myArray[c - 1]}" "$save_path"
-    done
-}
-
-function pull_all_iol_images() {
-    FILENAME="$ISHARE2_DIR/BIN.csv"
-
-    while IFS=',' read -r col1 _ _ _ _; do
-        N=$col1
-    done <$FILENAME
-    N=$col1
-
-    echo "Starting to download $N bin files"
-
-    for ((i = 1; i <= N; i++)); do
-        echo -e "\nFile $i/$N"
-        ishare2 pull bin "$i"
-    done
-
-    echo -e "\nFinished"
-}
-
-function pull_all_dynamips_images() {
-    FILENAME="$ISHARE2_DIR/DYNAMIPS.csv"
-    while IFS=',' read -r col1 _ _ _ _; do
-        N=$col1
-    done <$FILENAME
-    N=$col1
-
-    echo "Starting to download $N dynamips files"
-
-    for ((i = 1; i <= N; i++)); do
-        echo -e "\nFile $i/$N"
-        ishare2 pull dynamips "$i"
-    done
-
-    echo -e "\nFinished"
-}
-
-function pull_dynamips() {
-    PARAMETER=$1
-    OVERWRITE=$2
-
-    if [[ $PARAMETER = "all" ]]; then
-        pull_all_dynamips_images
-        exit 0
-    fi
-
-    DYNAMIPS_NUMBER=$PARAMETER
-    FILENAME=$ISHARE2_DIR"/DYNAMIPS.csv"
-
-    FLAG=0
-    while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]; then
-            FLAG=1
-            NAME=$col2
-            LINK=$col3
-            SIZE=$col4
-            UNIT=$col5
-
-            corrections_for_dynamips_images "$NAME"
-        fi
-    done <$FILENAME
-    if [[ "$col1" = "$DYNAMIPS_NUMBER" ]]; then
-        FLAG=1to $ISHARE2_GUI_DIR
-        NAME=$col2
-        LINK=$col3
-        SIZE=$col4
-        UNIT=$col5
-
-        corrections_for_dynamips_images "$NAME"
-    fi
-
-    # Remove csv file
-    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-
-    if [[ $FLAG = 1 ]]; then
-        if [[ -e /opt/unetlab/addons/dynamips/"$NAME" && "$OVERWRITE" != "--overwrite" ]]; then
-            echo -e "File $NAME already exists in server. Use --overwrite to overwrite it"
-            exit 0
-        fi
-
-        FILES_COUNTER=1
-        download_1_file_bin_or_dynamips $FILES_COUNTER "$NAME" "$LINK" "$SIZE" "$UNIT" dynamips
-
-        # 2. Move downloaded file to /opt/unetlab/addons/dynamips/
-        #mv "$NAME" /opt/unetlab/addons/dynamips/
-        #Done with -O parameter using wget
-        echo -e "\n$NAME was downloaded successfully"
-
-        # 3. Apply fix permissions command
-        fix_permissions
-    else
-        echo "File not found"
-        ishare2 search dynamips
-    fi
-}
-
-function pull_bin() {
-    PARAMETER=$1
-    OVERWRITE=$2
-
-    if [[ $PARAMETER = "all" ]]; then
-        pull_all_iol_images
-        exit 0
-    fi
-
-    BIN_NUMBER=$PARAMETER
-
-    FILENAME=$ISHARE2_DIR"/BIN.csv"
-    FLAG=0
-    while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if [[ "$col1" = "$BIN_NUMBER" ]]; then
-            FLAG=1
-            NAME=$col2
-            LINK=$col3
-            SIZE=$col4
-            UNIT=$col5
-
-            corrections_for_iol_images "$NAME"
-        fi
-    done <$FILENAME
-
-    if [[ "$col1" = "$BIN_NUMBER" ]]; then
-        FLAG=1
-        NAME=$col2
-        LINK=$col3
-        SIZE=$col4
-        UNIT=$col5
-
-        corrections_for_iol_images "$NAME"
-    fi
-
-    # Remove csv file
-    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-
-    if [[ $FLAG = 1 ]]; then
-        if [[ -e /opt/unetlab/addons/iol/bin/"$NAME" && "$OVERWRITE" != "--overwrite" ]]; then
-            echo -e "File $NAME already exists in server. Use --overwrite to overwrite it"
-            exit 0
-        fi
-
-        FILES_COUNTER=1
-        download_1_file_bin_or_dynamips $FILES_COUNTER "$NAME" "$LINK" "$SIZE" "$UNIT" bin
-
-        # 2. Move downloaded file to /opt/unetlab/addons/iol/bin/
-        #mv "$NAME" /opt/unetlab/addons/iol/bin/
-        #Done with -O parameter using wget
-        echo -e "\n$NAME was downloaded successfully"
-
-        # 3. Apply fix permissions command
-        fix_permissions
-    else
-        echo "File not found"
-        ishare2 search bin
-    fi
-}
-
-function show_help_info() {
-    echo -e "1) For problems, use our Telegram Channel describing your problem and sending a screenshot and/or a video"
-    echo -e "\n2) For new files to be uploaded, you can use our Telegram Channel too"
-    echo -e "In this case, you can send or ask for new images to be uploaded"
-    echo -e "\n3) Using \033[32mishare2 upgrade\033[0m will display a menu that allows users to upgrade ishare2 and PNETLab."
-    echo -e "\n4) If CiscoIOUKeygen.py, iourc and/or keepalive.pl files in /opt/unetlab/addons/iol/bin/ are deleted, you can recover them by using \033[32mishare2 relicense\033[0m. This will not affect images in there."
-    echo -e "Also, this command when used, will generate a new license file called iourc, needed for bin files"
-    echo -e "\n5) Don't cancel a download. In case you do it, you will have to remove incomplete files or folders manually or use the --overwrite parameter."
-    echo -e "\n6) The main difference between ${YELLOW}ishare2 labs${NO_COLOR} and ${YELLOW}ishare2 mylabs${NO_COLOR} is that, in the first case, the folder used is the one PNETLab creates when you download a lab from the store and in the second case you are able to select any folder you want in order to download labs"
-    echo -e "\nTelegram Channel: https://t.me/NetLabHub"
-}
-
-function show_ishare2_usage() {
+show_ishare2_usage() {
     # For ishare2
-    ISHARE2_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_version)
-
-    STR=""
-    LOCAL_VALUE=$ISHARE2_VERSION_USAGE
-    REMOTE_VALUE=$(curl -s $URL_VERSION)
-
-    if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-        STR="New ishare2 version available: $REMOTE_VALUE"
+    ISHARE2_VERSION_INFO=$(cat $ISHARE2_DIR/ishare2_version)
+    UPSTREAM_VERSION=$(curl -s "$URL_VERSION")
+    if ! [[ $ISHARE2_VERSION_INFO == "$UPSTREAM_VERSION" ]]; then
+        ISHARE2_VERSION_INFO="$ISHARE2_VERSION_INFO $(echo -e "${YELLOW}Update available: $UPSTREAM_VERSION. Run: ishare2 upgrade${NO_COLOR}")"
+    else
+        ISHARE2_VERSION_INFO="$ISHARE2_VERSION_INFO $(echo -e "${GREEN}Up to date${NO_COLOR}")"
     fi
-
-    NEW_VERSION_RESULT=$(echo -e ${YELLOW} $STR ${NO_COLOR})
 
     # For PNETLab
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     pnetlab_info=($data)
-    PNETLAB_VERSION_USAGE=${pnetlab_info[1]}
-
-    # For ishare2 GUI
-    # ISHARE2_GUI_VERSION_USAGE=$(cat $ISHARE2_DIR/ishare2_gui_version)
-
-    # STR=""
-    # LOCAL_VALUE=$ISHARE2_GUI_VERSION_USAGE
-    # REMOTE_VALUE=$(curl -s $URL_ISHARE2_GUI_VERSION)
-
-    # if ! [[ $LOCAL_VALUE == "$REMOTE_VALUE" ]]; then
-    #     STR="New ishare2 GUI version available: $REMOTE_VALUE"
-    # fi
-
-    # NEW_VERSION_RESULT_FOR_ISHARE2_GUI=$(echo -e ${YELLOW} $STR ${NO_COLOR})
-
-    # Message displayed when using ishare2 command
-    echo "
+    if [[ ${#pnetlab_info[@]} -eq 0 ]]; then
+        PNETLAB_INSTALLED=$(echo -e "${RED}PNETLab is not installed.${NO_COLOR}")
+    else
+        PNETLAB_INSTALLED=$(echo -e "${GREEN}PNETLab v${pnetlab_info[1]} is installed.${NO_COLOR}")
+    fi
+    cat <<EOF
 Syntax
 
 ishare2 [action] [param1] [param2] [--overwrite]
@@ -2153,42 +1292,13 @@ Examples:
 - ishare2 config
 - ishare2 help
 
-ishare2: $ISHARE2_VERSION_USAGE$NEW_VERSION_RESULT
-Channel: $CHANNEL
-PNetLab: v$PNETLAB_VERSION_USAGE
-ishare2 GUI: $ISHARE2_GUI_VERSION_USAGE$NEW_VERSION_RESULT_FOR_ISHARE2_GUI
-"
+ishare2: $ISHARE2_VERSION_INFO
+ishare2 Channel: $CHANNEL
+$PNETLAB_INSTALLED
+EOF
 }
 
-function msg_available_options_for_ishare2_search() {
-    echo -e "Available options\n"
-    echo "- ishare2 search all"
-    echo "- ishare2 search qemu"
-    echo "- ishare2 search dynamips"
-    echo "- ishare2 search bin"
-    echo "- ishare2 search <name>"
-    echo "  - ishare2 search vios"
-    echo "  - ishare2 search win-"
-    echo "  - ishare2 search winserver"
-    echo "  - ishare2 search kali"
-    echo "  - ishare2 search mikro"
-    echo "  - ishare2 search forti"
-    echo "  - ishare2 search nxos"
-    echo "  - ishare2 search vmx"
-    echo "  - ishare2 search esxi"
-    echo "  - More <name> options using ishare2 search all"
-}
-
-function msg_incorrect_argument_or_no_arg_for_ishare2_pull() {
-    echo -e "Syntax:\nishare2 pull <type> <number>\n"
-    echo "type: bin, qemu or dynamips"
-    echo -e "number: ishare2 search <type>\n"
-    echo "Example: ishare2 pull qemu 4"
-    echo "Example: ishare2 pull dynamips 5"
-    echo -e "Example: ishare2 pull bin 6"
-}
-
-function tgz_files_function() {
+tgz_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2204,7 +1314,7 @@ function tgz_files_function() {
     fi
 }
 
-function tar_gz_files_function() {
+tar_gz_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2220,7 +1330,7 @@ function tar_gz_files_function() {
     fi
 }
 
-function tar_files_function() {
+tar_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2236,7 +1346,7 @@ function tar_files_function() {
     fi
 }
 
-function zip_files_function() {
+zip_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2252,7 +1362,7 @@ function zip_files_function() {
     fi
 }
 
-function rar_files_function() {
+rar_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2273,7 +1383,7 @@ function rar_files_function() {
     fi
 }
 
-function ova_files_function() {
+ova_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2289,7 +1399,7 @@ function ova_files_function() {
     fi
 }
 
-function iso_files_function() {
+iso_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2301,15 +1411,21 @@ function iso_files_function() {
 
         if ! [[ "${ISO_FILE: -9}" == "cdrom.iso" ]]; then
             mv "$ISO_FILE" "$DIR"/cdrom.iso # Rename file
+            echo -e "${GREEN} [+] ISO file saved as: $DIR/cdrom.iso ${NO_COLOR}"
+        fi
+
+        if ! [[ -e /usr/bin/qemu-img ]]; then
+            echo -e "${YELLOW} [!] qemu-img is not installed. Attempting to install it... ${NO_COLOR}"
+            install_packages "qemu-utils"
         fi
 
         if [[ $FILES_COUNTER -eq 1 ]]; then
-            /opt/qemu/bin/qemu-img create -f qcow2 "$DIR"/virtioa.qcow2 20G
+            qemu-img create -f qcow2 "$DIR"/virtioa.qcow2 20G
         fi
     fi
 }
 
-function yml_files_function() {
+yml_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2320,13 +1436,13 @@ function yml_files_function() {
     for ext in "${EXTENSIONS[@]}"; do
         if ls "${DIR}"/*"$ext" &>/dev/null; then
             file=$(ls "${DIR}"/*"$ext" | head -1)
-            cp "$file" $YML_DIR
+            cp "$file" "$YML_DIR"
             break
         fi
     done
 }
 
-function txt_files_function() {
+txt_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2345,7 +1461,7 @@ function txt_files_function() {
     done
 }
 
-function sh_files_function() {
+sh_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2355,12 +1471,19 @@ function sh_files_function() {
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
         chmod +x "$file"
-        echo -e "\nExecuting $file"
-        bash "$file" "$DIR"
+        echo -e "This image includes a script file: $file"
+        read -p "Do you want to run $file? [y/n]: " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            bash "$file"
+        else
+            echo -e "${YELLOW} [!] $file was not executed. ${NO_COLOR}"
+            echo -e "${YELLOW} [!] WARN: This script file might be needed for the image to work properly. ${NO_COLOR}"
+        fi
     fi
 }
 
-function png_files_function() {
+png_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2382,7 +1505,7 @@ function png_files_function() {
     fi
 }
 
-function php_files_function() {
+php_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2396,8 +1519,7 @@ function php_files_function() {
     fi
 }
 
-function vmdk_files_function() {
-    install_qemu_tools
+vmdk_files_function() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -2406,6 +1528,7 @@ function vmdk_files_function() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         VMDK_FILE=$(ls "${DIR}"/*"$EXTENSION")
+        install_qemu_tools
 
         echo -e "\nConverting .vmdk to .qcow2. It might take a while..."
         /opt/qemu/bin/qemu-img convert -p -f vmdk -O qcow2 "$VMDK_FILE" "$DIR"/hda.qcow2
@@ -2414,320 +1537,145 @@ function vmdk_files_function() {
     fi
 }
 
-function install_qemu_tools() {
+install_qemu_tools() {
     apt update
     apt install -y qemu-utils
     # check if qemu-img is installed
     if ! [[ -e /opt/qemu/bin/qemu-img ]]; then
         echo -e "${RED} [-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
+    fi
+}
+
+pull_images() {
+    IMAGE_TYPE=$1
+    IMAGE_ID=$2
+    OVERWRITE=$3
+
+    # 0. Check parameters
+    # Check if IMAGE_TYPE is not empty
+    if [[ -z "$IMAGE_TYPE" ]]; then
+        echo "Usage: $SCR_NAME pull <type> <id>"
+        echo "Types: qemu, iol, dynamips"
+        echo "Example: $SCR_NAME pull bin <id>"
         exit 1
     fi
-}
-
-function check_if_yml_template_is_missing() {
-    FOLDERNAME=$1
-
-    #YML_DIR="/opt/unetlab/html/templates/" # Value getted from set_yml_template_folder_location()
-
-    TEMPLATE_NAME="$(cut -d'-' -f1 <<<"$FOLDERNAME")"
-    EXTENSION=".yml"
-
-    FULL_TEMPLATE_PATH=$YML_DIR"$TEMPLATE_NAME"$EXTENSION
-
-    if ! [[ -e $FULL_TEMPLATE_PATH ]]; then
-        STR="\n ${RED} [-] Template $FULL_TEMPLATE_PATH is missing, so device will not appear in list when adding a new node"
-        echo -e "$STR\033[0m"
-    fi
-}
-
-function corrections_for_iol_images() {
-    NAME=$1
-
-    if [[ $NAME = "L2-Adventerprisek9-ms.nov3_2015_high_iron.bin" ]]; then
-        NAME="i86bi_linux_l2-L2-Adventerprisek9-ms.nov3_2015_high_iron.bin"
-
-        FILE="$YML_DIR"i86bi_linux_l2.yml
-        if ! [[ -e $FILE ]]; then
-            wget -O $FILE $URL_I86BI_LINUX_L2_YML >/dev/null 2>&1
-        fi
+    # Check if IMAGE_ID is not empty and is a number
+    if [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]]; then
+        echo "Usage: $SCR_NAME pull ${IMAGE_TYPE,,} <id>"
+        echo "Example: $SCR_NAME pull ${IMAGE_TYPE,,} 1"
+        exit 1
     fi
 
-    if [[ $NAME = "L3-ADVENTERPRISEK9-M-15.4-2T.bin" ]]; then
-        NAME="i86bi_linux_l3-L3-ADVENTERPRISEK9-M-15.4-2T.bin"
-
-        FILE="$YML_DIR"i86bi_linux_l3.yml
-        if ! [[ -e $FILE ]]; then
-            wget -O $FILE $URL_I86BI_LINUX_L3_YML >/dev/null 2>&1
-        fi
-    fi
-}
-
-function corrections_for_qemu_images_in_lab_function() {
-    QEMU_NAME=$1
-
-    if [[ $QEMU_NAME = "huaweicx-V800R011" ]]; then QEMU_NAME="cx"; fi
-    if [[ $QEMU_NAME = "huaweine40e-ne40e" ]]; then QEMU_NAME="ne40e"; fi
-    if [[ $QEMU_NAME = "huaweine5ke-ne5000e" ]]; then QEMU_NAME="ne5000e"; fi
-    if [[ $QEMU_NAME = "huaweine9k-ne9000" ]]; then QEMU_NAME="ne9000"; fi
-    if [[ $QEMU_NAME = "huaweice6800-ce6800" ]]; then QEMU_NAME="ce6800"; fi
-    if [[ $QEMU_NAME = "huaweice12800-ce12800" ]]; then QEMU_NAME="ce12800"; fi
-    if [[ $QEMU_NAME = "cips-7.0.8" ]]; then QEMU_NAME="vIPS-7.0.8"; fi
-    if [[ $QEMU_NAME = "catalyst8000v-17.07.01a" ]]; then QEMU_NAME="c8000v-17.07.01a"; fi
-    if [[ $QEMU_NAME = "linux-kali2020-epiol" ]]; then QEMU_NAME="kali-2020-epiol"; fi
-}
-
-function corrections_for_qemu_images() {
-    # Delete ,,, characters (if present) at the end of the FILE6LINK variable (6th element to download)
-    if [[ "${FILE6LINK: -4}" == *",,,"* ]]; then FILE6LINK=${FILE6LINK::-4}; fi
-    if [[ $FOLDERNAME = "cx" ]]; then FOLDERNAME="huaweicx-V800R011"; fi
-    if [[ $FOLDERNAME = "ne40e" ]]; then FOLDERNAME="huaweine40e-ne40e"; fi
-    if [[ $FOLDERNAME = "ne5000e" ]]; then FOLDERNAME="huaweine5ke-ne5000e"; fi
-    if [[ $FOLDERNAME = "ne9000" ]]; then FOLDERNAME="huaweine9k-ne9000"; fi
-    if [[ $FOLDERNAME = "ce6800" ]]; then FOLDERNAME="huaweice6800-ce6800"; fi
-    if [[ $FOLDERNAME = "ce12800" ]]; then FOLDERNAME="huaweice12800-ce12800"; fi
-    if [[ $FOLDERNAME = "vIPS-7.0.8" ]]; then FOLDERNAME="cips-7.0.8"; fi
-    if [[ $FOLDERNAME = "c8000v-17.07.01a" ]]; then FOLDERNAME="catalyst8000v-17.07.01a"; fi
-    if [[ $FOLDERNAME = "kali-2020-epiol" ]]; then FOLDERNAME="linux-kali2020-epiol"; fi
-}
-
-function count_elements_to_download_for_qemu_images() {
-    FILES_COUNTER=1
-    myArray=("$FILE1LINK")
-
-    if ! [[ "$FILE2NAME" == *"-"* ]]; then
-        FILES_COUNTER=2
-        myArray=("$FILE1LINK" "$FILE2LINK")
-    fi
-
-    if ! [[ "$FILE3NAME" == *"-"* ]]; then
-        FILES_COUNTER=3
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK")
-    fi
-
-    if ! [[ "$FILE4NAME" == *"-" ]]; then
-        FILES_COUNTER=4
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK" "$FILE4LINK")
-    fi
-
-    if ! [[ "$FILE5NAME" == *"-"* ]]; then
-        FILES_COUNTER=5
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK" "$FILE4LINK" "$FILE5LINK")
-    fi
-
-    if ! [[ "$FILE6NAME" == *"-"* ]]; then
-        FILES_COUNTER=6
-        myArray=("$FILE1LINK" "$FILE2LINK" "$FILE3LINK" "$FILE4LINK" "$FILE5LINK" "$FILE6LINK")
-    fi
-}
-
-function corrections_for_dynamips_images() {
-    NAME=$1
-
-    SUBSTRING="c2600"
-    if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        FILE="$YML_DIR"c2600.yml
-        wget -O $FILE $URL_C2600_YML >/dev/null 2>&1
-    fi
-
-    SUBSTRING="c1760"
-    if [[ "$NAME" == *"$SUBSTRING"* ]]; then
-        FILE="$YML_DIR"c1760.yml
-        wget -O $FILE $URL_C1760_YML >/dev/null 2>&1
-    fi
-}
-
-function pull_qemu() {
-    PARAMETER=$1
-    OVERWRITE=$2
-
-    if [[ $PARAMETER = "all" ]]; then
-        echo "Feature not available for qemu images due to large size"
-        exit 0
-    fi
-
-    QEMU_NUMBER=$PARAMETER
-    FILENAME=$ISHARE2_DIR"/QEMU.csv"
-
-    FLAG=0
-    declare -a myArray=()
-    while IFS=',' read -r col1 col2 col3 col4 col5 col6 col7 col8 col9 col10 col11 col12 col13 col14 col15 col16; do
-        if [[ "$col1" = "$QEMU_NUMBER" ]]; then
-            FLAG=1
-
-            #NUMBER=$col1
-            FOLDERNAME=$col2
-            SIZE=$col3
-            UNIT=$col4
-            FILE1NAME=$col5
-            FILE1LINK=$col6
-            FILE2NAME=$col7
-            FILE2LINK=$col8
-            FILE3NAME=$col9
-            FILE3LINK=$col10
-            FILE4NAME=$col11
-            FILE4LINK=$col12
-            FILE5NAME=$col13
-            FILE5LINK=$col14
-            FILE6NAME=$col15
-            FILE6LINK=$col16
-
-            corrections_for_qemu_images
-            count_elements_to_download_for_qemu_images
-        fi
-    done <$FILENAME
-
-    if [[ "$col1" = "$QEMU_NUMBER" ]]; then
-        FLAG=1
-
-        #NUMBER=$col1
-        FOLDERNAME=$col2
-        SIZE=$col3
-        UNIT=$col4
-        FILE1NAME=$col5
-        FILE1LINK=$col6
-        FILE2NAME=$col7
-        FILE2LINK=$col8
-        FILE3NAME=$col9
-        FILE3LINK=$col10
-        FILE4NAME=$col11
-        FILE4LINK=$col12
-        FILE5NAME=$col13
-        FILE5LINK=$col14
-        FILE6NAME=$col15
-        FILE6LINK=$col16
-
-        corrections_for_qemu_images
-        count_elements_to_download_for_qemu_images
-    fi
-
-    # Remove csv file
-    # rm "$(pwd)"/$FILENAME >/dev/null 2>&1
-
-    if [[ $FLAG = 1 ]]; then
-        if [[ -d /opt/unetlab/addons/qemu/"$FOLDERNAME" && "$OVERWRITE" != "--overwrite" ]]; then
-            echo -e "Folder $FOLDERNAME already exists in server. Use --overwrite to overwrite it."
-            exit 0
-        fi
-
-        mkdir -p /opt/unetlab/addons/qemu/"$FOLDERNAME"/
-
-        #1. Download file requested
-        if [[ $FILES_COUNTER -eq 1 ]]; then
-            download_1_file_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "$FILE1NAME" "$FILE1LINK"
-
-            #2. Move file to /opt/unetlab/addons/qemu/<folder>
-            # mv "$FILE1NAME" /opt/unetlab/addons/qemu/"$FOLDERNAME"/"$FILE1NAME"
-            # ^ No longer needed since it will be downloaded to the correct folder with aria2c -d
-        fi
-
-        if [[ $FILES_COUNTER -gt 1 ]]; then
-            #echo $FILES_COUNTER
-            download_multiple_files_qemu $FILES_COUNTER "$FOLDERNAME" "$SIZE" "$UNIT" "${myArray[@]}"
-
-            #2. Move files to /opt/unetlab/addons/qemu/<folder>
-            #Files moved to qemu directory when "download_multiple_files_qemu" is called
-            #Achieved by using -P parameter in wget
-        fi
-
-        #3. Extensions
-
-        # Decompress files section
-        tgz_files_function "$FOLDERNAME"
-        tar_gz_files_function "$FOLDERNAME"
-        tar_files_function "$FOLDERNAME"
-        zip_files_function "$FOLDERNAME"
-        rar_files_function "$FOLDERNAME"
-        ova_files_function "$FOLDERNAME"
-        iso_files_function "$FOLDERNAME"
-
-        # Treat files section
-        yml_files_function "$FOLDERNAME"
-        txt_files_function "$FOLDERNAME"
-        sh_files_function "$FOLDERNAME"
-        png_files_function "$FOLDERNAME"
-        php_files_function "$FOLDERNAME"
-        vmdk_files_function "$FOLDERNAME"
-
-        # 4. Show if .yml template is missing
-        check_if_yml_template_is_missing "$FOLDERNAME"
-
-        # 5. Apply fix permissions command
-        fix_permissions
+    if [ "$IMAGE_TYPE" = "BIN" ]; then
+        IMAGE_TYPE="IOL"
     else
-        echo -e "${RED}Error: ${NC}No image found with number $QEMU_NUMBER"
-        echo -e "Use ${GREEN}ishare2 search qemu${NC} to search for an image"
-        # get user input y or n
-        read -p "Do you want to search for the image? [y/n] " -n 1 -r
-        echo -e # (optional) move to a new line after user input
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            ishare2 search qemu
+        IMAGE_TYPE="$1"
+    fi
+    local download_urls
+    local download_path # Pending: implement corrections_for_qemu_images with new JSON structure
+    local image_name
+    local image_size
+
+    # 1. Fetch the JSON file
+    fetch_json
+
+    # Extract the download URLs, path, name, and size for the specified type and ID
+    download_urls=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_links[]' "$TEMP_JSON")
+    download_path=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_path' "$TEMP_JSON")
+    image_name=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .name' "$TEMP_JSON")
+    image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .size' "$TEMP_JSON")
+
+    # 2. Download the image(s) for the specified type and ID
+    # Skip download if the image is already installed
+    FOLDERNAME="$image_name"
+    IMAGE_TYPE_LOWER=$(echo "$IMAGE_TYPE" | tr '[:upper:]' '[:lower:]')
+
+    case "$IMAGE_TYPE" in
+    "QEMU")
+        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$FOLDERNAME"
+        if [ -d "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+            echo "Folder $FOLDERNAME already exists in server for Type: $IMAGE_TYPE"
+            exit 1
         fi
+        ;;
+    "BIN" | "IOL")
+        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/bin/$image_name"
+        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+            echo "File $image_name already exists in server for Type: $IMAGE_TYPE. Use --overwrite to overwrite it"
+            exit 1
+        fi
+        ;;
+    "DYNAMIPS")
+        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$image_name"
+        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+            echo "File $image_name already exists in server for Type: $IMAGE_TYPE. Use --overwrite to overwrite it"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Invalid image type: $IMAGE_TYPE"
+        exit 1
+        ;;
+    esac
+
+    if [ -n "$download_urls" ]; then
+        echo "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID, Size: $image_size, Download URLs: $download_urls, Download Path: $download_path" >>"$LOG_FILE"
+        echo -e "${YELLOW} [!] Downloading Image... ${NO_COLOR}"
+        echo -e "${YELLOW} [i] Image Name: ${NO_COLOR} $image_name"
+        echo -e "${YELLOW} [i] Image Size: ${NO_COLOR} $image_size"
+        echo -e "${YELLOW} [i] Image Type: ${NO_COLOR} $IMAGE_TYPE"
+        echo -e "${YELLOW} [i] Image ID: ${NO_COLOR} $IMAGE_ID"
+        echo -e "${YELLOW} [i] Download path: ${NO_COLOR} $download_path"
+        # Create the directory if it doesn't exist
+        mkdir -p "$download_path"
+
+        # Iterate through the download URLs and download each file
+        case $IMAGE_TYPE in
+        "QEMU")
+            for download_url in $download_urls; do
+                download_file "$download_url" "$download_path"
+            done
+            ;;
+        "BIN" | "DYNAMIPS" | "IOL")
+            for download_url in $download_urls; do
+                download_file "$download_url" "$download_path" "$image_name"
+            done
+            ;;
+        *)
+            echo "Something went wrong. Invalid image type provided: $IMAGE_TYPE"
+            ;;
+        esac
+
+        echo -e "${GREEN} [+] Download completed for Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID ${NO_COLOR}"
+    else
+        echo "Image not found for Type: $IMAGE_TYPE, ID: $IMAGE_ID"
+    fi
+
+    # 3. Handle downloaded files if TYPE is QEMU
+    if [ "$IMAGE_TYPE" = "QEMU" ]; then
+        # 3.1. Extract archives
+        tgz_files_"$FOLDERNAME"
+        tar_gz_files_"$FOLDERNAME"
+        tar_files_"$FOLDERNAME"
+        zip_files_"$FOLDERNAME"
+        rar_files_"$FOLDERNAME"
+        ova_files_"$FOLDERNAME"
+        iso_files_"$FOLDERNAME"
+
+        # 3.2. Handle other files
+        yml_files_"$FOLDERNAME"
+        txt_files_"$FOLDERNAME"
+        sh_files_"$FOLDERNAME"
+        png_files_"$FOLDERNAME"
+        php_files_"$FOLDERNAME"
+        vmdk_files_"$FOLDERNAME"
+
+        # 3.3. Apply fix permissions command
+        fix_permissions
     fi
 }
 
-function print_separator() {
-    local TITLE=$1
-    local WIDTH=${#TITLE}
-    local SEPARATOR=""
-
-    # Calculate the required number of '=' characters to create the separator
-    for ((i = 0; i < WIDTH + 8; i++)); do
-        SEPARATOR+="="
-    done
-
-    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
-    echo -e "\033[1;33m    ${TITLE}    \033[0m"
-    echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
-}
-
-function filter_images() {
-    QUERY=$1
-    TYPES=("QEMU" "DYNAMIPS" "BIN")
-    for TYPE in "${TYPES[@]}"; do
-        search_tables "$TYPE" "$QUERY"
-    done
-}
-
-search_tables() {
-    TYPE=$1
-    NAME_TO_SEARCH_FOR=$2
-
-    FILENAME="$ISHARE2_DIR/${TYPE}.csv"
-    cp "$FILENAME" search.csv
-
-    sed -i '1d' search.csv
-
-    FLAG_TO_SHOW_RESULTS=0
-    while IFS=',' read -r col1 col2 col3 col4 col5; do
-        if grep -q "$NAME_TO_SEARCH_FOR" "search.csv"; then
-            CMD=$(grep "$NAME_TO_SEARCH_FOR" "search.csv")
-            FLAG_TO_SHOW_RESULTS=1
-            break
-        fi
-    done <search.csv
-
-    if [[ $FLAG_TO_SHOW_RESULTS -eq 1 ]]; then
-        print_separator "List of available $TYPE images"
-        if [[ $TYPE = "QEMU" ]]; then
-            echo "Number, Name, Size, Unit" >search.csv
-            echo "$CMD" >>search.csv
-            echo "$CMD" | awk -F, '{print $1,$2,$3,$4}' search.csv | column -t
-        elif [[ $TYPE != "QEMU" ]]; then
-            echo "Number, Name, Link, Size, Unit" >search.csv
-            echo "$CMD" >>search.csv
-            echo "$CMD" | awk -F, '{print $1,$2,$4,$5}' search.csv | column -t
-        fi
-        RESULTS_NUMBER=$(cat <search.csv | wc -l)
-        echo -e "\nTotal results: ${GREEN}$RESULTS_NUMBER${NO_COLOR}"
-
-        echo -e "\nTo pull an image, use the following command: \033[32mishare2 pull ${TYPE,,} <number>\033[0m"
-    fi
-
-    # Remove temp csv files
-    rm "$(pwd)"/search.csv >/dev/null 2>&1
-}
-
-function fix_permissions() {
+fix_permissions() {
     /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
     if [[ $? -eq 0 ]]; then
         echo -e "\n${GREEN} [+] Fix permissions command has been executed correctly ${NO_COLOR}"
@@ -2736,120 +1684,116 @@ function fix_permissions() {
     fi
 }
 
-function connection_tests() {
+connection_tests() {
+    # Define an associative array with service names and their respective IP addresses or domains
+    declare -A SERVICES=(
+        ["GitHub"]="github.com"
+        ["GitHub Raw Files"]="raw.githubusercontent.com"
+        ["LabHub (Onedrive)"]="labhub.eu.org"
+        ["LabHub (Google Drive)"]="drive.labhub.eu.org"
+        ["Google DNS"]="8.8.8.8"
+    )
+
     # Header
     echo -e "${YELLOW} [-] Running connection tests... ${NO_COLOR}"
-    # Check if GitHub is reachable
-    echo -e "${YELLOW} [-] Checking if GitHub is reachable... ${NO_COLOR}"
-    if ping -q -c 1 -W 1 github.com >/dev/null; then
-        echo -e "${GREEN} [+] GitHub is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] GitHub is not reachable ${NO_COLOR}"
-    fi
-    # Check if Google Sheets is reachable
-    echo -e "${YELLOW} [-] Checking if Google Sheets is reachable... ${NO_COLOR}"
-    if ping -q -c 1 -W 1 docs.google.com >/dev/null; then
-        echo -e "${GREEN} [+] Google Sheets is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] Google Sheets is not reachable ${NO_COLOR}"
-    fi
-    # Check if labhub.eu.org is reachable
-    echo -e "${YELLOW} [-] Checking if labhub.eu.org is reachable... ${NO_COLOR}"
-    if ping -q -c 1 -W 1 labhub.eu.org >/dev/null; then
-        echo -e "${GREEN} [+] labhub.eu.org is reachable. ${NO_COLOR}"
-    else
-        echo -e "${RED} [-] labhub.eu.org is not reachable ${NO_COLOR}"
-    fi
+
+    # Loop through the services and check their reachability
+    for service in "${!SERVICES[@]}"; do
+        echo -e "${YELLOW} [-] Checking if $service is reachable... ${NO_COLOR}"
+        if ping -q -c 5 -W 5 "${SERVICES[$service]}" >/dev/null; then
+            echo -e "${GREEN} [+] $service is reachable. ${NO_COLOR}"
+        else
+            echo -e "${RED} [-] $service is not reachable ${NO_COLOR}"
+        fi
+    done
+
     # Checks completed
     echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
 }
 
-function selector() {
+selector() {
     case "$1" in
     "search")
-        if [[ "$2" = "all" ]]; then
-            ishare2 search qemu
-            ishare2 search dynamips
-            ishare2 search bin
-            echo " "
-        elif [[ "$2" = "qemu" ]]; then
-            general_available_list QEMU
-        elif [[ "$2" = "dynamips" ]]; then
-            general_available_list DYNAMIPS
-        elif [[ "$2" = "bin" ]]; then
-            general_available_list BIN
-        else
-            if [[ $2 ]]; then
-                filter_images "$2"
+        QUERY="$3"
+        # Switch case to determine the type of the device to be displayed
+        case "$2" in
+        "qemu" | "iol" | "dynamips")
+            TYPE="${2^^}" # Convert to uppercase
+            search_images "$TYPE" "$QUERY"
+            ;;
+        "bin")
+            TYPE="IOL" # Treat "bin" as "iol" in uppercase
+            search_images "$TYPE" "$QUERY"
+            ;;
+        "all")
+            for type in "QEMU" "IOL" "DYNAMIPS"; do
+                TYPE="${type^^}" # Convert to uppercase
+                search_images "$TYPE"
+                echo
+            done
+            ;;
+        *)
+            if [ -n "$2" ]; then
+                FILTER="$2"
+                for type in "QEMU" "IOL" "DYNAMIPS"; do
+                    TYPE="${type^^}"
+                    search_images "$TYPE"
+                    echo
+                done
             else
-                msg_available_options_for_ishare2_search
+                echo "Usage: $SCR_NAME search <type> [keyword]"
+                echo "       $SCR_NAME search all"
+                echo "Types: qemu, iol, dynamips"
+                exit 1
             fi
-        fi
+            ;;
+        esac
         ;;
     "pull")
-        if [[ "$2" ]]; then
-            case "$2" in
-            "qemu")
-                if [[ "$3" ]]; then
-                    pull_qemu "$3" "$4"
-                else
-                    STR="Last parameter not detected"
-                    echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "Syntax: ishare2 pull qemu ${YELLOW}<number>${NO_COLOR}"
+        case "$2" in
+        "qemu" | "iol" | "dynamips" | "bin")
+            TYPE="${2^^}" # Convert to uppercase
+            if [[ "$3" ]]; then
+                if [[ "$3" = "all" ]]; then
+                    pull_all "$TYPE"
+                    exit 0
                 fi
-                ;;
-            "dynamips")
-                if [[ "$3" ]]; then
-                    pull_dynamips "$3" "$4"
-                else
-                    STR="Last parameter not detected"
-                    echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "Syntax: ishare2 pull dynamips ${YELLOW}<number>${NO_COLOR}"
-                fi
-                ;;
-            "bin")
-                if [[ "$3" ]]; then
-                    pull_bin "$3" "$4"
-                else
-                    STR="Last parameter not detected"
-                    echo -e "${RED}$STR${NO_COLOR}"
-                    echo -e "Syntax: ishare2 pull bin ${YELLOW}<number>${NO_COLOR}"
-                fi
-                ;;
-            *)
-                msg_incorrect_argument_or_no_arg_for_ishare2_pull
-                ;;
-            esac
-        else
-            msg_incorrect_argument_or_no_arg_for_ishare2_pull
-        fi
+            fi
+            pull_images "$TYPE" "$3" "$4"
+            ;;
+        *) # If the type is not specified, print the usage
+            echo "Usage: $SCR_NAME pull <type> <id>"
+            echo "       $SCR_NAME pull <type> all"
+            echo "Types: qemu, iol, dynamips"
+            ;;
+        esac
         ;;
     "installed")
         if [[ "$2" ]]; then
             case "$2" in
             "all")
-                echo -e "${GREEN}----- QEMU -----${NO_COLOR}"
+                print_separator "QEMU"
                 ishare2 installed qemu
-                echo -e "${GREEN}----- DYNAMIPS -----${NO_COLOR}"
+                print_separator "DYANMIPS"
                 ishare2 installed dynamips
-                echo -e "${GREEN}----- BIN -----${NO_COLOR}"
+                print_separator "BIN"
                 ishare2 installed bin
-                echo -e "${GREEN}----- DOCKER -----${NO_COLOR}"
+                print_separator "DOCKER"
                 ishare2 installed docker
                 ;;
             "qemu")
                 echo -e
-                ls -lh -R /opt/unetlab/addons/qemu/
+                tree -hp /opt/unetlab/addons/qemu/
                 echo -e
                 ;;
             "dynamips")
                 echo -e
-                ls -lh -R /opt/unetlab/addons/dynamips/
+                tree -hp /opt/unetlab/addons/dynamips/
                 echo -e
                 ;;
             "bin")
                 echo -e
-                ls -lh -R /opt/unetlab/addons/iol/bin/
+                tree -hp /opt/unetlab/addons/iol/bin/
                 echo -e
                 ;;
             "docker")
@@ -2857,55 +1801,41 @@ function selector() {
                 count_dockers
                 ;;
             *)
-                echo -e "Syntax:\n\nishare2 installed <type>"
-                echo -e "${YELLOW}type: all, bin, qemu, dynamips or docker${NO_COLOR}"
+                echo "Usage: $SCR_NAME installed <type>"
+                echo "       $SCR_NAME installed all"
                 ;;
             esac
         else
-            echo -e "Syntax:\n\nishare2 installed ${YELLOW}<type>${NO_COLOR}"
-            echo -e "type: all, bin, qemu, dynamips or docker"
+            echo "Usage: $SCR_NAME installed <type>"
+            echo "       $SCR_NAME installed all"
         fi
         ;;
     "labs")
         if [[ "$2" ]]; then
             if [[ "$2" = "all" ]]; then
-                install_lab_images_just_for_only_readable_labs_ALL
+                install_images_all_labs "$1"
                 exit 0
             else
-                install_lab_images_just_for_only_readable_labs "$2"
+                install_images_from_lab "$2"
                 exit 0
             fi
         fi
-        get_lab_list_just_for_only_readable_labs
+        list_labs "$1"
         ;;
     "mylabs")
         if [[ "$2" ]]; then
-            if [[ "$3" ]]; then
-                if [[ "$3" == "all" ]]; then
-                    mylabs_install_lab_images_just_for_only_readable_labs_ALL "$2" all
-                else
-                    if ! [[ -z "${3##*[!0-9]*}" ]]; then
-                        mylabs_install_lab_images_just_for_only_readable_labs "$2" "$3"
-                    else
-                        STR="The last parameter must be a number"
-                        echo -e "${RED}$STR${NO_COLOR}"
-                        echo -e "ishare2 mylabs <path> ${YELLOW}<number>${NO_COLOR}"
-                    fi
-                fi
+            if [[ "$2" = "all" ]]; then
+                install_images_all_labs "$1"
+                exit 0
             else
-                mylabs_get_lab_list_just_for_only_readable_labs "$2"
+                install_images_from_lab "$1" "$2" "$3"
+                exit 0
             fi
-        else
-            echo -e "Syntax:\n\nishare2 mylabs <path>"
-            echo "ishare2 mylabs <path> <number>"
-            echo -e "ishare2 mylabs <path> all"
         fi
+        list_labs "$1"
         ;;
     "relicense")
-        generate_a_new_license
-        ;;
-    "update")
-        manual_sources_update
+        generate_iourc_license
         ;;
     "upgrade")
         menu_ishare2_upgrade
@@ -2929,20 +1859,15 @@ function selector() {
                 ishare2_gui_restart
                 ;;
             *)
-                echo -e "${RED}Bad last argument${NO_COLOR}"
-                echo -e "Syntax:\n\nishare2 gui <option>\n"
-                echo "ishare2 gui download"
-                echo -e "ishare2 gui start"
-                echo -e "ishare2 gui stop"
-                echo -e "ishare2 gui restart"
+                echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+                echo -e "Usage: $SCR_NAME gui <action>"
+                echo -e "Actions: install, start, stop, restart"
                 ;;
             esac
         else
-            echo -e "Syntax:\n\nishare2 gui <option>\n"
-            echo "ishare2 gui download"
-            echo -e "ishare2 gui start"
-            echo -e "ishare2 gui stop"
-            echo -e "ishare2 gui restart"
+            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            echo -e "Usage: $SCR_NAME gui <action>"
+            echo -e "Actions: install, start, stop, restart"
         fi
         ;;
     "help")
@@ -2952,7 +1877,7 @@ function selector() {
         connection_tests
         ;;
     "config")
-        switch_downloader
+        create_config
         ;;
     *)
         show_ishare2_usage
@@ -2960,8 +1885,9 @@ function selector() {
     esac
 }
 
-function main() {
+main() {
     if [[ "$1" = "test" ]]; then
+        # Tests without checking if user is root
         connection_tests
         exit 0
     fi
@@ -2969,11 +1895,10 @@ function main() {
     check_ishare2_dir
     check_config
     set_max_log_lines
-    set_url_constants
-    download_files_lists
     set_yml_template_folder_location
-    check_ishare2_version_file_exists
+    fetch_sources
+    ishare2_version
     selector "$1" "$2" "$3" "$4"
 }
 
-main $@
+main "$@"
