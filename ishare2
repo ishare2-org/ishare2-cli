@@ -2,7 +2,7 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.3-beta-rc
+# Version: 3.3.2-beta
 # Last Updated: 2023-12-09 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
@@ -16,7 +16,7 @@ JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.js
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="v3.3-beta-rc"                                                                        # Current version of ishare2
+VERSION="3.3.2-beta"                                                                          # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
@@ -104,6 +104,8 @@ check_config() {
 }
 
 create_config() {
+    echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
+    install_dependencies
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
@@ -198,7 +200,6 @@ create_config() {
     remove_duplicates
     validate_conf_file
     echo -e "${GREEN} [+] Configuration file created successfully.${NO_COLOR}"
-    install_dependencies
 }
 
 remove_duplicates() {
@@ -273,6 +274,22 @@ install_dependencies() {
     done
 }
 
+check_installed() {
+    PACKAGE=$1
+    # Check if package is installed
+    if ! command -v jq &>/dev/null; then
+        echo -e "${YELLOW} [!] WARN: $PACKAGE is not installed.${NO_COLOR}"
+        install_package "$PACKAGE"
+        # Check success of package installation
+        if ! command -v "$PACKAGE" &>/dev/null; then
+            echo -e "${RED} [-] Error: Failed to install $PACKAGE.${NO_COLOR}"
+            exit 1
+        else # package is installed
+            echo -e "${GREEN} [+] $PACKAGE has been installed successfully.${NO_COLOR}"
+        fi
+    fi
+}
+
 install_package() {
     local package_name=$1
     # unlock apt
@@ -341,21 +358,20 @@ unlock_dpkg() {
 
 create_ishare2_dir() {
     echo -e "${YELLOW} [+] Creating ishare2 directory...${NO_COLOR}"
-    for dir in $ISHARE2_DIR $ISHARE2_DIR/tmp; do
-        if ! mkdir -p "$dir" 2>/dev/null; then
-            error_message=$(mkdir -p "$dir" 2>&1 >/dev/null)
-            if [[ $error_message == *"Permission denied"* ]]; then
-                echo -e "${RED} [-] Failed to create $dir: Permission denied.${NO_COLOR}"
-            else
-                echo -e "${RED} [-] Failed to create $dir. Error: $error_message${NO_COLOR}"
-            fi
-            exit 1
+    if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
+        error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
+        if [[ $error_message == *"Permission denied"* ]]; then
+            echo -e "${RED} [-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
+        else
+            echo -e "${RED} [-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
         fi
-    done
+        exit 1
+    fi
     echo -e "${GREEN} [+] Done.${NO_COLOR}"
 }
 
 fetch_json() {
+    check_installed "jq"
     # Download the JSON and store it in a temporary file
     curl -sL "$JSON_URL" >"$TEMP_JSON"
     # Check if curl command failed
@@ -1300,7 +1316,7 @@ $PNETLAB_INSTALLED
 EOF
 }
 
-tgz_files_function() {
+handle_tgz_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1316,7 +1332,7 @@ tgz_files_function() {
     fi
 }
 
-tar_gz_files_function() {
+handle_tar_gz_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1332,7 +1348,7 @@ tar_gz_files_function() {
     fi
 }
 
-tar_files_function() {
+handle_tar_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1348,7 +1364,7 @@ tar_files_function() {
     fi
 }
 
-zip_files_function() {
+handle_zip_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1364,7 +1380,7 @@ zip_files_function() {
     fi
 }
 
-rar_files_function() {
+handle_rar_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1385,7 +1401,7 @@ rar_files_function() {
     fi
 }
 
-ova_files_function() {
+handle_ova_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1401,7 +1417,7 @@ ova_files_function() {
     fi
 }
 
-iso_files_function() {
+handle_iso_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1427,7 +1443,7 @@ iso_files_function() {
     fi
 }
 
-yml_files_function() {
+handle_yml_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1444,7 +1460,7 @@ yml_files_function() {
     done
 }
 
-txt_files_function() {
+handle_txt_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1463,7 +1479,7 @@ txt_files_function() {
     done
 }
 
-sh_files_function() {
+handle_sh_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1485,7 +1501,7 @@ sh_files_function() {
     fi
 }
 
-png_files_function() {
+handle_png_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1507,7 +1523,7 @@ png_files_function() {
     fi
 }
 
-php_files_function() {
+handle_php_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1521,7 +1537,7 @@ php_files_function() {
     fi
 }
 
-vmdk_files_function() {
+handle_vmdk_files() {
     FOLDERNAME=$1
 
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
@@ -1656,21 +1672,21 @@ pull_images() {
     # 3. Handle downloaded files if TYPE is QEMU
     if [ "$IMAGE_TYPE" = "QEMU" ]; then
         # 3.1. Extract archives
-        tgz_files_"$FOLDERNAME"
-        tar_gz_files_"$FOLDERNAME"
-        tar_files_"$FOLDERNAME"
-        zip_files_"$FOLDERNAME"
-        rar_files_"$FOLDERNAME"
-        ova_files_"$FOLDERNAME"
-        iso_files_"$FOLDERNAME"
+        handle_tgz_files "$FOLDERNAME"
+        handle_tar_gz_files "$FOLDERNAME"
+        handle_tar_files "$FOLDERNAME"
+        handle_zip_files "$FOLDERNAME"
+        handle_rar_files "$FOLDERNAME"
+        handle_ova_files "$FOLDERNAME"
+        handle_iso_files "$FOLDERNAME"
 
         # 3.2. Handle other files
-        yml_files_"$FOLDERNAME"
-        txt_files_"$FOLDERNAME"
-        sh_files_"$FOLDERNAME"
-        png_files_"$FOLDERNAME"
-        php_files_"$FOLDERNAME"
-        vmdk_files_"$FOLDERNAME"
+        handle_yml_files "$FOLDERNAME"
+        handle_txt_files "$FOLDERNAME"
+        handle_sh_files "$FOLDERNAME"
+        handle_png_files "$FOLDERNAME"
+        handle_php_files "$FOLDERNAME"
+        handle_vmdk_files "$FOLDERNAME"
 
         # 3.3. Apply fix permissions command
         fix_permissions
