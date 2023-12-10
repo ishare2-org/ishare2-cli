@@ -8,7 +8,7 @@
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                    # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="beta"                                                                      # Set to main to use the main channel. Set to beta to use the beta channel.
+CHANNEL="main"                                                                      # Set to main to use the main channel. Set to beta to use the beta channel.
 JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" # Default JSON URL
 # End of ishare2 configuration
 
