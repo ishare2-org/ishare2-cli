@@ -265,6 +265,11 @@ validate_conf_file() {
     return 0
 }
 
+remove_ishare_sources() {
+    # Remove i-share.top line from sources.list
+    sed -i '/i-share.top/d' /etc/apt/sources.list
+}
+
 install_dependencies() {
     # unlock apt
     unlock_dpkg
