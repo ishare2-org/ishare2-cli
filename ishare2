@@ -271,6 +271,7 @@ remove_ishare_sources() {
 }
 
 install_dependencies() {
+    remove_ishare_sources
     # unlock apt
     unlock_dpkg
     local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
