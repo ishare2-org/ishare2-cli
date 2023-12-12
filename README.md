@@ -49,13 +49,13 @@ ishare2 is a tool that helps you download and manage images in your network emul
 ### wget
 
 ```bash
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/alpha/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 ### curl
 
 ```bash
-curl -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
+curl -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/alpha/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
 ```
 
 > Note: Run the command as root or using sudo
@@ -65,7 +65,7 @@ curl -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-
 1. Download ishare2
 
 ```bash
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2
+wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/alpha/ishare2
 ```
 
 2. Make ishare2 executable
@@ -349,11 +349,11 @@ ishare2 test
 
 ## Useful information
 
-[HELP.md](https://github.com/pnetlabrepo/ishare2/blob/main/HELP.md)
+[HELP.md](https://github.com/pnetlabrepo/ishare2/blob/alpha/HELP.md)
 
 ## See the latest changes on ishare2
 
-[CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
+[CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/alpha/CHANGELOG.md)
 
 ## Known limitations
 
