@@ -2,13 +2,13 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.3.2-stable
+# Version: 3.3.3-main
 # Last Updated: 2023-12-12 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                    # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="main"                                                                      # Set to main to use the main channel. Set to beta to use the beta channel.
+CHANNEL="main"                                                                      # Set to main to use the main channel. Set to main to use the main channel.
 JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" # Default JSON URL
 # End of ishare2 configuration
 
@@ -16,7 +16,7 @@ JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.js
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="3.3.2-stable"                                                                        # Current version of ishare2
+VERSION="3.3.3-main"                                                                          # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
@@ -271,6 +271,7 @@ remove_ishare_sources() {
 }
 
 install_dependencies() {
+    remove_ishare_sources
     # unlock apt
     unlock_dpkg
     local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
@@ -1032,8 +1033,8 @@ menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
         "Upgrade PNETLab v5 STABLE"
-        "Upgrade PNETLab v5 BETA"
-        "Upgrade PNETLab v6 BETA"
+        "Upgrade PNETLab v5 main"
+        "Upgrade PNETLab v6 main"
     )
 
     # Set the prompt for the select menu
@@ -1047,8 +1048,8 @@ menu_ishare2_upgrade_pnetlab() {
             bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5")"
             ;;
         2)
-            # Upgrade PNETLab v5 Beta
-            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_BETA")"
+            # Upgrade PNETLab v5 main
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_main")"
             ;;
         3)
             # Upgrade PNETLab v6
