@@ -2,8 +2,8 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.3.3-main
-# Last Updated: 2023-12-12 yyyy-mm-dd
+# Version: 3.3.4-main
+# Last Updated: 2024-01-03 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
@@ -16,7 +16,7 @@ JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.js
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="3.3.3-main"                                                                          # Current version of ishare2
+VERSION="3.3.4-main"                                                                          # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
@@ -105,7 +105,16 @@ check_config() {
 
 create_config() {
     echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
-    install_dependencies
+    if ! install_dependencies; then
+        echo -e "${RED} [-] Failed to install dependencies. Please install them manually and try again.${NO_COLOR}"
+        echo -e "${YELLOW} Attempting to fix apt...${NO_COLOR}"
+        if ! remove_ishare_sources; then
+            echo -e "${RED} [-] Failed to fix apt automatically. Please fix apt manually and try again.${NO_COLOR}"
+            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
+            echo -e "${YELLOW} [!] Suggestions:\n - Run: apt-get update manually and check for errors.\n - Run: dpkg --configure -a and check for errors.\n - Google the error message using keywords from the error message.${NO_COLOR}"
+            exit 1
+        fi
+    fi
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
@@ -296,6 +305,14 @@ check_installed() {
     fi
 }
 
+replace_pnetlab_sources() {
+    # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
+    echo -e "${YELLOW} [+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
+    sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
+}
+
 install_package() {
     local package_name=$1
     # unlock apt
@@ -305,7 +322,8 @@ install_package() {
         echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
         echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
         if ! apt-get update; then
-            echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
+            echo -e "${RED} [-] Failed to update package lists: apt-get update failed.\nYou must fix issues with apt before continuing.${NO_COLOR}"
+            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
             exit 1
         fi
 
@@ -1033,8 +1051,8 @@ menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
         "Upgrade PNETLab v5 STABLE"
-        "Upgrade PNETLab v5 main"
-        "Upgrade PNETLab v6 main"
+        "Upgrade PNETLab v5 BETA"
+        "Upgrade PNETLab v6 BETA"
     )
 
     # Set the prompt for the select menu
@@ -1048,8 +1066,8 @@ menu_ishare2_upgrade_pnetlab() {
             bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5")"
             ;;
         2)
-            # Upgrade PNETLab v5 main
-            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_main")"
+            # Upgrade PNETLab v5 Beta
+            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_BETA")"
             ;;
         3)
             # Upgrade PNETLab v6
