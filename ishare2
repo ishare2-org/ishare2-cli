@@ -105,7 +105,16 @@ check_config() {
 
 create_config() {
     echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
-    install_dependencies
+    if ! install_dependencies; then
+        echo -e "${RED} [-] Failed to install dependencies. Please install them manually and try again.${NO_COLOR}"
+        echo -e "${YELLOW} Attempting to fix apt...${NO_COLOR}"
+        if ! remove_ishare_sources; then
+            echo -e "${RED} [-] Failed to fix apt automatically. Please fix apt manually and try again.${NO_COLOR}"
+            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
+            echo -e "${YELLOW} [!] Suggestions:\n - Run: apt-get update manually and check for errors.\n - Run: dpkg --configure -a and check for errors.\n - Google the error message using keywords from the error message.${NO_COLOR}"
+            exit 1
+        fi
+    fi
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
     echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
@@ -296,6 +305,14 @@ check_installed() {
     fi
 }
 
+replace_pnetlab_sources() {
+    # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
+    echo -e "${YELLOW} [+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
+    sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
+}
+
 install_package() {
     local package_name=$1
     # unlock apt
@@ -305,7 +322,8 @@ install_package() {
         echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
         echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
         if ! apt-get update; then
-            echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
+            echo -e "${RED} [-] Failed to update package lists: apt-get update failed.\nYou must fix issues with apt before continuing.${NO_COLOR}"
+            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
             exit 1
         fi
 
