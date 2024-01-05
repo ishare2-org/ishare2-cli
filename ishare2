@@ -105,16 +105,29 @@ check_config() {
 
 create_config() {
     echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
-    if ! install_dependencies; then
-        echo -e "${RED} [-] Failed to install dependencies. Please install them manually and try again.${NO_COLOR}"
-        echo -e "${YELLOW} Attempting to fix apt in 10 seconds...${NO_COLOR}"
-        sleep 10
-        if ! replace_pnetlab_sources; then
-            echo -e "${RED} [-] Failed to fix apt automatically. Please fix apt manually and try again.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
-            echo -e "${YELLOW} [!] Suggestions:\n - Run: apt-get update manually and check for errors.\n - Run: dpkg --configure -a and check for errors.\n - Google the error message using keywords from the error message.${NO_COLOR}"
-            exit 1
+    MAX_RETRIES=3
+    retry_counter=0
+
+    while [[ $retry_counter -lt $MAX_RETRIES ]]; do
+        if install_dependencies; then
+            break
         fi
+        echo -e "${RED} [-] Failed to install dependencies. Retrying...${NO_COLOR}"
+        retry_counter=$((retry_counter + 1))
+        sleep 10
+    done
+
+    if [[ $retry_counter -eq $MAX_RETRIES ]]; then
+        MAX_RETRIES=3
+        retry_counter=0
+        while [[ $retry_counter -lt $MAX_RETRIES ]]; do
+            if replace_pnetlab_sources; then
+                break
+            fi
+            echo -e "${RED} [-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
+            retry_counter=$((retry_counter + 1))
+            sleep 10
+        done
     fi
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
