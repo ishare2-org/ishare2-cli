@@ -107,7 +107,8 @@ create_config() {
     echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
     if ! install_dependencies; then
         echo -e "${RED} [-] Failed to install dependencies. Please install them manually and try again.${NO_COLOR}"
-        echo -e "${YELLOW} Attempting to fix apt...${NO_COLOR}"
+        echo -e "${YELLOW} Attempting to fix apt in 10 seconds...${NO_COLOR}"
+        sleep 10
         if ! replace_pnetlab_sources; then
             echo -e "${RED} [-] Failed to fix apt automatically. Please fix apt manually and try again.${NO_COLOR}"
             echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
