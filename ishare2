@@ -338,7 +338,7 @@ install_package() {
         if ! apt-get update; then
             echo -e "${RED} [-] Failed to update package lists: apt-get update failed.\nYou must fix issues with apt before continuing.${NO_COLOR}"
             echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
-            exit 1
+            # exit 1
         fi
 
         echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
