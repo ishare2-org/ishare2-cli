@@ -8,7 +8,7 @@
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                    # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="alpha"                                                                     # Set to main to use the main channel. Set to beta to use the beta channel.
+CHANNEL="main"                                                                      # Set to main to use the main channel. Set to main to use the main channel.
 JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" # Default JSON URL
 # End of ishare2 configuration
 
@@ -105,15 +105,29 @@ check_config() {
 
 create_config() {
     echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
-    if ! install_dependencies; then
-        echo -e "${RED} [-] Failed to install dependencies. Please install them manually and try again.${NO_COLOR}"
-        echo -e "${YELLOW} Attempting to fix apt...${NO_COLOR}"
-        if ! remove_ishare_sources; then
-            echo -e "${RED} [-] Failed to fix apt automatically. Please fix apt manually and try again.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
-            echo -e "${YELLOW} [!] Suggestions:\n - Run: apt-get update manually and check for errors.\n - Run: dpkg --configure -a and check for errors.\n - Google the error message using keywords from the error message.${NO_COLOR}"
-            exit 1
+    MAX_RETRIES=3
+    retry_counter=0
+
+    while [[ $retry_counter -lt $MAX_RETRIES ]]; do
+        if install_dependencies; then
+            break
         fi
+        echo -e "${RED} [-] Failed to install dependencies. Retrying...${NO_COLOR}"
+        retry_counter=$((retry_counter + 1))
+        sleep 10
+    done
+
+    if [[ $retry_counter -eq $MAX_RETRIES ]]; then
+        MAX_RETRIES=3
+        retry_counter=0
+        while [[ $retry_counter -lt $MAX_RETRIES ]]; do
+            if replace_pnetlab_sources; then
+                break
+            fi
+            echo -e "${RED} [-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
+            retry_counter=$((retry_counter + 1))
+            sleep 10
+        done
     fi
     echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
     echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
@@ -322,8 +336,7 @@ install_package() {
         echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
         echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
         if ! apt-get update; then
-            echo -e "${RED} [-] Failed to update package lists: apt-get update failed.\nYou must fix issues with apt before continuing.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
+            echo -e "${RED} [-] Failed to update package lists.${NO_COLOR}"
             exit 1
         fi
 
