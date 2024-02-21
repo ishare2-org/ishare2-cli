@@ -39,29 +39,26 @@ ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
 rotate_mirrors() {
     # Rotate mirrors
     source $ISHARE2_CONF_FILE
-    cat $ISHARE2_CONF_FILE
-    echo "Mirror in conf: $JSON_URL"
     # Create unset JSON_URL if it does not exist
     if ! grep -q "JSON_URL" "$ISHARE2_CONF_FILE"; then
         echo "JSON_URL=" >>"$ISHARE2_CONF_FILE"
     fi
     if [[ $ROTATE == true ]]; then
-        echo "Rotate was set to true"
+        echo "Rotate was set to true" >>$LOG_FILE
         if [[ $JSON_URL == ${MIRRORS[0]} ]]; then
-            echo "Setting JSON_URL to ${MIRRORS[1]}"
+            echo "Setting JSON_URL to ${MIRRORS[1]}" >>$LOG_FILE
             JSON_URL=${MIRRORS[1]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[1]}|" "$ISHARE2_CONF_FILE"
         elif [[ $JSON_URL == ${MIRRORS[1]} ]]; then
-            echo "Setting JSON_URL to ${MIRRORS[0]}"
+            echo "Setting JSON_URL to ${MIRRORS[0]}" >>$LOG_FILE
             JSON_URL=${MIRRORS[0]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
         elif [[ -z $JSON_URL ]]; then # If JSON_URL is empty, set it to the first mirror
-            echo "Setting JSON_URL to ${MIRRORS[0]}"
+            echo "Setting JSON_URL to ${MIRRORS[0]}" >>$LOG_FILE
             JSON_URL=${MIRRORS[0]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
         fi
     fi
-    echo "ROTATE is $ROTATE"
 }
 
 print_separator() {
