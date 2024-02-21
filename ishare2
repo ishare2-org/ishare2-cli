@@ -41,6 +41,36 @@ logger() {
     echo -e "$1" >>$LOG_FILE
 }
 
+check_updates() {
+    LATEST_VERSION=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version)
+    if [[ $LATEST_VERSION != $VERSION ]]; then
+        # Make an array of messages
+        messages=(
+            "A new version of ishare2 is available."
+            "Current version: $VERSION"
+            "Latest version: $LATEST_VERSION"
+            "Run: ishare2 upgrade to update to the latest version."
+        )
+        print_box "${messages[@]}"
+    fi
+
+    # Check if there's an MOTD message on GitHub for the current date
+    MOTD=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.txt)
+    # Check MOTD date, format: STARTDATE: 2024-02-21 (yyyy-mm-dd)
+    MOTD_DATE=$(echo "$MOTD" | grep -oP 'STARTDATE: \K\d{4}-\d{2}-\d{2}')
+    # Check MOTD end date, format: ENDDATE: 2024-02-23 (yyyy-mm-dd)
+    MOTD_ENDDATE=$(echo "$MOTD" | grep -oP 'ENDDATE: \K\d{4}-\d{2}-\d{2}')
+    # Get the current date
+    CURRENT_DATE=$(date +%F)
+    # Check if the MOTD is not empty and the current date is within the range
+    if [[ -n $MOTD && $CURRENT_DATE -ge $MOTD_DATE && $CURRENT_DATE -le $MOTD_ENDDATE ]]; then
+        # If the MOTD is not empty and the current date is within the range, print the MOTD MESSAGE:
+        MOTD_MESSAGE=$(echo "$MOTD" | grep -oP 'MESSAGE: \K.*')
+        echo -e "${YELLOW}[!] MOTD:${NO_COLOR}"
+        echo "$MOTD_MESSAGE"
+    fi
+}
+
 print_box() {
     # Calculate the width based on the length of the longest message
     messages=("$@")
@@ -2036,6 +2066,7 @@ selector() {
 }
 
 main() {
+    check_updates
     if [[ "$1" = "test" ]]; then
         # Tests without checking if user is root
         connection_tests
