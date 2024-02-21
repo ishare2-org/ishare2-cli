@@ -501,12 +501,38 @@ download_file_aria2() {
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
+        echo -e "${GREEN}\n [+] The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
         rm -f error.log
     else
         echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
         exit 1
     fi
+    # Check if file size is less than 20KB and its extension is not excluded
+    local excluded_extensions=("html" "txt" "php" "yml" "md" "json" "sh" "yaml" "txt")
+
+    if [ -f "$output_dir$output_name" ] && [ $(stat -c%s "$output_dir$output_name") -lt 20000 ]; then
+        is_excluded=false
+        for ext in "${excluded_extensions[@]}"; do
+            if [ "${output_name##*.}" = "$ext" ]; then
+                is_excluded=true
+                break
+            fi
+        done
+
+        if [ "$is_excluded" = false ]; then
+            echo -e "${RED} [-] The file size is too small. The file may be corrupted.${NO_COLOR}"
+            # Check if html file is downloaded instead of the actual file, key words: "DOCTYPE", "<html>", Bhadoo
+            if grep -q "DOCTYPE" "$output_dir$output_name" || grep -q "<html>" "$output_dir$output_name" || grep -q "Bhadoo" "$output_dir$output_name"; then
+                echo -e "${RED} [-] The file may be corrupted. The file may be an HTML file instead of the actual file.${NO_COLOR}"
+            fi
+            # Show troubleshooting steps
+            echo -e "${YELLOW} [!] Troubleshooting:${NO_COLOR}"
+            echo -e "${YELLOW} [!] 1) Switch mirrors, if you have mirrors rotation enabled then run the command again using the --overwrite flag.${NO_COLOR}"
+            echo -e "${YELLOW} [!] 2) If the issue persists, visit the live repository through your web browser and download the file manually.${NO_COLOR}"
+            echo -e "${YELLOW} [!] 3) If the issue persists, report the issue to the ishare2 team on Telegram.${NO_COLOR}"
+        fi
+    fi
+
 }
 
 download_file_curl() { # $1 = url, $2 = output
@@ -524,7 +550,7 @@ download_file_curl() { # $1 = url, $2 = output
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
+        echo -e "${GREEN}\n [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -559,7 +585,7 @@ download_file_wget() {
 
     # Check if wget command failed
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN} [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
+        echo -e "${GREEN}\n [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
