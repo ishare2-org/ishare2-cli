@@ -1,0 +1,4 @@
+STARTDATE:2024-02-21
+ENDDATE:2024-02-23
+
+MESSAGE:Welcome to ishare2! This is a new feature!
