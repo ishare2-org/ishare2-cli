@@ -36,6 +36,11 @@ SCR_NAME=${SCR_NAME%.*}
 # Configuration file
 ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
 
+logger() {
+    # Log the output to the log file
+    echo -e "$1" >>$LOG_FILE
+}
+
 rotate_mirrors() {
     # Rotate mirrors
     source $ISHARE2_CONF_FILE
@@ -44,17 +49,17 @@ rotate_mirrors() {
         echo "JSON_URL=" >>"$ISHARE2_CONF_FILE"
     fi
     if [[ $ROTATE == true ]]; then
-        echo "Rotate was set to true" >>$LOG_FILE
+        logger "Rotating mirrors..."
         if [[ $JSON_URL == ${MIRRORS[0]} ]]; then
-            echo "Setting JSON_URL to ${MIRRORS[1]}" >>$LOG_FILE
+            logger "Setting JSON_URL to ${MIRRORS[1]}"
             JSON_URL=${MIRRORS[1]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[1]}|" "$ISHARE2_CONF_FILE"
         elif [[ $JSON_URL == ${MIRRORS[1]} ]]; then
-            echo "Setting JSON_URL to ${MIRRORS[0]}" >>$LOG_FILE
+            logger "Setting JSON_URL to ${MIRRORS[0]}"
             JSON_URL=${MIRRORS[0]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
         elif [[ -z $JSON_URL ]]; then # If JSON_URL is empty, set it to the first mirror
-            echo "Setting JSON_URL to ${MIRRORS[0]}" >>$LOG_FILE
+            logger "Setting JSON_URL to ${MIRRORS[0]}"
             JSON_URL=${MIRRORS[0]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
         fi
@@ -85,24 +90,24 @@ check_ishare2_dir() {
 
 fetch_sources() {
     # Fetch the sources.list from the repository
-    echo "Fetching sources.list from $SOURCES_URL..." >>$LOG_FILE
+    logger "Fetching sources.list..."
     check_ishare2_dir
     # Cache the sources.list file for 10 minutes
     if [[ -f $ISHARE2_DIR/sources.list && $(find "$ISHARE2_DIR/sources.list" -mmin -10) ]]; then
-        echo "Using cached sources.list file." >>$LOG_FILE
+        logger "Using cached sources.list file."
     else
-        echo "Downloading sources.list file..." >>$LOG_FILE
+        logger "Downloading sources.list from $SOURCES_URL"
         # Backup the old sources.list file
         if [[ -f $ISHARE2_DIR/sources.list ]]; then
             mv $ISHARE2_DIR/sources.list $ISHARE2_DIR/sources.list.bak
         fi
         # If download failed, use the cached sources.list file
         if ! download_file_curl "$SOURCES_URL" "$ISHARE2_DIR/sources.list"; then
-            echo "Failed to update sources. Using cached sources.list file." >>$LOG_FILE
+            logger "Failed to download sources.list. Using the old sources.list file."
             # Restore the old sources.list file
             mv $ISHARE2_DIR/sources.list.bak $ISHARE2_DIR/sources.list
         fi
-        echo "Done." >>$LOG_FILE
+        logger "Downloaded sources.list successfully."
     fi
     # Use sources.list file
     source $ISHARE2_DIR/sources.list
@@ -271,7 +276,7 @@ remove_duplicates() {
     # Remove duplicate lines from the configuration file
     awk '!seen[$0]++' "$config_file" >"$config_file.tmp" && mv "$config_file.tmp" "$config_file"
 
-    echo -e "${GREEN} [+] Duplicates removed from the configuration file.${NO_COLOR}" >>$LOG_FILE
+    logger "Removed duplicate lines from the configuration file."
 }
 
 validate_conf_file() {
@@ -308,14 +313,14 @@ validate_conf_file() {
         if $is_allowed || [[ "$line" != *=* ]]; then
             filtered_content+="$line"$'\n'
         else
-            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>"$LOG_FILE"
+            logger "Removed invalid variable \"$var_name\" from the configuration file."
         fi
     done <"$ISHARE2_CONF_FILE"
 
     # Write the filtered content back to the configuration file
     echo "$filtered_content" >"$ISHARE2_CONF_FILE"
 
-    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>"$LOG_FILE"
+    logger "Validated the configuration file."
     # shellcheck source=/opt/ishare2/cli/ishare2.conf
     source "$ISHARE2_CONF_FILE"
     return 0
@@ -376,13 +381,14 @@ install_package() {
         echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
         if ! apt-get install -y "$package_name"; then
             echo -e "${RED} [-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
+            echo -e "${YELLOW} [!] Run: apt-get install -y $package_name${NO_COLOR}"
             exit 1
         fi
     else
-        echo -e "${GREEN} [+] $package_name already is installed.${NO_COLOR}" >>$LOG_FILE
-        echo -e "${YELLOW} [+] Updating $package_name...${NO_COLOR}" >>$LOG_FILE
+        logger "Package $package_name is already installed."
+        logger "Updating $package_name..."
         if ! apt-get install --only-upgrade "$package_name"; then
-            echo -e "${RED} [-] Failed to update $package_name.${NO_COLOR}" >>$LOG_FILE
+            logger "Failed to update $package_name."
             exit 1
         fi
     fi
@@ -541,7 +547,7 @@ download_file_curl() { # $1 = url, $2 = output
     touch $ISHARE2_DIR/tmp/curl_error
     local url="$1"
     local output="$2"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$LOG_FILE
+    logger "Downloading file from $url..."
     if [ "$SSL_CHECK" = true ]; then
         curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error
     else
@@ -549,7 +555,7 @@ download_file_curl() { # $1 = url, $2 = output
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}\n [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
+        logger "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -574,7 +580,7 @@ download_file_wget() {
         output_name=$(basename "$url")
     fi
     local output="$output_dir/$output_name"
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}" >>$LOG_FILE
+    logger "Downloading file from $url..."
 
     if [ "$SSL_CHECK" = true ]; then
         wget -O "$output" "$url" -q --show-progress --content-disposition
@@ -584,7 +590,7 @@ download_file_wget() {
 
     # Check if wget command failed
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}\n [+] The file has been downloaded successfully to $output. ${NO_COLOR}" >>$LOG_FILE
+        logger "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
@@ -1737,7 +1743,7 @@ pull_images() {
     esac
 
     if [ -n "$download_urls" ]; then
-        echo "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID, Size: $image_size, Download URLs: $download_urls, Download Path: $download_path" >>"$LOG_FILE"
+        logger -s -t "ishare2" "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
         echo -e "${YELLOW} [!] Downloading Image... ${NO_COLOR}"
         echo -e "${YELLOW} [i] Image Name: ${NO_COLOR} $image_name"
         echo -e "${YELLOW} [i] Image Size: ${NO_COLOR} $image_size"
