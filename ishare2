@@ -497,7 +497,7 @@ download_file_aria2() {
     local output_dir="$2"
     local output_name="$3"
 
-    echo -e "${YELLOW} [+] Downloading file from $url... ${NO_COLOR}"
+    logger "Downloading file from $url..."
     rm -f error.log
     if [ "$SSL_CHECK" = true ]; then
         aria2c --console-log-level=warn -j 2 -c --split=4 --min-split-size=20M --max-connection-per-server=4 --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"
@@ -506,7 +506,9 @@ download_file_aria2() {
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}\n [+] The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
+        # line break
+        echo
+        echo -e "${YELLOW}[+] ${GREEN}The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
         rm -f error.log
     else
         echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
@@ -1744,14 +1746,17 @@ pull_images() {
 
     if [ -n "$download_urls" ]; then
         logger -s -t "ishare2" "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
-        echo -e "${YELLOW} [!] Downloading Image... ${NO_COLOR}"
-        echo -e "${YELLOW} [i] Image Name: ${NO_COLOR} $image_name"
-        echo -e "${YELLOW} [i] Image Size: ${NO_COLOR} $image_size"
-        echo -e "${YELLOW} [i] Image Type: ${NO_COLOR} $IMAGE_TYPE"
-        echo -e "${YELLOW} [i] Image ID: ${NO_COLOR} $IMAGE_ID"
-        echo -e "${YELLOW} [i] Download path: ${NO_COLOR} $download_path"
+        echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
+        printf "%-20s: %s\n" " - Image Name" "$image_name"
+        printf "%-20s: %s\n" " - Image Size" "$image_size"
+        printf "%-20s: %s\n" " - Image Type" "$IMAGE_TYPE"
+        printf "%-20s: %s\n" " - Image ID" "$IMAGE_ID"
+        printf "%-20s: %s\n" " - Download path" "$download_path"
         # Create the directory if it doesn't exist
+        logger "Creating directory: $IMAGE_PATH"
         mkdir -p "$download_path"
+
+        echo -e "${YELLOW}[!] DOWNLOADING IMAGE ${NO_COLOR}"
 
         # Iterate through the download URLs and download each file
         case $IMAGE_TYPE in
@@ -1770,7 +1775,7 @@ pull_images() {
             ;;
         esac
 
-        echo -e "${GREEN} [+] Download completed for Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID ${NO_COLOR}"
+        echo -e "${YELLOW}[+] ${BLUE}DOWNLOAD COMPLETED! ${NO_COLOR}"
     else
         echo "Image not found for Type: $IMAGE_TYPE, ID: $IMAGE_ID"
     fi
