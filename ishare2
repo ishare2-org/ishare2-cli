@@ -41,6 +41,27 @@ logger() {
     echo -e "$1" >>$LOG_FILE
 }
 
+print_box() {
+    # Calculate the width based on the length of the longest message
+    messages=("$@")
+
+    # Find the length of the longest message
+    max_length=0
+    for message in "${messages[@]}"; do
+        length=${#message}
+        if ((length > max_length)); then
+            max_length=$length
+        fi
+    done
+
+    # Display information in a box-like component with adjusted width
+    echo -e "${YELLOW}┌$(printf '─%.0s' $(seq 1 $((max_length + 4))))┐${NO_COLOR}"
+    for message in "${messages[@]}"; do
+        printf "${YELLOW}│${NO_COLOR} %-$(($max_length + 2))s ${YELLOW}│${NO_COLOR}\n" "$message"
+    done
+    echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
+}
+
 rotate_mirrors() {
     # Rotate mirrors
     source $ISHARE2_CONF_FILE
