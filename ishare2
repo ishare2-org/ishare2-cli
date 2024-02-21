@@ -1254,6 +1254,8 @@ search_images() {
             echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
         elif [[ $total_count -eq 1 ]]; then
             echo -e "\n${GREEN}$total_count $TYPE image found for \"$FILTER\"${NO_COLOR}"
+        elif [[ $FILTER == "" ]]; then
+            echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
         else
             echo -e "\n${GREEN}$total_count $TYPE images found for \"$FILTER\"${NO_COLOR}"
         fi
