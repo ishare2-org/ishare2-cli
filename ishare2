@@ -2,21 +2,22 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.3.4-alpha
-# Last Updated: 2024-01-03 yyyy-mm-dd
+# Version: 3.4.0-alpha
+# Last Updated: 2024-02-21 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
-USE_ARIA2C=false                                                                    # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
-SSL_CHECK="true"                                                                    # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="main"                                                                      # Set to main to use the main channel. Set to main to use the main channel.
-JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" # Default JSON URL
+USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
+SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
+CHANNEL="alpha"                                                                                                                                                 # Set to main to use the main channel. Set to main to use the main channel.
+MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
+JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
 # End of ishare2 configuration
 
 # Initialize variables
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="3.3.4-alpha"                                                                         # Current version of ishare2
+VERSION="3.4.0-alpha"                                                                         # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
@@ -169,13 +170,13 @@ create_config() {
     read -p " [+] (y/n): " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW} [!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
-        echo "USE_ARIA2C=true" >$ISHARE2_DIR/ishare2.conf
+        echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
         install_aria2c
         echo "Press any key to continue..."
         read -n 1
     else
         echo -e "${YELLOW} [!] Using wget is slower than aria2c, however, it is more stable.\nTo enable aria2c, run: ishare2 config and answer yes to this question.${NO_COLOR}"
-        echo "USE_ARIA2C=false" >$ISHARE2_DIR/ishare2.conf
+        echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
         echo "Press any key to continue..."
         read -n 1
     fi
@@ -191,7 +192,7 @@ create_config() {
         SSL_CHECK=true
         ;;
     esac
-    echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_DIR/ishare2.conf
+    echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_CONF_FILE
 
     echo -e "${YELLOW} [+] Choose the update channel.${NO_COLOR}"
 
@@ -216,38 +217,43 @@ create_config() {
         echo -e "${YELLOW} [!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
     fi
 
-    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_DIR/ishare2.conf
+    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_CONF_FILE
 
     # Provisional mirror selection feature. Will be replaced with a better solution in the future.
     # Ask if the user wants to use the default mirror, another mirror or a custom mirror
     echo -e "${YELLOW} [+] Choose a mirror.${NO_COLOR}"
     # Show list of mirrors
-    echo " 1) Google Drive mirror"
-    echo " 2) Onedrive mirror"
-    echo " 3) Custom mirror"
+    echo " 1) Rotate mirrors (recommended)"
+    echo " 2) Google Drive mirror"
+    echo " 3) Onedrive mirror"
+    echo " 4) Custom mirror"
     # Ask the user to select a mirror
     read -p " [*] Enter the number of the mirror you want to use (default: 1): " -r
     case $REPLY in
     2)
-        JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json"
-        echo -e "${YELLOW} [!] Using Onedrive mirror.${NO_COLOR}"
+        JSON_URL=${MIRRORS[0]}
+        echo -e "${YELLOW} [!] Using Google Drive mirror.${NO_COLOR}"
         ;;
     3)
+        JSON_URL=${MIRRORS[1]}
+        echo -e "${YELLOW} [!] Using Onedrive mirror.${NO_COLOR}"
+        ;;
+    4)
         echo -e "${YELLOW} [+] Enter the URL of the mirror.${NO_COLOR}"
         read -p " [*] Enter the URL of the mirror you want to use: " -r
         JSON_URL="$REPLY"
         echo -e "${YELLOW} [!] Using custom mirror: $JSON_URL.${NO_COLOR}"
         ;;
     *)
-        JSON_URL="https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json"
-        echo -e "${YELLOW} [!] Using Google Drive mirror.${NO_COLOR}"
+        echo -e "${YELLOW} [!] ishare2 will rotate among the available mirrors.${NO_COLOR}"
+        echo "ROTATE=true" >>$ISHARE2_CONF_FILE
         ;;
     esac
 
-    echo "JSON_URL=\"$JSON_URL\"" >>$ISHARE2_DIR/ishare2.conf
+    echo "JSON_URL=\"$JSON_URL\"" >>$ISHARE2_CONF_FILE
 
     # Validate the configuration file
-    if [ ! -f "$ISHARE2_DIR/ishare2.conf" ]; then
+    if [ ! -f "$ISHARE2_CONF_FILE" ]; then
         echo -e "${RED} [!] Failed to create configuration file. Please try again.${NO_COLOR}"
         exit 1
     fi
@@ -257,7 +263,7 @@ create_config() {
 }
 
 remove_duplicates() {
-    local config_file="$ISHARE2_DIR/ishare2.conf"
+    local config_file="$ISHARE2_CONF_FILE"
 
     # Check if the configuration file exists
     if [ ! -f "$config_file" ]; then
@@ -272,16 +278,15 @@ remove_duplicates() {
 }
 
 validate_conf_file() {
-    local config_file="$ISHARE2_DIR/ishare2.conf"
 
     # Check if the configuration file exists
-    if [ ! -f "$config_file" ]; then
+    if [ ! -f "$ISHARE2_CONF_FILE" ]; then
         echo -e "${RED} [!] Configuration file does not exist.${NO_COLOR}"
         return 1
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL" "ROTATE")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
@@ -291,8 +296,8 @@ validate_conf_file() {
             continue
         fi
 
-        # Extract variable name
-        local var_name="${line%%=*}"
+        # Extract variable name by trimming leading and trailing whitespaces
+        local var_name="$(echo "$line" | awk -F '=' '{gsub(/^[ \t]+|[ \t]+$/, "", $1); print $1}')"
 
         # Check if the variable is allowed
         is_allowed=false
@@ -303,19 +308,19 @@ validate_conf_file() {
             fi
         done
 
-        if $is_allowed; then
+        if $is_allowed || [[ "$line" != *=* ]]; then
             filtered_content+="$line"$'\n'
         else
-            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>$LOG_FILE
+            echo -e "${RED} [!] Removing invalid variable from the configuration file: $line.${NO_COLOR}" >>"$LOG_FILE"
         fi
-    done <"$config_file"
+    done <"$ISHARE2_CONF_FILE"
 
     # Write the filtered content back to the configuration file
-    echo "$filtered_content" >"$config_file"
+    echo "$filtered_content" >"$ISHARE2_CONF_FILE"
 
-    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>$LOG_FILE
+    echo -e "${GREEN} [+] Configuration file validated and updated.${NO_COLOR}" >>"$LOG_FILE"
     # shellcheck source=/opt/ishare2/cli/ishare2.conf
-    source "$config_file"
+    source "$ISHARE2_CONF_FILE"
     return 0
 }
 
@@ -458,7 +463,7 @@ download_file() {
     local url="$1"
     local output="$2"
     local options="$3"
-    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_DIR/ishare2.conf | cut -d "=" -f2)
+    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
 
     if [[ $USE_ARIA2C == "true" ]]; then
         # Check if aria2c is installed
@@ -1984,6 +1989,7 @@ main() {
     set_yml_template_folder_location
     fetch_sources
     ishare2_version
+    rotate_mirrors
     selector "$1" "$2" "$3" "$4"
 }
 
