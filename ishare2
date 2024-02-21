@@ -461,6 +461,8 @@ download_file() {
     local output="$2"
     local options="$3"
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
+    # Rotate mirrors if enabled
+    rotate_mirrors
 
     if [[ $USE_ARIA2C == "true" ]]; then
         # Check if aria2c is installed
