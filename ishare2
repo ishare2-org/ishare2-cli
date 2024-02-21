@@ -2016,7 +2016,6 @@ main() {
     set_yml_template_folder_location
     fetch_sources
     ishare2_version
-    rotate_mirrors
     selector "$1" "$2" "$3" "$4"
 }
 
