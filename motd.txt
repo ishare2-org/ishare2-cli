@@ -1,4 +1,3 @@
-STARTDATE:2024-02-21
-ENDDATE:2024-02-23
-
-MESSAGE:Welcome to ishare2! This is a new feature!
+STARTDATE: 2024-02-21
+ENDDATE: 2024-02-23
+MESSAGE: This is the Message of the Day (MOTD). It can include multiple lines and informative content.
