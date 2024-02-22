@@ -64,7 +64,7 @@ check_motd() {
     fi
 
     # Check if there's an MOTD message on GitHub for the current date
-    MOTD=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.txt)
+    MOTD=$(curl -sN https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.txt)
 
     # Check MOTD date, format: STARTDATE: 2024-02-21 (yyyy-mm-dd)
     MOTD_DATE=$(date -d $(echo "$MOTD" | grep -oP 'STARTDATE: \K\d{4}-\d{2}-\d{2}') +%s)
@@ -80,7 +80,7 @@ check_motd() {
         # Debug: Check if the current date is within the range
         if [[ $CURRENT_DATE -ge $MOTD_DATE && $CURRENT_DATE -le $MOTD_ENDDATE ]]; then
             # Print the MOTD MESSAGE
-            MOTD_MESSAGE=$(echo "$MOTD" | awk -v RS='MESSAGE: ' 'NR>1{print $0}' | tr -d '\n')
+            MOTD_MESSAGE=$(echo "$MOTD" | awk -v RS='MESSAGE: ' 'NR>1{print $0}')
             echo -e "${YELLOW}[!] Latest Updates from the ishare2 Developer:${NO_COLOR}"
             echo "$MOTD_MESSAGE"
         fi
