@@ -1,7 +1,10 @@
 STARTDATE: 2024-02-21
 ENDDATE: 2024-02-23
-MESSAGE: Welcome to the latest version of ishare2!
+MESSAGE: Welcome to the BETA version of ishare2!
+
 We've made a couple of changes to ishare2:
 1. Mirrors rotation has been implemented.
 2. MOTD is now displayed when a user uses ishare2. This will be useful for displaying important messages to users!
 3. You can disable the MOTD by setting the environment variable MOTD to false.
+
+Please report any bugs or issues to the ishare2 GitHub page: https://github.com/ishare2-org/ishare2-cli/issues or join our Telegram group: https://t.me/NetLabHub
