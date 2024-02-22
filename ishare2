@@ -54,20 +54,36 @@ check_updates() {
         print_box "${messages[@]}"
     fi
 
+    check_motd
+}
+
+check_motd() {
+    # If MOTD is disabled, return
+    if [[ $MOTD == "false" ]]; then
+        return
+    fi
+
     # Check if there's an MOTD message on GitHub for the current date
     MOTD=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.txt)
+
     # Check MOTD date, format: STARTDATE: 2024-02-21 (yyyy-mm-dd)
-    MOTD_DATE=$(echo "$MOTD" | grep -oP 'STARTDATE: \K\d{4}-\d{2}-\d{2}')
+    MOTD_DATE=$(date -d $(echo "$MOTD" | grep -oP 'STARTDATE: \K\d{4}-\d{2}-\d{2}') +%s)
+
     # Check MOTD end date, format: ENDDATE: 2024-02-23 (yyyy-mm-dd)
-    MOTD_ENDDATE=$(echo "$MOTD" | grep -oP 'ENDDATE: \K\d{4}-\d{2}-\d{2}')
+    MOTD_ENDDATE=$(date -d $(echo "$MOTD" | grep -oP 'ENDDATE: \K\d{4}-\d{2}-\d{2}') +%s)
+
     # Get the current date
-    CURRENT_DATE=$(date +%F)
-    # Check if the MOTD is not empty and the current date is within the range
-    if [[ -n $MOTD && $CURRENT_DATE -ge $MOTD_DATE && $CURRENT_DATE -le $MOTD_ENDDATE ]]; then
-        # If the MOTD is not empty and the current date is within the range, print the MOTD MESSAGE:
-        MOTD_MESSAGE=$(echo "$MOTD" | grep -oP 'MESSAGE: \K.*')
-        echo -e "${YELLOW}[!] MOTD:${NO_COLOR}"
-        echo "$MOTD_MESSAGE"
+    CURRENT_DATE=$(date +%s)
+
+    # Check if the MOTD is not empty
+    if [[ -n $MOTD ]]; then
+        # Debug: Check if the current date is within the range
+        if [[ $CURRENT_DATE -ge $MOTD_DATE && $CURRENT_DATE -le $MOTD_ENDDATE ]]; then
+            # Print the MOTD MESSAGE
+            MOTD_MESSAGE=$(echo "$MOTD" | awk -v RS='MESSAGE: ' 'NR>1{print $0}' | tr -d '\n')
+            echo -e "${YELLOW}[!] Latest Updates from the ishare2 Developer:${NO_COLOR}"
+            echo "$MOTD_MESSAGE"
+        fi
     fi
 }
 
@@ -339,7 +355,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL" "ROTATE")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL" "ROTATE" "MOTD")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
