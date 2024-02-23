@@ -2,13 +2,13 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.4.1-beta
-# Last Updated: 2024-01-03 yyyy-mm-dd
+# Version: 3.4.2-main
+# Last Updated: 2024-02-22 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="alpha"                                                                                                                                                 # Set to main to use the main channel. Set to main to use the main channel.
+CHANNEL="main"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
 MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
 JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
 # End of ishare2 configuration
@@ -17,7 +17,7 @@ JSON_URL=${MIRRORS[0]}                                                          
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
 TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="3.4.1-beta"                                                                          # Current version of ishare2
+VERSION="3.4.2-main"                                                                          # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
