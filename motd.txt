@@ -1,6 +1,6 @@
 STARTDATE: 2024-02-21
 ENDDATE: 2024-02-23
-MESSAGE: Welcome to the BETA version of ishare2!
+MESSAGE: Welcome to the new version of ishare2!
 
 We've made a couple of changes to ishare2:
 1. Mirrors rotation has been implemented.
