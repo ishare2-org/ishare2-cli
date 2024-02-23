@@ -1,6 +1,7 @@
 STARTDATE: 2024-02-21
 ENDDATE: 2024-02-23
 COUNT: 1
+MESSAGE_ID: 1
 MESSAGE: Welcome to the new version of ishare2!
 
 We've made a couple of changes to ishare2:
