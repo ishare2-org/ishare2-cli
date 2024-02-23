@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+
+# Check if the script is running on Ubuntu 20.04
+if [[ ! -f /etc/os-release ]]; then
+    echo -e "${RED}Error: This script only supports Ubuntu 20.04.${NO_COLOR}"
+    exit 1
+fi
+
 ISHARE2_GUI_DIR=/opt/ishare2/gui
 PYTHON3_11_PATH=$(command -v python3.11)
 
