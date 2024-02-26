@@ -428,16 +428,9 @@ check_installed() {
 replace_pnetlab_sources() {
     # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
     echo -e "${YELLOW} [+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
-    sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-    sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-    echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
-}
-
-replace_pnetlab_sources() {
-    # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
-    echo -e "${YELLOW} [+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
-    sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-    sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    sed -i 's|^deb \[trusted=yes\] https://repo.pnetlab.com ./$|##deb [trusted=yes] https://repo.pnetlab.com ./|' /etc/apt/sources.list
+    sed -i 's|^deb \[trusted=yes\] http://repo.pnetlab.com ./$|##deb [trusted=yes] http://repo.pnetlab.com ./|' /etc/apt/sources.list
+    echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
     echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
 }
 
