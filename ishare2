@@ -38,7 +38,7 @@ ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
 
 logger() {
     # Log the output to the log file
-    echo -e "$1" >>$LOG_FILE
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') $1" >>$LOG_FILE
 }
 
 check_updates() {
