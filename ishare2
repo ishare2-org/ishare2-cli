@@ -537,17 +537,39 @@ create_ishare2_dir() {
 
 fetch_json() {
     check_installed "jq"
-    # Download the JSON and store it in a temporary file
-    curl -sL "$JSON_URL" >"$TEMP_JSON"
-    # Check if curl command failed
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}[-] Failed to download the JSON file. Please check your internet connection.${NO_COLOR}"
-        exit 1
+
+    # Check if the cached JSON file is present
+    if [ -s "$CACHED_JSON" ]; then
+        logger "Using cached JSON file."
+        TEMP_JSON="$CACHED_JSON"
+    else
+        # Attempt to download the new JSON file and store it in a temporary file
+        logger "Downloading JSON file from $JSON_URL..."
+        curl -sL "$JSON_URL" >"$TEMP_JSON"
+
+        # Check if the curl command failed
+        if [ $? -ne 0 ]; then
+            logger "Failed to download the JSON file."
+            if [ -s "$CACHED_JSON" ]; then
+                logger "Using cached JSON file, although it is older than one day."
+                TEMP_JSON="$CACHED_JSON"
+            else
+                logger "No valid cached JSON file found."
+                echo -e "${RED}[-] No valid JSON file found. Please check your internet connection.${NO_COLOR}"
+                echo -e "${YELLOW}[!] Running ishare2 test to check your internet connection.${NO_COLOR}"
+                connection_tests
+                exit 1
+            fi
+        fi
     fi
+
     # Check if the JSON file is valid
     if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
-        echo -e "${RED}[-] Error: Invalid JSON file. Please check your internet connection.${NO_COLOR}"
+        logger "Error: Invalid JSON file."
+        echo -e "${RED}[-] Error: Invalid JSON file.${NO_COLOR}"
         exit 1
+    else
+        logger "JSON file downloaded successfully."
     fi
 }
 
@@ -1070,8 +1092,6 @@ pull_lab_images() {
             fi
         fi
     done <"$filename1"
-
-    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
 check_docker_service_status() {
@@ -1359,8 +1379,6 @@ search_images() {
             echo -e "\n${GREEN}$total_count $TYPE images found for \"$FILTER\"${NO_COLOR}"
         fi
     fi
-
-    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
 generate_iourc_license() {
