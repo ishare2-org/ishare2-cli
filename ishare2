@@ -155,31 +155,6 @@ check_ishare2_dir() {
     fi
 }
 
-fetch_sources() {
-    # Fetch the sources.list from the repository
-    logger "Fetching sources.list..."
-    check_ishare2_dir
-    # Cache the sources.list file for 10 minutes
-    if [[ -f $ISHARE2_DIR/sources.list && $(find "$ISHARE2_DIR/sources.list" -mmin -10) ]]; then
-        logger "Using cached sources.list file."
-    else
-        logger "Downloading sources.list from $SOURCES_URL"
-        # Backup the old sources.list file
-        if [[ -f $ISHARE2_DIR/sources.list ]]; then
-            mv $ISHARE2_DIR/sources.list $ISHARE2_DIR/sources.list.bak
-        fi
-        # If download failed, use the cached sources.list file
-        if ! download_file_curl "$SOURCES_URL" "$ISHARE2_DIR/sources.list"; then
-            logger "Failed to download sources.list. Using the old sources.list file."
-            # Restore the old sources.list file
-            mv $ISHARE2_DIR/sources.list.bak $ISHARE2_DIR/sources.list
-        fi
-        logger "Downloaded sources.list successfully."
-    fi
-    # Use sources.list file
-    source $ISHARE2_DIR/sources.list
-}
-
 # set max log file lines to 1000
 set_max_log_lines() {
     if [[ -f $LOG_FILE ]]; then
@@ -456,6 +431,7 @@ replace_pnetlab_sources() {
     echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
     echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
 }
+
 apt_get_update() {
     if ! apt-get update; then
         return 1
