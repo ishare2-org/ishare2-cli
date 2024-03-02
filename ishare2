@@ -501,37 +501,48 @@ install_aria2c() {
 }
 
 unlock_dpkg() {
-    # Check if apt is running
-    if pgrep apt >/dev/null 2>&1; then
-        echo "apt is currently running. Would you like to attempt unlocking dpkg? This may cause issues with apt if it is still running. Proceed? (y/n)"
-        read -r answer
-
-        if [[ $answer == "y" || $answer == "Y" ]]; then
-            echo "Trying to kill the apt process..."
-
-            # Attempt to kill apt process
-            killall -r '^(apt|dpkg)$' >/dev/null 2>&1
-
-            # Wait for the process to terminate
-            sleep 5
-
-            # Check if apt process is still running
-            if pgrep apt >/dev/null 2>&1; then
-                echo "Killing apt process failed. Exiting..."
-                exit 1
-            fi
-        else
-            echo "Skipping dpkg unlocking. Exiting..."
-            exit 0
-        fi
+    # Check if APT or dpkg is running
+    if pgrep -f 'apt|dpkg' >/dev/null 2>&1; then
+        echo "APT or dpkg is currently running."
+        echo "It is not safe to unlock dpkg while APT or dpkg processes are active."
+        echo "Please wait for these processes to complete before attempting again."
+        exit 1
     fi
 
-    # Remove lock files
-    sudo rm /var/lib/dpkg/lock >/dev/null 2>&1
-    sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
-    # Remove lock files for apt frontend
-    sudo rm /var/lib/dpkg/lock-frontend >/dev/null 2>&1
-    sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
+    # Confirm with the user
+    echo "This will attempt to remove dpkg and APT lock files."
+    echo "Proceed with caution. It's recommended to try this only if you're sure that no APT or dpkg processes are running."
+    echo "Proceed? (y/n)"
+    read -r answer
+
+    if [[ $answer != "y" && $answer != "Y" ]]; then
+        echo "Operation cancelled by the user."
+        exit 0
+    fi
+
+    # Attempt to remove lock files
+    echo "Attempting to remove lock files..."
+    local lock_files=(
+        "/var/lib/dpkg/lock"
+        "/var/cache/apt/archives/lock"
+        "/var/lib/apt/lists/lock"
+        "/var/lib/dpkg/lock-frontend"
+    )
+
+    for file in "${lock_files[@]}"; do
+        if [ -f "$file" ]; then
+            sudo rm "$file" >/dev/null 2>&1
+            echo "Removed $file"
+        else
+            echo "$file does not exist or has already been removed."
+        fi
+    done
+
+    # Attempt to reconfigure dpkg
+    echo "Reconfiguring dpkg..."
+    sudo dpkg --configure -a
+
+    echo "Operation completed. Please try running your APT or dpkg command again."
 }
 
 create_ishare2_dir() {
