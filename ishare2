@@ -1376,13 +1376,13 @@ search_images() {
         total_count=$(echo "$data" | wc -l)
         total_count=$((total_count - 2))
         if [[ $total_count -eq 0 ]]; then
-            echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
+            echo -e "\n${RED}No $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
         elif [[ $total_count -eq 1 ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE image found for \"$FILTER\"${NO_COLOR}"
+            echo -e "\n${GREEN}$total_count $TYPE image found for the term: \"$FILTER\"${NO_COLOR}"
         elif [[ $FILTER == "" ]]; then
             echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
         else
-            echo -e "\n${GREEN}$total_count $TYPE images found for \"$FILTER\"${NO_COLOR}"
+            echo -e "\n${GREEN}$total_count $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
         fi
     fi
 }
