@@ -382,8 +382,6 @@ remove_ishare_sources() {
 
 install_dependencies() {
     remove_ishare_sources
-    # unlock apt
-    unlock_dpkg
     local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
     for package in "${packages[@]}"; do
         install_package "$package"
@@ -447,8 +445,6 @@ apt_get_update() {
 
 install_package() {
     local package_name=$1
-    # unlock apt
-    unlock_dpkg
     # check if $package_name is installed otherwise install it
     if ! command -v "$package_name" &>/dev/null; then
         echo -e "${YELLOW}[+] $package_name is not installed.${NO_COLOR}"
@@ -540,39 +536,31 @@ create_ishare2_dir() {
 }
 
 fetch_json() {
-    local CACHED_JSON="$ISHARE2_DIR/tmp/ishare2.json"
     check_installed "jq"
 
-    # Check if the cached JSON file is present
-    if [ -s "$CACHED_JSON" ]; then
-        logger "Using cached JSON file."
-        TEMP_JSON="$CACHED_JSON"
-    else
-        # Attempt to download the new JSON file and store it in a temporary file
-        logger "Downloading JSON file from $JSON_URL..."
-        mkdir -p $ISHARE2_DIR/tmp
-        curl -sL "$JSON_URL" >"$TEMP_JSON"
+    #
+    logger "Downloading JSON file from $JSON_URL..."
+    mkdir -p $ISHARE2_DIR/tmp
+    curl -sL "$JSON_URL" >"$TEMP_JSON"
 
-        # Check if the curl command failed
-        if [ $? -ne 0 ]; then
-            logger "Failed to download the JSON file."
-            if [ -s "$CACHED_JSON" ]; then
-                logger "Using cached JSON file, although it is older than one day."
-                TEMP_JSON="$CACHED_JSON"
-            else
-                logger "No valid cached JSON file found."
-                echo -e "${RED}[-] No valid JSON file found. Please check your internet connection.${NO_COLOR}"
-                echo -e "${YELLOW}[!] Running ishare2 test to check your internet connection.${NO_COLOR}"
-                connection_tests
-                exit 1
-            fi
-        fi
+    # Check if the curl command failed
+    if [ $? -ne 0 ]; then
+        logger "Failed to download the JSON file."
+        echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
+        connection_tests
+        exit 1
     fi
 
     # Check if the JSON file is valid
     if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
         logger "Error: Invalid JSON file."
         echo -e "${RED}[-] Error: Invalid JSON file.${NO_COLOR}"
+        echo -e "${RED}[!] Debug information:${NO_COLOR}"
+        echo -e "${YELLOW} - JSON file URL: $JSON_URL${NO_COLOR}"
+        echo -e "${YELLOW} - JSON file location: $TEMP_JSON${NO_COLOR}"
+        echo -e "${RED}[!] Troubleshooting:${NO_COLOR}"
+        echo -e "${YELLOW} 1) Check if the JSON file is accessible through your web browser.${NO_COLOR}"
+        echo -e "${YELLOW} 2) If the issue persists, report the issue to the ishare2 team on Telegram: https://t.me/NetLabHub${NO_COLOR}"
         exit 1
     else
         logger "JSON file downloaded successfully."
