@@ -43,6 +43,13 @@ logger() {
 
 check_updates() {
     LATEST_VERSION=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version)
+
+    # Check if the version file could be fetched successfully
+    if [ -z "$LATEST_VERSION" ]; then
+        echo -e "${RED}[-] Failed to fetch the latest version information. Please check your internet connection.${NO_COLOR}"
+        return
+    fi
+
     if [[ $LATEST_VERSION != $VERSION ]]; then
         # Make an array of messages
         messages=(
