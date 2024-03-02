@@ -540,6 +540,7 @@ create_ishare2_dir() {
 }
 
 fetch_json() {
+    local CACHED_JSON="$ISHARE2_DIR/tmp/ishare2.json"
     check_installed "jq"
 
     # Check if the cached JSON file is present
@@ -549,6 +550,7 @@ fetch_json() {
     else
         # Attempt to download the new JSON file and store it in a temporary file
         logger "Downloading JSON file from $JSON_URL..."
+        mkdir -p $ISHARE2_DIR/tmp
         curl -sL "$JSON_URL" >"$TEMP_JSON"
 
         # Check if the curl command failed
@@ -1956,13 +1958,33 @@ connection_tests() {
 
     # If any service is not reachable, attempt to fix DNS
     if [ "$all_services_reachable" = false ]; then
-        echo -e "${YELLOW}[-] Attempting to fix DNS by setting nameserver to 8.8.8.8... ${NO_COLOR}"
-        echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
-        else
-            echo -e "${RED}[-] Failed to update DNS settings. ${NO_COLOR}"
-        fi
+        echo -e "${YELLOW}[?] Some services are not reachable. Do you want to attempt to fix DNS? [y/n] ${NO_COLOR}"
+        read -r -n 1 -p "Choice: " choice
+        echo
+        case $choice in
+        y | Y)
+            fix_dns
+            ;;
+        n | N)
+            echo -e "${YELLOW}[-] DNS was not fixed. ${NO_COLOR}"
+            ;;
+        *)
+            echo -e "${RED}[-] Invalid choice. DNS was not fixed. ${NO_COLOR}"
+            ;;
+        esac
+    fi
+}
+
+fix_dns() {
+    echo -e "${YELLOW}[-] Attempting to fix DNS... ${NO_COLOR}"
+    echo -e "${YELLOW}[-] Running: systemctl restart systemd-resolved.service ${NO_COLOR}"
+    systemctl restart systemd-resolved.service
+    echo -e "${YELLOW}[-] Attempting to fix DNS by setting nameserver to 8.8.8.8... ${NO_COLOR}"
+    echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
+    else
+        echo -e "${RED}[-] Failed to update DNS settings. ${NO_COLOR}"
     fi
 }
 
@@ -2152,7 +2174,6 @@ main() {
     check_config
     set_max_log_lines
     set_yml_template_folder_location
-    fetch_sources
     ishare2_version
     selector "$1" "$2" "$3" "$4"
 }
