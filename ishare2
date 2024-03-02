@@ -236,7 +236,7 @@ create_config() {
     echo -e "${YELLOW} [*] Press Ctrl+C to cancel.${NO_COLOR}"
     # Ask whether to use aria2c or not
     echo -e "${YELLOW} [+] Use aria2c for faster downloads?${NO_COLOR}"
-    read -p " [+] (y/n): " -r
+    read -p "[+] (y/n): " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW} [!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
@@ -252,7 +252,7 @@ create_config() {
 
     # Ask if SSL certificate should be checked
     echo -e "${YELLOW} [+] Check SSL certificate? (default: yes)${NO_COLOR}"
-    read -p " [+] (y/n): " -r
+    read -p "[+] (y/n): " -r
     case $REPLY in
     [Nn])
         SSL_CHECK=false
@@ -274,7 +274,7 @@ create_config() {
     done
 
     # Ask the user to select a branch
-    read -p " [*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
+    read -p "[*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
         echo -e "${YELLOW} [!] Using the default branch.${NO_COLOR}"
@@ -297,7 +297,7 @@ create_config() {
     echo " 3) Onedrive mirror"
     echo " 4) Custom mirror"
     # Ask the user to select a mirror
-    read -p " [*] Enter the number of the mirror you want to use (default: 1): " -r
+    read -p "[*] Enter the number of the mirror you want to use (default: 1): " -r
     case $REPLY in
     2)
         JSON_URL=${MIRRORS[0]}
@@ -309,7 +309,7 @@ create_config() {
         ;;
     4)
         echo -e "${YELLOW} [+] Enter the URL of the mirror.${NO_COLOR}"
-        read -p " [*] Enter the URL of the mirror you want to use: " -r
+        read -p "[*] Enter the URL of the mirror you want to use: " -r
         JSON_URL="$REPLY"
         echo -e "${YELLOW} [!] Using custom mirror: $JSON_URL.${NO_COLOR}"
         ;;
@@ -988,7 +988,7 @@ pull_all() {
         # Enter confirmation text
         CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
         # Ask the user to enter the confirmation text
-        read -p " [?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
+        read -p "[?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
         # If the confirmation text is incorrect then exit
         if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
             echo -e "${RED} [!] Aborting.${NO_COLOR}"
@@ -997,7 +997,7 @@ pull_all() {
     fi
     echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
     # Ask for conirmation
-    read -p " [?] Are you sure you want to pull all $TYPE images? (y/n): " -r
+    read -p "[?] Are you sure you want to pull all $TYPE images? (y/n): " -r
     # If reply was no Y or y then exit
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${RED} [!] Aborting.${NO_COLOR}"
