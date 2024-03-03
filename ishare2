@@ -572,8 +572,6 @@ download_file() {
     local output="$2"
     local options="$3"
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
-    # Rotate mirrors if enabled
-    rotate_mirrors
 
     if [[ $USE_ARIA2C == "true" ]]; then
         # Check if aria2c is installed
@@ -1802,6 +1800,9 @@ pull_images() {
     local download_path # Pending: implement corrections_for_qemu_images with new JSON structure
     local image_name
     local image_size
+
+    # Rotate mirrors if enabled
+    rotate_mirrors
 
     # 1. Fetch the JSON file
     fetch_json
