@@ -1493,7 +1493,7 @@ show_help_info() {
     echo -e "- Email: contact@labhub.eu.org"
 }
 
-show_ishare2_usage() {
+show_ishare2_help() {
     # For ishare2
     ISHARE2_VERSION_INFO=$(cat $ISHARE2_DIR/ishare2_version)
     UPSTREAM_VERSION=$(curl -s "$URL_VERSION")
