@@ -472,7 +472,7 @@ fix_repositories() {
     else
         echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible. Checking alternative...${NO_COLOR}"
         if is_site_accessible "https://pnetlab.labhub.eu.org"; then
-            replace_pnetlab_sources
+            check_pnetlab_sources
             apt_get_update || echo -e "${RED}[-] Failed to update package lists after replacing sources.${NO_COLOR}"
         else
             echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
@@ -599,7 +599,7 @@ unlock_dpkg() {
 }
 
 create_ishare2_dir() {
-    echo -e "${YELLOW}[+] Creating ishare2 directory...${NO_COLOR}"
+    echo -e "${YELLOW}[!] Creating ishare2 directory...${NO_COLOR}"
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
         error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
         if [[ $error_message == *"Permission denied"* ]]; then
@@ -609,7 +609,7 @@ create_ishare2_dir() {
         fi
         exit 1
     fi
-    echo -e "${GREEN}[+] Done.${NO_COLOR}"
+    logger "ishare2 directory created successfully."
 }
 
 fetch_json() {
@@ -617,7 +617,6 @@ fetch_json() {
 
     #
     logger "Downloading JSON file from $JSON_URL..."
-    mkdir -p $ISHARE2_DIR/tmp
     curl -sL "$JSON_URL" >"$TEMP_JSON"
 
     # Check if the curl command failed
@@ -1277,7 +1276,10 @@ download_lab_docker_images() {
 ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
-        echo $VERSION >$ISHARE2_DIR/ishare2_version
+        echo $VERSION >$ISHARE2_DIR/ishare2_version >/dev/null 2>&1
+    fi
+    if [[ $1 == "show" ]]; then
+        echo -e "ishare2 version: $(cat $ISHARE2_DIR/ishare2_version)"
     fi
 }
 
@@ -1483,7 +1485,7 @@ generate_iourc_license() {
     echo -e "${GREEN}[+] IOL license was generated successfully. ${NO_COLOR}"
 }
 
-show_help_info() {
+show_info() {
     echo -e "- For documentation about ishare2, visit: https://github.com/ishare2-org/ishare2-cli"
     echo -e "- If you face any issues with ishare2, please report them at @NetLabHub Telegram Group. Attach screenshots and relevant information."
     echo -e "- You can use ${YELLOW}ishare2 config${NO_COLOR} to change the chosen downloader."
@@ -2248,7 +2250,7 @@ selector() {
         fi
         ;;
     "help")
-        show_help_info
+        show_ishare2_help
         ;;
     "test")
         connection_tests
@@ -2256,8 +2258,11 @@ selector() {
     "config")
         create_config
         ;;
+    "--version")
+        ishare2_version "show"
+        ;;
     *)
-        show_ishare2_usage
+        ishare2_quick_help
         ;;
     esac
 }
