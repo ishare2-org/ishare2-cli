@@ -481,17 +481,41 @@ fix_repositories() {
     fi
 }
 
-replace_pnetlab_sources() {
-    # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
-    echo -e "${YELLOW}[+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
-    sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-    sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-    echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
-    echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
+check_pnetlab_sources() {
+    # Check if https://repo.pnetlab.com is accessible
+    if ! is_site_accessible "https://repo.pnetlab.com"; then
+        echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Checking alternative...${NO_COLOR}"
+        # Check if https://pnetlab.labhub.eu.org is accessible
+        if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
+            echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+            exit 1
+        fi
+        # Ask the user if they want to replace the sources
+        echo -e "${YELLOW}[!] The official pnetlab.com repository is not accessible.${NO_COLOR}"
+        echo -e "${YELLOW}[?] Do you want to replace the pnetlab sources with the LabHub mirror?${NO_COLOR}"
+        read -p "[?] (y/n): " -r
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
+            echo -e "${YELLOW}[+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
+            sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+            sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+            echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
+            echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
+        fi
+    fi
+
+    # Find if "deb [trusted=yes] http://repo.pnetlab.com ./" exists in sources.list
+    if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
+        echo -e "${YELLOW}[!] Found your sources.list is using http instead of https.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Replacing http with https...${NO_COLOR}"
+        sed -i 's|http://repo.pnetlab.com|https://repo.pnetlab.com|' /etc/apt/sources.list
+    fi
 }
 
 apt_get_update() {
-    if ! apt-get update; then
+    if ! apt-get update -y; then
         return 1
     fi
 }
