@@ -1846,6 +1846,8 @@ pull_images() {
     esac
 
     if [ -n "$download_urls" ]; then
+        # extract one of the download URLs to get the domain, then print the protocol and domain without the path
+        domain=$(echo "$download_urls" | head -n 1 | awk -F/ '{print $1"//"$3}')
         logger -s -t "ishare2" "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
         echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
         printf "%-20s: %s\n" " - Image Name" "$image_name"
@@ -1853,8 +1855,9 @@ pull_images() {
         printf "%-20s: %s\n" " - Image Type" "$IMAGE_TYPE"
         printf "%-20s: %s\n" " - Image ID" "$IMAGE_ID"
         printf "%-20s: %s\n" " - Download path" "$download_path"
+        printf "%-20s: %s\n" " - Downloading from" "$domain"
         # Create the directory if it doesn't exist
-        logger "Creating directory: $IMAGE_PATH"
+        logger "Creating directory for: $IMAGE_PATH"
         mkdir -p "$download_path"
 
         echo -e "${YELLOW}[!] DOWNLOADING IMAGE ${NO_COLOR}"
