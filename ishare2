@@ -2040,27 +2040,26 @@ selector() {
         if [[ "$2" ]]; then
             case "$2" in
             "all")
-                print_separator "QEMU"
                 ishare2 installed qemu
-                print_separator "DYANMIPS"
                 ishare2 installed dynamips
-                print_separator "BIN"
-                ishare2 installed bin
-                print_separator "DOCKER"
+                ishare2 installed iol
                 ishare2 installed docker
                 ;;
             "qemu")
                 echo -e
+                print_separator "Showing installed ${2^^} images"
                 tree -hp /opt/unetlab/addons/qemu/
                 echo -e
                 ;;
             "dynamips")
                 echo -e
+                print_separator "Showing installed ${2^^} images"
                 tree -hp /opt/unetlab/addons/dynamips/
                 echo -e
                 ;;
-            "bin")
+            "bin" | "iol")
                 echo -e
+                print_separator "Showing installed ${2^^} images"
                 tree -hp /opt/unetlab/addons/iol/bin/
                 echo -e
                 ;;
@@ -2071,11 +2070,13 @@ selector() {
             *)
                 echo "Usage: $SCR_NAME installed <type>"
                 echo "       $SCR_NAME installed all"
+                echo "Types: qemu, dynamips, iol, docker"
                 ;;
             esac
         else
             echo "Usage: $SCR_NAME installed <type>"
             echo "       $SCR_NAME installed all"
+            echo "Types: qemu, dynamips, iol, docker"
         fi
         ;;
     "labs")
