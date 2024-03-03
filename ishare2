@@ -427,7 +427,15 @@ remove_ishare_sources() {
 
 install_dependencies() {
     remove_ishare_sources
+    echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
     local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
+    echo -e "${YELLOW}[+] List of packages to be installed: ${NO_COLOR}"
+    for package in "${packages[@]}"; do
+        echo -e "${YELLOW} -${NO_COLOR} $package"
+    done
+    echo -e "${YELLOW}[+] Installing dependencies in 5 seconds... Press Ctrl+C to cancel.${NO_COLOR}"
+    sleep 5
+
     for package in "${packages[@]}"; do
         install_package "$package"
     done
