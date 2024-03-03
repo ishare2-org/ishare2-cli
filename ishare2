@@ -1600,6 +1600,36 @@ $PNETLAB_INSTALLED
 EOF
 }
 
+ishare2_quick_help() {
+    cat <<EOF
+Syntax
+
+ishare2 [action] [param1] [param2] [--overwrite]
+
+action:
+    search      : Search for images available on LabHub mirrors.
+    pull        : Download an image by specifying the type and id.
+    installed   : Shows images installed on the server.
+    labs        : Shows available labs and downloads the images for the selected lab.
+    mylabs      : Same as labs command but you can use a customized path.
+    relicense   : Generates an iourc license for iol images.
+    upgrade     : Shows a menu to upgrade ishare2 or PNETLab.
+    test        : Test internet connectivity to required sites.
+    help        : Shows full help information.
+
+param1:
+    type = all, iol, qemu, dynamips, docker or name.
+
+param2:
+    id = This can be obtained using ishare2 search <type>
+
+--overwrite:
+    Used to overwrite an existing image if it already exists on your system.
+
+Try: ishare2 help for more information.
+EOF
+}
+
 handle_tgz_files() {
     FOLDERNAME=$1
 
