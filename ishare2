@@ -200,6 +200,23 @@ check_config() {
 }
 
 create_config() {
+    clear
+    messages=(
+        "Welcome to the ishare2!"
+        "This script will guide you through the initial configuration process."
+        "But first, let's check if the required dependencies are installed."
+    )
+    print_box "${messages[@]}"
+    sleep 3
+    is_pnetlab_installed
+    # check if pnetlab is installed
+    if [[ -z $pnetlab_version ]]; then
+        logger "PNetLab is not installed."
+    else
+        echo -e "${GREEN}[+] PNetLab version: $pnetlab_version found.${NO_COLOR}"
+        check_pnetlab_sources
+    fi
+
     echo -e "${BLUE}[*] Installing ishare2 dependencies...${NO_COLOR}"
     MAX_RETRIES=3
     retry_counter=0
@@ -217,7 +234,7 @@ create_config() {
         MAX_RETRIES=3
         retry_counter=0
         while [[ $retry_counter -lt $MAX_RETRIES ]]; do
-            if replace_pnetlab_sources; then
+            if check_pnetlab_sources; then
                 break
             fi
             echo -e "${RED}[-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
@@ -225,12 +242,20 @@ create_config() {
             sleep 10
         done
     fi
-    echo -e "${BLUE}[*] Creating ishare2 configuration file...${NO_COLOR}"
-    echo -e "${YELLOW}[*] Please answer the following questions to configure ishare2.${NO_COLOR}"
-    echo -e "${YELLOW}[*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
-    echo -e "${YELLOW}[*] Press Ctrl+C to cancel.${NO_COLOR}"
+    logger "Starting configuration wizard..."
+    # Create the configuration file
+    clear
+    echo
+    messages=(
+        "Welcome to the ishare2 configuration wizard."
+        "- This wizard will guide you through the configuration process."
+        "- Press Enter to accept the default value."
+        "- Press Ctrl+C to cancel."
+    )
+    print_box "${messages[@]}"
+    sleep 3
     # Ask whether to use aria2c or not
-    echo -e "${YELLOW}[+] Use aria2c for faster downloads?${NO_COLOR}"
+    echo -e "${YELLOW}[+] Use aria2c for faster downloads? (default: no)${NO_COLOR}"
     read -p "[+] (y/n): " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}[!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
@@ -239,10 +264,10 @@ create_config() {
         echo "Press any key to continue..."
         read -n 1
     else
+        echo
         echo -e "${YELLOW}[!] Using wget is slower than aria2c, however, it is more stable.\nTo enable aria2c, run: ishare2 config and answer yes to this question.${NO_COLOR}"
         echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
-        echo "Press any key to continue..."
-        read -n 1
+        sleep 3
     fi
 
     # Ask if SSL certificate should be checked
@@ -323,7 +348,14 @@ create_config() {
     fi
     remove_duplicates
     validate_conf_file
-    echo -e "${GREEN}[+] Configuration file created successfully.${NO_COLOR}"
+
+    sleep 1
+    clear
+    messages=(
+        "Configuration completed successfully."
+        "Starting ishare2..."
+    )
+    print_box "${messages[@]}"
 }
 
 remove_duplicates() {
