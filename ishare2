@@ -14,11 +14,13 @@ JSON_URL=${MIRRORS[0]}                                                          
 # End of ishare2 configuration
 
 # Initialize variables
-ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
-LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                           # Log file
-TEMP_JSON="$ISHARE2_DIR/index.json"                                                           # Temporary JSON file
-VERSION="3.4.4-alpha"                                                                         # Current version of ishare2
-SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
+ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
+LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
+TEMP_JSON="$ISHARE2_DIR/index.json"                                                            # Temporary JSON file
+VERSION="3.4.4-alpha"                                                                          # Current version of ishare2
+SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
+MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
+REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
 
 # Colors
 RED='\033[31m'
@@ -41,6 +43,7 @@ logger() {
     echo -e "$(date '+%Y-%m-%d %H:%M:%S') $1" >>$LOG_FILE
 }
 
+# Function to fetch the latest list of sources needed for ishare2
 ishare2_sources() {
     # Check if the sources.list file exists in the ishare2 directory
     if [ ! -f "$ISHARE2_DIR/sources.list" ]; then
@@ -191,6 +194,7 @@ print_box() {
     echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
 }
 
+# Function to rotate among the available mirrors
 rotate_mirrors() {
     # Rotate mirrors
     source $ISHARE2_CONF_FILE
@@ -216,6 +220,7 @@ rotate_mirrors() {
     fi
 }
 
+# Function to print a separator with a title
 print_separator() {
     local TITLE=$1
     local WIDTH=${#TITLE}
@@ -231,6 +236,7 @@ print_separator() {
     echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
 }
 
+# Function to check if PNetLab is installed
 is_pnetlab_installed() {
     # Check if pnetlab is installed
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
@@ -244,6 +250,7 @@ is_pnetlab_installed() {
     return 0
 }
 
+# Function to initialize the ishare2 directory checks
 check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
     if [[ ! -d $ISHARE2_DIR ]]; then
@@ -251,7 +258,7 @@ check_ishare2_dir() {
     fi
 }
 
-# set max log file lines to 1000
+# Set max log file lines to 1000
 set_max_log_lines() {
     if [[ -f $LOG_FILE ]]; then
         if [[ $(wc -l <"$LOG_FILE") -gt 1000 ]]; then
@@ -261,6 +268,7 @@ set_max_log_lines() {
     fi
 }
 
+# Function to check if the configuration file exists, and validate it
 check_config() {
     # check if config file exists
     if [[ ! -f $ISHARE2_CONF_FILE ]]; then
@@ -275,6 +283,7 @@ check_config() {
     validate_conf_file
 }
 
+# Function to create the configuration file
 create_config() {
     clear
     messages=(
@@ -336,7 +345,7 @@ create_config() {
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}[!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
-        install_aria2c
+        install_package "aria2"
         echo "Press any key to continue..."
         read -n 1
     else
@@ -434,6 +443,7 @@ create_config() {
     print_box "${messages[@]}"
 }
 
+# Function to remove duplicate lines from the configuration file
 remove_duplicates() {
     local config_file="$ISHARE2_CONF_FILE"
 
@@ -449,6 +459,7 @@ remove_duplicates() {
     logger "Removed duplicate lines from the configuration file."
 }
 
+# Function to validate the configuration file
 validate_conf_file() {
 
     # Check if the configuration file exists
@@ -496,11 +507,13 @@ validate_conf_file() {
     return 0
 }
 
+# Function to remove i-share.top apt sources.list
 remove_ishare_sources() {
     # Remove i-share.top line from sources.list
     sed -i '/i-share.top/d' /etc/apt/sources.list
 }
 
+# Function to install dependencies required for ishare2
 install_dependencies() {
     remove_ishare_sources
     echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
@@ -517,6 +530,7 @@ install_dependencies() {
     done
 }
 
+# Function to check if a package is installed and install it if it's not
 check_installed() {
     PACKAGE=$1
     # Check if package is installed
@@ -533,6 +547,7 @@ check_installed() {
     fi
 }
 
+# Function to check if a site is accessible
 is_site_accessible() {
     local url=$1
     if ! curl -s --head --request GET "$url" | grep "200 OK\|301 Moved Permanently" >/dev/null; then
@@ -542,6 +557,7 @@ is_site_accessible() {
     fi
 }
 
+# Function to attempt to fix APT sources
 fix_repositories() {
     if is_site_accessible "https://repo.pnetlab.com"; then
         echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
@@ -557,11 +573,18 @@ fix_repositories() {
     fi
 }
 
+# Function to check if the sources.list file is using the correct sources
 check_pnetlab_sources() {
     # Check if https://repo.pnetlab.com is accessible
     if ! is_site_accessible "https://repo.pnetlab.com"; then
         echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
         echo -e "${YELLOW}[!] Checking alternative...${NO_COLOR}"
+        # Find if "deb [trusted=yes] http://repo.pnetlab.com ./" exists in sources.list
+        if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
+            echo -e "${YELLOW}[!] Found your sources.list is using http instead of https.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Replacing http with https...${NO_COLOR}"
+            sed -i 's|http://repo.pnetlab.com|https://repo.pnetlab.com|' /etc/apt/sources.list
+        fi
         # Check if https://pnetlab.labhub.eu.org is accessible
         if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
             echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
@@ -581,21 +604,16 @@ check_pnetlab_sources() {
             echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
         fi
     fi
-
-    # Find if "deb [trusted=yes] http://repo.pnetlab.com ./" exists in sources.list
-    if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
-        echo -e "${YELLOW}[!] Found your sources.list is using http instead of https.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Replacing http with https...${NO_COLOR}"
-        sed -i 's|http://repo.pnetlab.com|https://repo.pnetlab.com|' /etc/apt/sources.list
-    fi
 }
 
+# Function to run apt-get update
 apt_get_update() {
     if ! apt-get update -y; then
         return 1
     fi
 }
 
+# Function to install a package
 install_package() {
     local package_name=$1
     # check if $package_name is installed otherwise install it
@@ -628,10 +646,7 @@ install_package() {
     fi
 }
 
-install_aria2c() {
-    install_package "aria2"
-}
-
+# Function to check if APT or dpkg is running and unlock dpkg
 unlock_dpkg() {
     # Check if APT or dpkg is running
     if pgrep -f '^[/]usr[/]bin[/](apt|dpkg)' >/dev/null 2>&1; then
@@ -674,6 +689,7 @@ unlock_dpkg() {
     fi
 }
 
+# Function to create the ishare2 directory
 create_ishare2_dir() {
     echo -e "${YELLOW}[!] Creating ishare2 directory...${NO_COLOR}"
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
@@ -688,6 +704,7 @@ create_ishare2_dir() {
     logger "ishare2 directory created successfully."
 }
 
+# Function to fetch JSON file with the list of files to download
 fetch_json() {
     check_installed "jq"
 
@@ -719,6 +736,7 @@ fetch_json() {
     fi
 }
 
+# Function to download a file using wget or aria2c
 download_file() {
     local url="$1"
     local output="$2"
@@ -729,7 +747,7 @@ download_file() {
         # Check if aria2c is installed
         if ! command -v aria2c &>/dev/null; then
             echo -e "${RED}[-] Error: aria2c is not installed. Attempting to install it...${NO_COLOR}"
-            install_aria2c >/dev/null
+            install_package "aria2" >/dev/null
             # Check if aria2c is installed
             if ! command -v aria2c &>/dev/null; then
                 echo -e "${RED}[-] Error: aria2c is not installed. Please install it manually and try again.${NO_COLOR}"
@@ -747,6 +765,7 @@ download_file() {
     fi
 }
 
+# Function to download a file using aria2c
 download_file_aria2() {
     local url="$1"
     local output_dir="$2"
@@ -797,6 +816,7 @@ download_file_aria2() {
 
 }
 
+# Function to download a file using curl
 download_file_curl() { # $1 = url, $2 = output
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
@@ -824,6 +844,7 @@ download_file_curl() { # $1 = url, $2 = output
     fi
 }
 
+# Function to download a file using wget
 download_file_wget() {
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
@@ -859,6 +880,7 @@ download_file_wget() {
     fi
 }
 
+# Function to check if the user is root
 check_user_is_root() {
     if ! [[ "$(id -u)" == 0 ]]; then
         user=$(whoami)
@@ -867,6 +889,7 @@ check_user_is_root() {
     fi
 }
 
+# Function to get the yaml templates directory based on the server platform
 get_server_platform() {
     grep -q vmx /proc/cpuinfo && echo -n vmx >/opt/unetlab/platform
     grep -q svm /proc/cpuinfo && echo -n svm >/opt/unetlab/platform
@@ -877,6 +900,7 @@ get_server_platform() {
     if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/"; fi
 }
 
+# Function to set the yaml templates directory based on the PNETLab version
 set_yml_template_folder_location() {
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     data_array=("$data")
@@ -891,6 +915,7 @@ set_yml_template_folder_location() {
     fi
 }
 
+# Function to list the labs available in the default or custom labs directory
 list_labs() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
@@ -973,6 +998,7 @@ list_labs() {
     echo -e "\nTo install images for all of the labs, use the following command:\n\033[32m$CMD_TO_EXECUTE_ALL\033[0m"
 }
 
+# Function to pull images for a lab
 install_images_from_lab() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
@@ -1101,6 +1127,7 @@ install_images_from_lab() {
     rm /opt/unetlab/labs/{iol_images.txt,dynamips_images.txt,qemu_images.txt,docker_images.txt} >/dev/null 2>&1
 }
 
+# Function to download images for all labs
 install_images_all_labs() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
@@ -1166,6 +1193,7 @@ install_images_all_labs() {
     echo -e "\nDone"
 }
 
+# Function to download all images of a specific type (IOL, DYNAMIPS, QEMU, DOCKER)
 pull_all() {
     TYPE=${1^^}
     if [[ $TYPE == "BIN" ]]; then
@@ -1205,6 +1233,7 @@ pull_all() {
     done
 }
 
+# Function to pull lab images
 pull_lab_images() {
     # Pending to implement: corrections_for_bin_images_in_lab_"$IMAGE_NAME" "$LAB_PATH"
     # Pending to implement: corrections_for_qemu_images_in_lab_"$QEMU_NAME"
@@ -1238,6 +1267,7 @@ pull_lab_images() {
     done <"$filename1"
 }
 
+# Function to check docker service status
 check_docker_service_status() {
     local status=$(service docker status)
 
@@ -1261,11 +1291,13 @@ check_docker_service_status() {
     fi
 }
 
+# Function to list docker images
 list_dockers() {
     echo -e "\nDocker images in server"
     docker images
 }
 
+# Function to count docker images
 count_dockers() {
     data=$(docker images | wc -l)
     docker_count=$((data - 1))
@@ -1277,6 +1309,7 @@ count_dockers() {
     fi
 }
 
+# Function to download lab docker images using the correct docker image name
 corrections_for_docker_images_in_lab_function() {
     DOCKER_NAME=$1
     LAB_PATH=$2
@@ -1328,6 +1361,7 @@ corrections_for_docker_images_in_lab_function() {
     done
 }
 
+# Function to download lab docker images
 download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
@@ -1349,6 +1383,7 @@ download_lab_docker_images() {
     count_dockers
 }
 
+# Function to get the version of ishare2
 ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
@@ -1359,6 +1394,7 @@ ishare2_version() {
     fi
 }
 
+# Function to upgrade ishare2
 upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
     UPSTREAM_VERSION=$(curl -s --insecure "$URL_VERSION")
@@ -1385,6 +1421,7 @@ upgrade_ishare2() {
     echo -e "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
 }
 
+# Function to show the ishare2 upgrade menu
 menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
@@ -1424,6 +1461,7 @@ menu_ishare2_upgrade_pnetlab() {
     done
 }
 
+# Function to show the ishare2 upgrade menu
 menu_ishare2_upgrade() {
     prompt="Please, select an option: "
     options=(
@@ -1459,6 +1497,7 @@ menu_ishare2_upgrade() {
     done
 }
 
+# Function to show the ishare2 changelog
 show_changelog() {
     FILE=/root/CHANGELOG.md
     if [[ -e $FILE ]]; then rm $FILE; fi
@@ -1468,9 +1507,12 @@ show_changelog() {
     rm $FILE
 }
 
+# Function to install ishare2 GUI
 ishare2_gui_install() {
     curl -sL "$URL_ISHARE2_GUI_INSTALL" | bash
 }
+
+# Function to start ishare2 GUI
 ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
@@ -1480,6 +1522,7 @@ ishare2_gui_start() {
     fi
 }
 
+# Function to stop ishare2 GUI
 ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
@@ -1489,6 +1532,7 @@ ishare2_gui_stop() {
     fi
 }
 
+# Function to restart ishare2 GUI
 ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
@@ -1498,6 +1542,7 @@ ishare2_gui_restart() {
     fi
 }
 
+# Function to search for images in the JSON index
 search_images() {
     TYPE=${1^^}
     if [[ -n $2 ]]; then # If the user passed a filter
@@ -1528,6 +1573,7 @@ search_images() {
     fi
 }
 
+# Function to generate a new iourc license
 generate_iourc_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
 
@@ -1561,6 +1607,7 @@ generate_iourc_license() {
     echo -e "${GREEN}[+] IOL license was generated successfully. ${NO_COLOR}"
 }
 
+# Function to show information about ishare2
 show_info() {
     echo -e "- For documentation about ishare2, visit: https://github.com/ishare2-org/ishare2-cli"
     echo -e "- If you face any issues with ishare2, please report them at @NetLabHub Telegram Group. Attach screenshots and relevant information."
@@ -1571,6 +1618,7 @@ show_info() {
     echo -e "- Email: contact@labhub.eu.org"
 }
 
+# Function to show help for ishare2
 show_ishare2_help() {
     # For ishare2
     ISHARE2_VERSION_INFO=$(cat $ISHARE2_DIR/ishare2_version)
@@ -1678,6 +1726,7 @@ $PNETLAB_INSTALLED
 EOF
 }
 
+# Function to show quick help for ishare2
 ishare2_quick_help() {
     cat <<EOF
 Syntax
@@ -1708,6 +1757,7 @@ Try: ishare2 help for more information.
 EOF
 }
 
+# Function to handle tgz archives
 handle_tgz_files() {
     FOLDERNAME=$1
 
@@ -1724,6 +1774,7 @@ handle_tgz_files() {
     fi
 }
 
+# Function to handle tar.gz archives
 handle_tar_gz_files() {
     FOLDERNAME=$1
 
@@ -1740,6 +1791,7 @@ handle_tar_gz_files() {
     fi
 }
 
+# Function to handle tar files
 handle_tar_files() {
     FOLDERNAME=$1
 
@@ -1756,6 +1808,7 @@ handle_tar_files() {
     fi
 }
 
+# Function to handle zip files
 handle_zip_files() {
     FOLDERNAME=$1
 
@@ -1772,6 +1825,7 @@ handle_zip_files() {
     fi
 }
 
+# Function to handle rar files
 handle_rar_files() {
     FOLDERNAME=$1
 
@@ -1793,6 +1847,7 @@ handle_rar_files() {
     fi
 }
 
+# Function to handle OVA files
 handle_ova_files() {
     FOLDERNAME=$1
 
@@ -1809,6 +1864,7 @@ handle_ova_files() {
     fi
 }
 
+# Function to handle ISO files
 handle_iso_files() {
     FOLDERNAME=$1
 
@@ -1835,6 +1891,7 @@ handle_iso_files() {
     fi
 }
 
+# Function to handle yaml templates
 handle_yml_files() {
     FOLDERNAME=$1
 
@@ -1852,6 +1909,7 @@ handle_yml_files() {
     done
 }
 
+# Function to handle txt and md files
 handle_txt_files() {
     FOLDERNAME=$1
 
@@ -1871,6 +1929,7 @@ handle_txt_files() {
     done
 }
 
+# Function to handle sh files
 handle_sh_files() {
     FOLDERNAME=$1
 
@@ -1893,6 +1952,7 @@ handle_sh_files() {
     fi
 }
 
+# Function to handle png files (icons)
 handle_png_files() {
     FOLDERNAME=$1
 
@@ -1915,6 +1975,7 @@ handle_png_files() {
     fi
 }
 
+# Function to handle php files
 handle_php_files() {
     FOLDERNAME=$1
 
@@ -1929,6 +1990,7 @@ handle_php_files() {
     fi
 }
 
+# Function to handle vmdk files
 handle_vmdk_files() {
     FOLDERNAME=$1
 
@@ -1947,6 +2009,7 @@ handle_vmdk_files() {
     fi
 }
 
+# Function to install qemu-utils
 install_qemu_tools() {
     apt update
     apt install -y qemu-utils
@@ -1956,6 +2019,7 @@ install_qemu_tools() {
     fi
 }
 
+# Function to pull images passed as parameters
 pull_images() {
     IMAGE_TYPE=$1
     IMAGE_ID=$2
@@ -2094,6 +2158,7 @@ pull_images() {
     fi
 }
 
+# Function to fix permissions of the downloaded images
 fix_permissions() {
     /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
     if [[ $? -eq 0 ]]; then
@@ -2103,6 +2168,7 @@ fix_permissions() {
     fi
 }
 
+# Function to run Internet connection tests
 connection_tests() {
     # Define an associative array with service names and their respective IP addresses or domains
     declare -A SERVICES=(
@@ -2152,6 +2218,7 @@ connection_tests() {
     fi
 }
 
+# Function to fix DNS (common issue with resolv.conf)
 fix_dns() {
     echo -e "${YELLOW}[-] Attempting to fix DNS... ${NO_COLOR}"
     echo -e "${YELLOW}[-] Running: systemctl restart systemd-resolved.service ${NO_COLOR}"
@@ -2165,6 +2232,7 @@ fix_dns() {
     fi
 }
 
+# Function to handle parameters passed to ishare2
 selector() {
     case "$1" in
     "search")
@@ -2354,6 +2422,7 @@ main() {
     check_ishare2_dir
     ishare2_sources
     check_config
+    check_motd
     set_max_log_lines
     set_yml_template_folder_location
     ishare2_version
