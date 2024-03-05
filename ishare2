@@ -74,6 +74,80 @@ ishare2_sources() {
     fi
 }
 
+# Function to initialize motd checks
+check_motd() {
+    # Fetch the latest MOTD from the remote source
+    fetch_latest_motd
+
+    # Check if the fetched MOTD is different from the current one
+    if motds_are_different; then
+        # Display the updated MOTD
+        show_motd
+
+        # Update the MOTD information
+        update_motd_info
+    else
+        logger "MOTD is up to date. No changes were made."
+        if should_show_motd; then
+            # Display the current MOTD
+            show_motd
+            # Update the MOTD information
+            update_motd_info
+        fi
+    fi
+}
+
+# Function to check if the MOTD should be shown
+should_show_motd() {
+    current_date=$(date +"%Y-%m-%d")
+    last_shown_date=$(jq -r '.last_shown_date' "$MOTD_FILE")
+    show_count=$(jq -r '.show_count' "$MOTD_FILE")
+
+    # Check if MOTD has not been shown today or shown less than 3 times
+    if [ "$current_date" != "$last_shown_date" ] || [ "$show_count" -lt 3 ]; then
+        return 0 # Show MOTD
+    else
+        return 1 # Do not show MOTD
+    fi
+}
+
+# Function to display the MOTD
+show_motd() {
+    message=$(jq -r '.message' "$MOTD_FILE")
+    messages=(
+        "$message"
+        "Join our Telegram group: https://t.me/NetLabHub for support and updates."
+    )
+    print_box "$messages"
+}
+
+# Function to update the MOTD information
+update_motd_info() {
+    current_date=$(date +"%Y-%m-%d")
+    jq '.last_shown_date = $date | .show_count += 1' --arg date "$current_date" "$MOTD_FILE" >$ISHARE2_DIR/motd.tmp.json
+    times_shown=$(jq -r '.show_count' "$ISHARE2_DIR/motd.tmp.json")
+    logger "MOTD has been shown $times_shown out of 3 times today."
+    mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
+}
+
+# Function to fetch the latest MOTD from a remote source
+fetch_latest_motd() {
+    curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.tmp.json
+}
+
+# Function to compare the current MOTD with the fetched MOTD
+motds_are_different() {
+    local current_motd=$(jq -r '.message' "$MOTD_FILE")
+    local fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
+    # Compare the current MOTD with the fetched MOTD
+    if [ "$current_motd" != "$fetched_motd" ]; then
+        mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
+    fi
+
+    [ "$current_motd" != "$fetched_motd" ]
+}
+
+# Function to check if there is a new version of ishare2 available
 check_updates() {
     LATEST_VERSION=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version)
 
@@ -93,40 +167,9 @@ check_updates() {
         )
         print_box "${messages[@]}"
     fi
-
-    check_motd
 }
 
-check_motd() {
-    # If MOTD is disabled, return
-    if [[ $MOTD == "false" ]]; then
-        return
-    fi
-
-    # Check if there's an MOTD message on GitHub for the current date
-    MOTD=$(curl -sN https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.txt)
-
-    # Check MOTD date, format: STARTDATE: 2024-02-21 (yyyy-mm-dd)
-    MOTD_DATE=$(date -d $(echo "$MOTD" | grep -oP 'STARTDATE: \K\d{4}-\d{2}-\d{2}') +%s)
-
-    # Check MOTD end date, format: ENDDATE: 2024-02-23 (yyyy-mm-dd)
-    MOTD_ENDDATE=$(date -d $(echo "$MOTD" | grep -oP 'ENDDATE: \K\d{4}-\d{2}-\d{2}') +%s)
-
-    # Get the current date
-    CURRENT_DATE=$(date +%s)
-
-    # Check if the MOTD is not empty
-    if [[ -n $MOTD ]]; then
-        # Debug: Check if the current date is within the range
-        if [[ $CURRENT_DATE -ge $MOTD_DATE && $CURRENT_DATE -le $MOTD_ENDDATE ]]; then
-            # Print the MOTD MESSAGE
-            MOTD_MESSAGE=$(echo "$MOTD" | awk -v RS='MESSAGE: ' 'NR>1{print $0}')
-            echo -e "${YELLOW}[!] Latest Updates from the ishare2 Developer:${NO_COLOR}"
-            echo "$MOTD_MESSAGE"
-        fi
-    fi
-}
-
+# Function to print a box-like component with adjusted width
 print_box() {
     # Calculate the width based on the length of the longest message
     messages=("$@")
