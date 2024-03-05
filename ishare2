@@ -75,6 +75,8 @@ ishare2_sources() {
             fi
         fi
     fi
+    # Source the sources.list file
+    source $ISHARE2_DIR/sources.list
 }
 
 # Function to initialize motd checks
@@ -175,7 +177,7 @@ check_updates() {
     if [[ $LATEST_VERSION != $VERSION ]]; then
         # Make an array of messages
         messages=(
-            "A new version of ishare2 is available."
+            "A newer version of ishare2 is available."
             "Current version: $VERSION"
             "Latest version: $LATEST_VERSION"
             "Run: ishare2 upgrade to update to the latest version."
@@ -1398,11 +1400,10 @@ download_lab_docker_images() {
 # Function to get the version of ishare2
 ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
-    if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
-        echo $VERSION >$ISHARE2_DIR/ishare2_version >/dev/null 2>&1
-    fi
+    echo $VERSION >$ISHARE2_DIR/ishare2_version
     if [[ $1 == "show" ]]; then
         echo -e "ishare2 version: $(cat $ISHARE2_DIR/ishare2_version)"
+        echo -e "Latest version: $(curl -s --insecure "$URL_VERSION")"
     fi
 }
 
