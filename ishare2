@@ -245,7 +245,7 @@ create_config() {
     logger "Starting configuration wizard..."
     # Create the configuration file
     clear
-    echo
+
     messages=(
         "Welcome to the ishare2 configuration wizard."
         "- This wizard will guide you through the configuration process."
