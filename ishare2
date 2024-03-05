@@ -135,11 +135,23 @@ update_motd_info() {
 
 # Function to fetch the latest MOTD from a remote source
 fetch_latest_motd() {
+    if [ ! -f "$MOTD_FILE" ]; then
+        logger "MOTD file does not exist. Fetching the latest MOTD from the remote source."
+        curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.json
+        return
+    fi
     curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.tmp.json
+    # if curl failed then write custom message to motd file
+    if [ $? -ne 0 ]; then
+        echo -e "{\"message\":\"Failed to fetch the latest MOTD. Please check your internet connection.\"}" >$ISHARE2_DIR/motd.tmp.json
+    fi
 }
 
 # Function to compare the current MOTD with the fetched MOTD
 motds_are_different() {
+    if [ ! -f "$MOTD_FILE" ] || [ ! -f "$ISHARE2_DIR/motd.tmp.json" ]; then
+        return 0
+    fi
     local current_motd=$(jq -r '.message' "$MOTD_FILE")
     local fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
     # Compare the current MOTD with the fetched MOTD
