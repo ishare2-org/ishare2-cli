@@ -2,8 +2,8 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.4.0-alpha
-# Last Updated: 2024-02-21 yyyy-mm-dd
+# Version: 3.4.4-alpha
+# Last Updated: 2024-03-05 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
@@ -17,7 +17,7 @@ JSON_URL=${MIRRORS[0]}                                                          
 ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                           # Log file
 TEMP_JSON="$ISHARE2_DIR/index.json"                                                           # Temporary JSON file
-VERSION="3.4.0-alpha"                                                                         # Current version of ishare2
+VERSION="3.4.4-alpha"                                                                         # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
 
 # Colors
@@ -39,6 +39,39 @@ ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
 logger() {
     # Log the output to the log file
     echo -e "$(date '+%Y-%m-%d %H:%M:%S') $1" >>$LOG_FILE
+}
+
+ishare2_sources() {
+    # Check if the sources.list file exists in the ishare2 directory
+    if [ ! -f "$ISHARE2_DIR/sources.list" ]; then
+        # If the sources.list file is older than 1 day, backup the file and download the latest sources.list
+        if [ ! -f "$ISHARE2_DIR/sources.list" ] || [ $(find "$ISHARE2_DIR/sources.list" -mtime +1 -print) ]; then
+            # Backup the sources.list file
+            cp $ISHARE2_DIR/sources.list "$ISHARE2_DIR/sources.list.bak"
+            # Download the latest sources.list
+            curl -sL "$SOURCES_URL" >"$ISHARE2_DIR/sources.list"
+            # Check if the sources.list file was downloaded successfully
+            if [ $? -eq 0 ]; then
+                logger "The sources.list file has been downloaded successfully."
+            else
+                logger "Failed to download the sources.list file."
+                logger "Restoring the backup sources.list file..."
+                # Restore the backup sources.list file
+                if [ -f "$ISHARE2_DIR/sources.list.bak" ]; then
+                    cp "$ISHARE2_DIR/sources.list.bak" $ISHARE2_DIR/sources.list
+                    logger "The backup sources.list file has been restored."
+                    echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
+                    echo -e "${YELLOW}[!] Using the old sources.list file.${NO_COLOR}"
+                    echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+                else
+                    logger "The backup sources.list file does not exist."
+                    echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
+                    echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+                    exit 1
+                fi
+            fi
+        fi
+    fi
 }
 
 check_updates() {
@@ -2276,6 +2309,7 @@ main() {
     fi
     check_user_is_root
     check_ishare2_dir
+    ishare2_sources
     check_config
     set_max_log_lines
     set_yml_template_folder_location
