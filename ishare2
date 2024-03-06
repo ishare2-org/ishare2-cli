@@ -395,6 +395,7 @@ create_config() {
     done
 
     # Ask the user to select a branch
+    local current_channel=$CHANNEL
     read -p "[*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
@@ -454,9 +455,17 @@ create_config() {
     clear
     messages=(
         "Configuration completed successfully."
-        "Starting ishare2..."
+        "You can start using ishare2!"
     )
     print_box "${messages[@]}"
+
+    # Update to the latest version on the selected channel
+    if [[ $current_channel != $CHANNEL ]]; then
+        echo -e "${YELLOW}[!] Installing the latest version of ishare2 on the $CHANNEL channel...${NO_COLOR}"
+        curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2 >/usr/sbin/ishare2
+        chmod +x /usr/sbin/ishare2
+        echo -e "${GREEN}[+] ishare2 has been updated to the latest version on the $CHANNEL channel.${NO_COLOR}"
+    fi
 }
 
 # Function to remove duplicate lines from the configuration file
@@ -1403,6 +1412,8 @@ download_lab_docker_images() {
 ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     echo $VERSION >$ISHARE2_DIR/ishare2_version
+    # Set CHANNEL on ishare2.conf
+    sed -i "s/CHANNEL=.*/CHANNEL=$CHANNEL/" $ISHARE2_CONF_FILE
     if [[ $1 == "show" ]]; then
         echo -e "ishare2 version: $(cat $ISHARE2_DIR/ishare2_version)"
         echo -e "Latest version: $(curl -s --insecure "$URL_VERSION")"
@@ -2436,11 +2447,11 @@ main() {
     check_user_is_root
     check_ishare2_dir
     ishare2_sources
+    ishare2_version
     check_config
     check_motd
     set_max_log_lines
     set_yml_template_folder_location
-    ishare2_version
     selector "$1" "$2" "$3" "$4"
 }
 
