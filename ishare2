@@ -120,10 +120,12 @@ should_show_motd() {
 show_motd() {
     message=$(jq -r '.message' "$MOTD_FILE")
     messages=(
+        "MOTD from the ishare2 team:"
         "$message"
-        "Join our Telegram group: https://t.me/NetLabHub for support and updates."
+        "Join our Telegram channel: https://t.me/NetLabHub"
+        "Donate: https://buymeacoffee.com/sudoalex"
     )
-    print_box "$messages"
+    print_box "${messages[@]}"
 }
 
 # Function to update the MOTD information
