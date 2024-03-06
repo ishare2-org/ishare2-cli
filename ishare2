@@ -2,23 +2,25 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.4.2-main
-# Last Updated: 2024-02-22 yyyy-mm-dd
+# Version: 3.4.5-beta
+# Last Updated: 2024-03-05 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="main"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
+CHANNEL="beta"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
 MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
 JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
 # End of ishare2 configuration
 
 # Initialize variables
-ISHARE2_DIR="/opt/ishare2/cli"                                                                # ishare2 directory
-LOG_FILE="$ISHARE2_DIR/logs.txt"                                                              # Log file
-TEMP_JSON="$ISHARE2_DIR/tmp/ishare2.json"                                                     # Temporary JSON file
-VERSION="3.4.2-main"                                                                          # Current version of ishare2
-SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list" # Sources.list URL
+ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
+LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
+TEMP_JSON="$ISHARE2_DIR/index.json"                                                            # Temporary JSON file
+VERSION="3.4.5-beta"                                                                           # Current version of ishare2
+SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
+MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
+REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
 
 # Colors
 RED='\033[31m'
@@ -38,55 +40,155 @@ ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
 
 logger() {
     # Log the output to the log file
-    echo -e "$1" >>$LOG_FILE
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') $1" >>$LOG_FILE
 }
 
+# Function to fetch the latest list of sources needed for ishare2
+ishare2_sources() {
+    # Check if the sources.list file exists in the ishare2 directory
+    if [ ! -f "$ISHARE2_DIR/sources.list" ]; then
+        # If the sources.list file is older than 1 day, backup the file and download the latest sources.list
+        if [ ! -f "$ISHARE2_DIR/sources.list" ] || [ $(find "$ISHARE2_DIR/sources.list" -mtime +1 -print) ]; then
+            # Backup the sources.list file
+            cp $ISHARE2_DIR/sources.list "$ISHARE2_DIR/sources.list.bak"
+            # Download the latest sources.list
+            curl -sL "$SOURCES_URL" >"$ISHARE2_DIR/sources.list"
+            # Check if the sources.list file was downloaded successfully
+            if [ $? -eq 0 ]; then
+                logger "The sources.list file has been downloaded successfully."
+            else
+                logger "Failed to download the sources.list file."
+                logger "Restoring the backup sources.list file..."
+                # Restore the backup sources.list file
+                if [ -f "$ISHARE2_DIR/sources.list.bak" ]; then
+                    cp "$ISHARE2_DIR/sources.list.bak" $ISHARE2_DIR/sources.list
+                    logger "The backup sources.list file has been restored."
+                    echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
+                    echo -e "${YELLOW}[!] Using the old sources.list file.${NO_COLOR}"
+                    echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+                else
+                    logger "The backup sources.list file does not exist."
+                    echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
+                    echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+                    exit 1
+                fi
+            fi
+        fi
+    fi
+    # Source the sources.list file
+    source $ISHARE2_DIR/sources.list
+}
+
+# Function to initialize motd checks
+check_motd() {
+    # Fetch the latest MOTD from the remote source
+    fetch_latest_motd
+
+    # Check if the fetched MOTD is different from the current one
+    if motds_are_different; then
+        # Display the updated MOTD
+        show_motd
+
+        # Update the MOTD information
+        update_motd_info
+    else
+        logger "MOTD is up to date. No changes were made."
+        if should_show_motd; then
+            # Display the current MOTD
+            show_motd
+            # Update the MOTD information
+            update_motd_info
+        fi
+    fi
+}
+
+# Function to check if the MOTD should be shown
+should_show_motd() {
+    current_date=$(date +"%Y-%m-%d")
+    last_shown_date=$(jq -r '.last_shown_date' "$MOTD_FILE")
+    show_count=$(jq -r '.show_count' "$MOTD_FILE")
+
+    # Check if MOTD has not been shown today or shown less than 3 times
+    if [ "$current_date" != "$last_shown_date" ] || [ "$show_count" -lt 3 ]; then
+        return 0 # Show MOTD
+    else
+        return 1 # Do not show MOTD
+    fi
+}
+
+# Function to display the MOTD
+show_motd() {
+    message=$(jq -r '.message' "$MOTD_FILE")
+    messages=(
+        "MOTD from the ishare2 team:"
+        "$message"
+        "Join our Telegram channel: https://t.me/NetLabHub"
+        "Donate: https://buymeacoffee.com/sudoalex"
+    )
+    print_box "${messages[@]}"
+}
+
+# Function to update the MOTD information
+update_motd_info() {
+    current_date=$(date +"%Y-%m-%d")
+    jq '.last_shown_date = $date | .show_count += 1' --arg date "$current_date" "$MOTD_FILE" >$ISHARE2_DIR/motd.tmp.json
+    times_shown=$(jq -r '.show_count' "$ISHARE2_DIR/motd.tmp.json")
+    logger "MOTD has been shown $times_shown out of 3 times today."
+    mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
+}
+
+# Function to fetch the latest MOTD from a remote source
+fetch_latest_motd() {
+    if [ ! -f "$MOTD_FILE" ]; then
+        logger "MOTD file does not exist. Fetching the latest MOTD from the remote source."
+        curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.json
+        return
+    fi
+    curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.tmp.json
+    # if curl failed then write custom message to motd file
+    if [ $? -ne 0 ]; then
+        echo -e "{\"message\":\"Failed to fetch the latest MOTD. Please check your internet connection.\"}" >$ISHARE2_DIR/motd.tmp.json
+    fi
+}
+
+# Function to compare the current MOTD with the fetched MOTD
+motds_are_different() {
+    if [ ! -f "$MOTD_FILE" ] || [ ! -f "$ISHARE2_DIR/motd.tmp.json" ]; then
+        return 0
+    fi
+    local current_motd=$(jq -r '.message' "$MOTD_FILE")
+    local fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
+    # Compare the current MOTD with the fetched MOTD
+    if [ "$current_motd" != "$fetched_motd" ]; then
+        mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
+    fi
+
+    [ "$current_motd" != "$fetched_motd" ]
+}
+
+# Function to check if there is a new version of ishare2 available
 check_updates() {
     LATEST_VERSION=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version)
+
+    # Check if the version file could be fetched successfully
+    if [ -z "$LATEST_VERSION" ]; then
+        echo -e "${RED}[-] Failed to fetch the latest version information. Please check your internet connection.${NO_COLOR}"
+        return
+    fi
+
     if [[ $LATEST_VERSION != $VERSION ]]; then
         # Make an array of messages
         messages=(
-            "A new version of ishare2 is available."
+            "A newer version of ishare2 is available."
             "Current version: $VERSION"
             "Latest version: $LATEST_VERSION"
             "Run: ishare2 upgrade to update to the latest version."
         )
         print_box "${messages[@]}"
     fi
-
-    check_motd
 }
 
-check_motd() {
-    # If MOTD is disabled, return
-    if [[ $MOTD == "false" ]]; then
-        return
-    fi
-
-    # Check if there's an MOTD message on GitHub for the current date
-    MOTD=$(curl -sN https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.txt)
-
-    # Check MOTD date, format: STARTDATE: 2024-02-21 (yyyy-mm-dd)
-    MOTD_DATE=$(date -d $(echo "$MOTD" | grep -oP 'STARTDATE: \K\d{4}-\d{2}-\d{2}') +%s)
-
-    # Check MOTD end date, format: ENDDATE: 2024-02-23 (yyyy-mm-dd)
-    MOTD_ENDDATE=$(date -d $(echo "$MOTD" | grep -oP 'ENDDATE: \K\d{4}-\d{2}-\d{2}') +%s)
-
-    # Get the current date
-    CURRENT_DATE=$(date +%s)
-
-    # Check if the MOTD is not empty
-    if [[ -n $MOTD ]]; then
-        # Debug: Check if the current date is within the range
-        if [[ $CURRENT_DATE -ge $MOTD_DATE && $CURRENT_DATE -le $MOTD_ENDDATE ]]; then
-            # Print the MOTD MESSAGE
-            MOTD_MESSAGE=$(echo "$MOTD" | awk -v RS='MESSAGE: ' 'NR>1{print $0}')
-            echo -e "${YELLOW}[!] Latest Updates from the ishare2 Developer:${NO_COLOR}"
-            echo "$MOTD_MESSAGE"
-        fi
-    fi
-}
-
+# Function to print a box-like component with adjusted width
 print_box() {
     # Calculate the width based on the length of the longest message
     messages=("$@")
@@ -108,6 +210,7 @@ print_box() {
     echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
 }
 
+# Function to rotate among the available mirrors
 rotate_mirrors() {
     # Rotate mirrors
     source $ISHARE2_CONF_FILE
@@ -133,6 +236,7 @@ rotate_mirrors() {
     fi
 }
 
+# Function to print a separator with a title
 print_separator() {
     local TITLE=$1
     local WIDTH=${#TITLE}
@@ -148,6 +252,21 @@ print_separator() {
     echo -e "${BLUE}$SEPARATOR${NO_COLOR}"
 }
 
+# Function to check if PNetLab is installed
+is_pnetlab_installed() {
+    # Check if pnetlab is installed
+    data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
+    data_array=("$data")
+    pnetlab_version=${data_array[1]}
+    if [[ -z $pnetlab_version ]]; then
+        echo -e "${YELLOW}[!] WARN: pnetlab is not installed.${NO_COLOR}"
+        echo -e "${YELLOW}[!]${NO_COLOR} This script has only been tested on PNetLab. If you are not using PNetLab, you may encounter issues."
+        return 1
+    fi
+    return 0
+}
+
+# Function to initialize the ishare2 directory checks
 check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
     if [[ ! -d $ISHARE2_DIR ]]; then
@@ -155,32 +274,7 @@ check_ishare2_dir() {
     fi
 }
 
-fetch_sources() {
-    # Fetch the sources.list from the repository
-    logger "Fetching sources.list..."
-    check_ishare2_dir
-    # Cache the sources.list file for 10 minutes
-    if [[ -f $ISHARE2_DIR/sources.list && $(find "$ISHARE2_DIR/sources.list" -mmin -10) ]]; then
-        logger "Using cached sources.list file."
-    else
-        logger "Downloading sources.list from $SOURCES_URL"
-        # Backup the old sources.list file
-        if [[ -f $ISHARE2_DIR/sources.list ]]; then
-            mv $ISHARE2_DIR/sources.list $ISHARE2_DIR/sources.list.bak
-        fi
-        # If download failed, use the cached sources.list file
-        if ! download_file_curl "$SOURCES_URL" "$ISHARE2_DIR/sources.list"; then
-            logger "Failed to download sources.list. Using the old sources.list file."
-            # Restore the old sources.list file
-            mv $ISHARE2_DIR/sources.list.bak $ISHARE2_DIR/sources.list
-        fi
-        logger "Downloaded sources.list successfully."
-    fi
-    # Use sources.list file
-    source $ISHARE2_DIR/sources.list
-}
-
-# set max log file lines to 1000
+# Set max log file lines to 1000
 set_max_log_lines() {
     if [[ -f $LOG_FILE ]]; then
         if [[ $(wc -l <"$LOG_FILE") -gt 1000 ]]; then
@@ -190,6 +284,7 @@ set_max_log_lines() {
     fi
 }
 
+# Function to check if the configuration file exists, and validate it
 check_config() {
     # check if config file exists
     if [[ ! -f $ISHARE2_CONF_FILE ]]; then
@@ -197,15 +292,33 @@ check_config() {
     fi
     # check if config file is empty
     if [[ ! -s $ISHARE2_CONF_FILE ]]; then
-        echo -e "${RED} [!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
+        echo -e "${RED}[!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
         create_config
     fi
     # check if config file is valid
     validate_conf_file
 }
 
+# Function to create the configuration file
 create_config() {
-    echo -e "${BLUE} [*] Installing ishare2 dependencies...${NO_COLOR}"
+    clear
+    messages=(
+        "Welcome to the ishare2!"
+        "This script will guide you through the initial configuration process."
+        "But first, let's check if the required dependencies are installed."
+    )
+    print_box "${messages[@]}"
+    sleep 3
+    is_pnetlab_installed
+    # check if pnetlab is installed
+    if [[ -z $pnetlab_version ]]; then
+        logger "PNetLab is not installed."
+    else
+        echo -e "${GREEN}[+] PNetLab version: $pnetlab_version found.${NO_COLOR}"
+        check_pnetlab_sources
+    fi
+
+    echo -e "${BLUE}[*] Installing ishare2 dependencies...${NO_COLOR}"
     MAX_RETRIES=3
     retry_counter=0
 
@@ -213,7 +326,7 @@ create_config() {
         if install_dependencies; then
             break
         fi
-        echo -e "${RED} [-] Failed to install dependencies. Retrying...${NO_COLOR}"
+        echo -e "${RED}[-] Failed to install dependencies. Retrying...${NO_COLOR}"
         retry_counter=$((retry_counter + 1))
         sleep 10
     done
@@ -222,37 +335,45 @@ create_config() {
         MAX_RETRIES=3
         retry_counter=0
         while [[ $retry_counter -lt $MAX_RETRIES ]]; do
-            if replace_pnetlab_sources; then
+            if check_pnetlab_sources; then
                 break
             fi
-            echo -e "${RED} [-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
+            echo -e "${RED}[-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
             retry_counter=$((retry_counter + 1))
             sleep 10
         done
     fi
-    echo -e "${BLUE} [*] Creating ishare2 configuration file...${NO_COLOR}"
-    echo -e "${YELLOW} [*] Please answer the following questions to configure ishare2.${NO_COLOR}"
-    echo -e "${YELLOW} [*] Press enter to use the default values which should work out of the box.${NO_COLOR}"
-    echo -e "${YELLOW} [*] Press Ctrl+C to cancel.${NO_COLOR}"
+    logger "Starting configuration wizard..."
+    # Create the configuration file
+    clear
+
+    messages=(
+        "Welcome to the ishare2 configuration wizard."
+        "- This wizard will guide you through the configuration process."
+        "- Press Enter to accept the default value."
+        "- Press Ctrl+C to cancel."
+    )
+    print_box "${messages[@]}"
+    sleep 3
     # Ask whether to use aria2c or not
-    echo -e "${YELLOW} [+] Use aria2c for faster downloads?${NO_COLOR}"
-    read -p " [+] (y/n): " -r
+    echo -e "${YELLOW}[+] Use aria2c for faster downloads? (default: no)${NO_COLOR}"
+    read -p "[+] (y/n): " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW} [!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
-        install_aria2c
+        install_package "aria2"
         echo "Press any key to continue..."
         read -n 1
     else
-        echo -e "${YELLOW} [!] Using wget is slower than aria2c, however, it is more stable.\nTo enable aria2c, run: ishare2 config and answer yes to this question.${NO_COLOR}"
+        echo
+        echo -e "${YELLOW}[!] Using wget is slower than aria2c, however, it is more stable.\nTo enable aria2c, run: ishare2 config and answer yes to this question.${NO_COLOR}"
         echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
-        echo "Press any key to continue..."
-        read -n 1
+        sleep 3
     fi
 
     # Ask if SSL certificate should be checked
-    echo -e "${YELLOW} [+] Check SSL certificate? (default: yes)${NO_COLOR}"
-    read -p " [+] (y/n): " -r
+    echo -e "${YELLOW}[+] Check SSL certificate? (default: yes)${NO_COLOR}"
+    read -p "[+] (y/n): " -r
     case $REPLY in
     [Nn])
         SSL_CHECK=false
@@ -263,7 +384,7 @@ create_config() {
     esac
     echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_CONF_FILE
 
-    echo -e "${YELLOW} [+] Choose the update channel.${NO_COLOR}"
+    echo -e "${YELLOW}[+] Choose the update channel.${NO_COLOR}"
 
     # Get branches as an array instead of a single string with spaces
     mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
@@ -274,47 +395,47 @@ create_config() {
     done
 
     # Ask the user to select a branch
-    read -p " [*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
+    read -p "[*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
-        echo -e "${YELLOW} [!] Using the default branch.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using the default branch.${NO_COLOR}"
     elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
-        echo -e "${RED} [!] Invalid input. Using the default branch.${NO_COLOR}"
+        echo -e "${RED}[!] Invalid input. Using the default branch.${NO_COLOR}"
     else
         CHANNEL=${branches[REPLY - 1]}
-        echo -e "${YELLOW} [!] Using the $CHANNEL branch.${NO_COLOR}"
-        echo -e "${YELLOW} [!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using the $CHANNEL branch.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
     fi
 
     echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_CONF_FILE
 
     # Provisional mirror selection feature. Will be replaced with a better solution in the future.
     # Ask if the user wants to use the default mirror, another mirror or a custom mirror
-    echo -e "${YELLOW} [+] Choose a mirror.${NO_COLOR}"
+    echo -e "${YELLOW}[+] Choose a mirror.${NO_COLOR}"
     # Show list of mirrors
     echo " 1) Rotate mirrors (recommended)"
     echo " 2) Google Drive mirror"
     echo " 3) Onedrive mirror"
     echo " 4) Custom mirror"
     # Ask the user to select a mirror
-    read -p " [*] Enter the number of the mirror you want to use (default: 1): " -r
+    read -p "[*] Enter the number of the mirror you want to use (default: 1): " -r
     case $REPLY in
     2)
         JSON_URL=${MIRRORS[0]}
-        echo -e "${YELLOW} [!] Using Google Drive mirror.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using Google Drive mirror.${NO_COLOR}"
         ;;
     3)
         JSON_URL=${MIRRORS[1]}
-        echo -e "${YELLOW} [!] Using Onedrive mirror.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using Onedrive mirror.${NO_COLOR}"
         ;;
     4)
-        echo -e "${YELLOW} [+] Enter the URL of the mirror.${NO_COLOR}"
-        read -p " [*] Enter the URL of the mirror you want to use: " -r
+        echo -e "${YELLOW}[+] Enter the URL of the mirror.${NO_COLOR}"
+        read -p "[*] Enter the URL of the mirror you want to use: " -r
         JSON_URL="$REPLY"
-        echo -e "${YELLOW} [!] Using custom mirror: $JSON_URL.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using custom mirror: $JSON_URL.${NO_COLOR}"
         ;;
     *)
-        echo -e "${YELLOW} [!] ishare2 will rotate among the available mirrors.${NO_COLOR}"
+        echo -e "${YELLOW}[!] ishare2 will rotate among the available mirrors.${NO_COLOR}"
         echo "ROTATE=true" >>$ISHARE2_CONF_FILE
         ;;
     esac
@@ -323,20 +444,28 @@ create_config() {
 
     # Validate the configuration file
     if [ ! -f "$ISHARE2_CONF_FILE" ]; then
-        echo -e "${RED} [!] Failed to create configuration file. Please try again.${NO_COLOR}"
+        echo -e "${RED}[!] Failed to create configuration file. Please try again.${NO_COLOR}"
         exit 1
     fi
     remove_duplicates
     validate_conf_file
-    echo -e "${GREEN} [+] Configuration file created successfully.${NO_COLOR}"
+
+    sleep 1
+    clear
+    messages=(
+        "Configuration completed successfully."
+        "Starting ishare2..."
+    )
+    print_box "${messages[@]}"
 }
 
+# Function to remove duplicate lines from the configuration file
 remove_duplicates() {
     local config_file="$ISHARE2_CONF_FILE"
 
     # Check if the configuration file exists
     if [ ! -f "$config_file" ]; then
-        echo -e "${RED} [!] Configuration file does not exist.${NO_COLOR}"
+        echo -e "${RED}[!] Configuration file does not exist.${NO_COLOR}"
         return
     fi
 
@@ -346,11 +475,12 @@ remove_duplicates() {
     logger "Removed duplicate lines from the configuration file."
 }
 
+# Function to validate the configuration file
 validate_conf_file() {
 
     # Check if the configuration file exists
     if [ ! -f "$ISHARE2_CONF_FILE" ]; then
-        echo -e "${RED} [!] Configuration file does not exist.${NO_COLOR}"
+        echo -e "${RED}[!] Configuration file does not exist.${NO_COLOR}"
         return 1
     fi
 
@@ -393,65 +523,133 @@ validate_conf_file() {
     return 0
 }
 
+# Function to remove i-share.top apt sources.list
 remove_ishare_sources() {
     # Remove i-share.top line from sources.list
     sed -i '/i-share.top/d' /etc/apt/sources.list
 }
 
+# Function to install dependencies required for ishare2
 install_dependencies() {
     remove_ishare_sources
-    remove_ishare_sources
-    # unlock apt
-    unlock_dpkg
+    echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
     local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
+    echo -e "${YELLOW}[+] List of packages to be installed: ${NO_COLOR}"
+    for package in "${packages[@]}"; do
+        echo -e "${YELLOW} -${NO_COLOR} $package"
+    done
+    echo -e "${YELLOW}[+] Installing dependencies in 5 seconds... Press Ctrl+C to cancel.${NO_COLOR}"
+    sleep 5
+
     for package in "${packages[@]}"; do
         install_package "$package"
     done
 }
 
+# Function to check if a package is installed and install it if it's not
 check_installed() {
     PACKAGE=$1
     # Check if package is installed
     if ! command -v jq &>/dev/null; then
-        echo -e "${YELLOW} [!] WARN: $PACKAGE is not installed.${NO_COLOR}"
+        echo -e "${YELLOW}[!] WARN: $PACKAGE is not installed.${NO_COLOR}"
         install_package "$PACKAGE"
         # Check success of package installation
         if ! command -v "$PACKAGE" &>/dev/null; then
-            echo -e "${RED} [-] Error: Failed to install $PACKAGE.${NO_COLOR}"
+            echo -e "${RED}[-] Error: Failed to install $PACKAGE.${NO_COLOR}"
             exit 1
         else # package is installed
-            echo -e "${GREEN} [+] $PACKAGE has been installed successfully.${NO_COLOR}"
+            echo -e "${GREEN}[+] $PACKAGE has been installed successfully.${NO_COLOR}"
         fi
     fi
 }
 
-replace_pnetlab_sources() {
-    # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
-    echo -e "${YELLOW} [+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
-    sed -i 's|^deb \[trusted=yes\] https://repo.pnetlab.com ./$|##deb [trusted=yes] https://repo.pnetlab.com ./|' /etc/apt/sources.list
-    sed -i 's|^deb \[trusted=yes\] http://repo.pnetlab.com ./$|##deb [trusted=yes] http://repo.pnetlab.com ./|' /etc/apt/sources.list
-    echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
-    echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
+# Function to check if a site is accessible
+is_site_accessible() {
+    local url=$1
+    if ! curl -s --head --request GET "$url" | grep "200 OK\|301 Moved Permanently" >/dev/null; then
+        return 1 # Site is not accessible
+    else
+        return 0 # Site is accessible
+    fi
 }
 
-install_package() {
-    local package_name=$1
-    # unlock apt
-    unlock_dpkg
-    # check if $package_name is installed otherwise install it
-    if ! command -v "$package_name" &>/dev/null; then
-        echo -e "${YELLOW} [+] $package_name is not installed.${NO_COLOR}"
-        echo -e "${YELLOW} [+] Updating package lists...${NO_COLOR}"
-        if ! apt-get update; then
-            echo -e "${RED} [-] Failed to update package lists: apt-get update failed.\nYou must fix issues with apt before continuing.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Join the Telegram group for help: https://t.me/NetLabHub${NO_COLOR}"
+# Function to attempt to fix APT sources
+fix_repositories() {
+    if is_site_accessible "https://repo.pnetlab.com"; then
+        echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
+    else
+        echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible. Checking alternative...${NO_COLOR}"
+        if is_site_accessible "https://pnetlab.labhub.eu.org"; then
+            check_pnetlab_sources
+            apt_get_update || echo -e "${RED}[-] Failed to update package lists after replacing sources.${NO_COLOR}"
+        else
+            echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
             exit 1
         fi
+    fi
+}
 
-        echo -e "${YELLOW} [+] Installing $package_name...${NO_COLOR}"
+# Function to check if the sources.list file is using the correct sources
+check_pnetlab_sources() {
+    # Check if https://repo.pnetlab.com is accessible
+    if ! is_site_accessible "https://repo.pnetlab.com"; then
+        echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Checking alternative...${NO_COLOR}"
+        # Find if "deb [trusted=yes] http://repo.pnetlab.com ./" exists in sources.list
+        if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
+            echo -e "${YELLOW}[!] Found your sources.list is using http instead of https.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Replacing http with https...${NO_COLOR}"
+            sed -i 's|http://repo.pnetlab.com|https://repo.pnetlab.com|' /etc/apt/sources.list
+        fi
+        # Check if https://pnetlab.labhub.eu.org is accessible
+        if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
+            echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+            exit 1
+        fi
+        # Ask the user if they want to replace the sources
+        echo -e "${YELLOW}[!] The official pnetlab.com repository is not accessible.${NO_COLOR}"
+        echo -e "${YELLOW}[?] Do you want to replace the pnetlab sources with the LabHub mirror?${NO_COLOR}"
+        read -p "[?] (y/n): " -r
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
+            echo -e "${YELLOW}[+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
+            sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+            sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+            echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
+            echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
+        fi
+    fi
+}
+
+# Function to run apt-get update
+apt_get_update() {
+    if ! apt-get update -y; then
+        return 1
+    fi
+}
+
+# Function to install a package
+install_package() {
+    local package_name=$1
+    # check if $package_name is installed otherwise install it
+    if ! command -v "$package_name" &>/dev/null; then
+        echo -e "${YELLOW}[+] $package_name is not installed.${NO_COLOR}"
+        echo -e "${YELLOW}[+] Updating package lists...${NO_COLOR}"
+        if ! apt_get_update; then
+            echo -e "${RED}[-] Failed to update package lists.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Attempting to fix APT sources...${NO_COLOR}"
+            fix_repositories
+            if ! apt_get_update; then
+                echo -e "${RED}[-] Failed to fix APT sources.${NO_COLOR}"
+                exit 1
+            fi
+        fi
+
+        echo -e "${YELLOW}[+] Installing $package_name...${NO_COLOR}"
         if ! apt-get install -y "$package_name"; then
-            echo -e "${RED} [-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
-            echo -e "${YELLOW} [!] Run: apt-get install -y $package_name${NO_COLOR}"
+            echo -e "${RED}[-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Run: apt-get install -y $package_name${NO_COLOR}"
             exit 1
         fi
     else
@@ -464,93 +662,114 @@ install_package() {
     fi
 }
 
-install_aria2c() {
-    install_package "aria2"
-}
-
+# Function to check if APT or dpkg is running and unlock dpkg
 unlock_dpkg() {
-    # Check if apt is running
-    if pgrep apt >/dev/null 2>&1; then
-        echo "apt is currently running. Would you like to attempt unlocking dpkg? This may cause issues with apt if it is still running. Proceed? (y/n)"
+    # Check if APT or dpkg is running
+    if pgrep -f '^[/]usr[/]bin[/](apt|dpkg)' >/dev/null 2>&1; then
+        echo "APT or dpkg seems to be running in the background."
+        echo -e "${YELLOW}[?] Do you want to unlock dpkg?${NO_COLOR}"
+
+        # Confirm with the user
+        echo -e "${YELLOW}[!] Warning: Unlocking dpkg while APT or dpkg processes are active can lead to a broken system.${NO_COLOR}"
+        echo "Proceed with caution. It's recommended to try this only if you're sure that no APT or dpkg processes are running."
+        echo "Proceed? (y/n)"
         read -r answer
 
-        if [[ $answer == "y" || $answer == "Y" ]]; then
-            echo "Trying to kill the apt process..."
-
-            # Attempt to kill apt process
-            killall -r '^(apt|dpkg)$' >/dev/null 2>&1
-
-            # Wait for the process to terminate
-            sleep 5
-
-            # Check if apt process is still running
-            if pgrep apt >/dev/null 2>&1; then
-                echo "Killing apt process failed. Exiting..."
-                exit 1
-            fi
-        else
-            echo "Skipping dpkg unlocking. Exiting..."
-            exit 0
+        if [[ $answer != "y" && $answer != "Y" ]]; then
+            echo "Operation cancelled by the user."
         fi
-    fi
 
-    # Remove lock files
-    sudo rm /var/lib/dpkg/lock >/dev/null 2>&1
-    sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
-    # Remove lock files for apt frontend
-    sudo rm /var/lib/dpkg/lock-frontend >/dev/null 2>&1
-    sudo rm /var/cache/apt/archives/lock >/dev/null 2>&1
+        # Attempt to remove lock files
+        echo "Attempting to remove lock files..."
+        local lock_files=(
+            "/var/lib/dpkg/lock"
+            "/var/cache/apt/archives/lock"
+            "/var/lib/apt/lists/lock"
+            "/var/lib/dpkg/lock-frontend"
+        )
+
+        for file in "${lock_files[@]}"; do
+            if [ -f "$file" ]; then
+                sudo rm "$file" >/dev/null 2>&1
+                echo "Removed $file"
+            else
+                echo "$file does not exist or has already been removed."
+            fi
+        done
+
+        # Attempt to reconfigure dpkg
+        echo "Reconfiguring dpkg..."
+        sudo dpkg --configure -a
+
+        echo "Operation completed. Please try running your APT or dpkg command again."
+    fi
 }
 
+# Function to create the ishare2 directory
 create_ishare2_dir() {
-    echo -e "${YELLOW} [+] Creating ishare2 directory...${NO_COLOR}"
+    echo -e "${YELLOW}[!] Creating ishare2 directory...${NO_COLOR}"
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
         error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
         if [[ $error_message == *"Permission denied"* ]]; then
-            echo -e "${RED} [-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
+            echo -e "${RED}[-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
         else
-            echo -e "${RED} [-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
+            echo -e "${RED}[-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
         fi
         exit 1
     fi
-    echo -e "${GREEN} [+] Done.${NO_COLOR}"
+    logger "ishare2 directory created successfully."
 }
 
+# Function to fetch JSON file with the list of files to download
 fetch_json() {
     check_installed "jq"
-    # Download the JSON and store it in a temporary file
+
+    #
+    logger "Downloading JSON file from $JSON_URL..."
     curl -sL "$JSON_URL" >"$TEMP_JSON"
-    # Check if curl command failed
+
+    # Check if the curl command failed
     if [ $? -ne 0 ]; then
-        echo -e "${RED} [-] Failed to download the JSON file. Please check your internet connection.${NO_COLOR}"
+        logger "Failed to download the JSON file."
+        echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
+        connection_tests
         exit 1
     fi
+
     # Check if the JSON file is valid
     if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
-        echo -e "${RED} [-] Error: Invalid JSON file. Please check your internet connection.${NO_COLOR}"
+        logger "Error: Invalid JSON file."
+        echo -e "${RED}[-] Error: Invalid JSON file.${NO_COLOR}"
+        echo -e "${RED}[!] Debug information:${NO_COLOR}"
+        echo -e "${YELLOW} - JSON file URL: $JSON_URL${NO_COLOR}"
+        echo -e "${YELLOW} - JSON file location: $TEMP_JSON${NO_COLOR}"
+        echo -e "${RED}[!] Troubleshooting:${NO_COLOR}"
+        echo -e "${YELLOW} 1) Check if the JSON file is accessible through your web browser.${NO_COLOR}"
+        echo -e "${YELLOW} 2) If the issue persists, report the issue to the ishare2 team on Telegram: https://t.me/NetLabHub${NO_COLOR}"
         exit 1
+    else
+        logger "JSON file downloaded successfully."
     fi
 }
 
+# Function to download a file using wget or aria2c
 download_file() {
     local url="$1"
     local output="$2"
     local options="$3"
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
-    # Rotate mirrors if enabled
-    rotate_mirrors
 
     if [[ $USE_ARIA2C == "true" ]]; then
         # Check if aria2c is installed
         if ! command -v aria2c &>/dev/null; then
-            echo -e "${RED} [-] Error: aria2c is not installed. Attempting to install it...${NO_COLOR}"
-            install_aria2c >/dev/null
+            echo -e "${RED}[-] Error: aria2c is not installed. Attempting to install it...${NO_COLOR}"
+            install_package "aria2" >/dev/null
             # Check if aria2c is installed
             if ! command -v aria2c &>/dev/null; then
-                echo -e "${RED} [-] Error: aria2c is not installed. Please install it manually and try again.${NO_COLOR}"
+                echo -e "${RED}[-] Error: aria2c is not installed. Please install it manually and try again.${NO_COLOR}"
                 exit 1
             else # aria2c is installed
-                echo -e "${GREEN} [+] aria2c has been installed successfully.${NO_COLOR}"
+                echo -e "${GREEN}[+] aria2c has been installed successfully.${NO_COLOR}"
             fi
         fi
     fi
@@ -562,6 +781,7 @@ download_file() {
     fi
 }
 
+# Function to download a file using aria2c
 download_file_aria2() {
     local url="$1"
     local output_dir="$2"
@@ -581,7 +801,7 @@ download_file_aria2() {
         echo -e "${YELLOW}[+] ${GREEN}The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
         rm -f error.log
     else
-        echo -e "${RED} [-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
+        echo -e "${RED}[-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
         exit 1
     fi
     # Check if file size is less than 20KB and its extension is not excluded
@@ -597,21 +817,22 @@ download_file_aria2() {
         done
 
         if [ "$is_excluded" = false ]; then
-            echo -e "${RED} [-] The file size is too small. The file may be corrupted.${NO_COLOR}"
+            echo -e "${RED}[-] The file size is too small. The file may be corrupted.${NO_COLOR}"
             # Check if html file is downloaded instead of the actual file, key words: "DOCTYPE", "<html>", Bhadoo
             if grep -q "DOCTYPE" "$output_dir$output_name" || grep -q "<html>" "$output_dir$output_name" || grep -q "Bhadoo" "$output_dir$output_name"; then
-                echo -e "${RED} [-] The file may be corrupted. The file may be an HTML file instead of the actual file.${NO_COLOR}"
+                echo -e "${RED}[-] The file may be corrupted. The file may be an HTML file instead of the actual file.${NO_COLOR}"
             fi
             # Show troubleshooting steps
-            echo -e "${YELLOW} [!] Troubleshooting:${NO_COLOR}"
-            echo -e "${YELLOW} [!] 1) Switch mirrors, if you have mirrors rotation enabled then run the command again using the --overwrite flag.${NO_COLOR}"
-            echo -e "${YELLOW} [!] 2) If the issue persists, visit the live repository through your web browser and download the file manually.${NO_COLOR}"
-            echo -e "${YELLOW} [!] 3) If the issue persists, report the issue to the ishare2 team on Telegram.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Troubleshooting:${NO_COLOR}"
+            echo -e "${YELLOW}[!] 1) Switch mirrors, if you have mirrors rotation enabled then run the command again using the --overwrite flag.${NO_COLOR}"
+            echo -e "${YELLOW}[!] 2) If the issue persists, visit the live repository through your web browser and download the file manually.${NO_COLOR}"
+            echo -e "${YELLOW}[!] 3) If the issue persists, report the issue to the ishare2 team on Telegram.${NO_COLOR}"
         fi
     fi
 
 }
 
+# Function to download a file using curl
 download_file_curl() { # $1 = url, $2 = output
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
@@ -630,15 +851,16 @@ download_file_curl() { # $1 = url, $2 = output
         logger "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
-        echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
+        echo -e "${RED}[-] Error: Unable to download the file. ${NO_COLOR}"
         # Read the error message from the curl_error file
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/curl_error)
         # Print the error message
-        echo -e "${RED} [-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        echo -e "${RED}[-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
         exit 1
     fi
 }
 
+# Function to download a file using wget
 download_file_wget() {
     # Create the directory if it does not exist
     mkdir -p $ISHARE2_DIR/tmp
@@ -665,23 +887,25 @@ download_file_wget() {
         logger "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
-        echo -e "${RED} [-] Error: Unable to download the file. ${NO_COLOR}"
+        echo -e "${RED}[-] Error: Unable to download the file. ${NO_COLOR}"
         # Read the error message from the wget_error file
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/wget_error)
         # Print the error message
-        echo -e "${RED} [-] Read the logs above for more information. ${NO_COLOR}"
+        echo -e "${RED}[-] Read the logs above for more information. ${NO_COLOR}"
         exit 1
     fi
 }
 
+# Function to check if the user is root
 check_user_is_root() {
     if ! [[ "$(id -u)" == 0 ]]; then
         user=$(whoami)
-        echo -e "${RED} [!] This script requires root privileges to be executed. The current user, \"$user\", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
+        echo -e "${RED}[!] This script requires root privileges to be executed. The current user, \"$user\", does not have enough permissions. Please, switch to the root user to run the script.${NO_COLOR}"
         exit 1
     fi
 }
 
+# Function to get the yaml templates directory based on the server platform
 get_server_platform() {
     grep -q vmx /proc/cpuinfo && echo -n vmx >/opt/unetlab/platform
     grep -q svm /proc/cpuinfo && echo -n svm >/opt/unetlab/platform
@@ -692,6 +916,7 @@ get_server_platform() {
     if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/"; fi
 }
 
+# Function to set the yaml templates directory based on the PNETLab version
 set_yml_template_folder_location() {
     data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
     data_array=("$data")
@@ -706,6 +931,7 @@ set_yml_template_folder_location() {
     fi
 }
 
+# Function to list the labs available in the default or custom labs directory
 list_labs() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
@@ -765,7 +991,7 @@ list_labs() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs were found, so images cannot be downloaded for any lab"
-        echo -e "${RED} [-]$STR\033[0m"
+        echo -e "${RED}[-]$STR\033[0m"
         exit 0
     fi
 
@@ -788,6 +1014,7 @@ list_labs() {
     echo -e "\nTo install images for all of the labs, use the following command:\n\033[32m$CMD_TO_EXECUTE_ALL\033[0m"
 }
 
+# Function to pull images for a lab
 install_images_from_lab() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
@@ -836,7 +1063,7 @@ install_images_from_lab() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs were found so we cannot download images for any lab"
-        echo -e "${RED} [-]$STR\033[0m"
+        echo -e "${RED}[-]$STR\033[0m"
         exit 0
     fi
 
@@ -916,6 +1143,7 @@ install_images_from_lab() {
     rm /opt/unetlab/labs/{iol_images.txt,dynamips_images.txt,qemu_images.txt,docker_images.txt} >/dev/null 2>&1
 }
 
+# Function to download images for all labs
 install_images_all_labs() {
     # Check if the user passed a custom path for Labs directory
     if [[ $1 == "mylabs" ]]; then # If the command is "ishare2 mylabs"
@@ -960,7 +1188,7 @@ install_images_all_labs() {
 
     if [[ $N -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED} [-]$STR\033[0m"
+        echo -e "${RED}[-]$STR\033[0m"
         exit 0
     fi
 
@@ -981,29 +1209,30 @@ install_images_all_labs() {
     echo -e "\nDone"
 }
 
+# Function to download all images of a specific type (IOL, DYNAMIPS, QEMU, DOCKER)
 pull_all() {
     TYPE=${1^^}
     if [[ $TYPE == "BIN" ]]; then
         TYPE="IOL"
     fi
     if [[ $TYPE == "QEMU" ]]; then
-        echo -e "${YELLOW} [!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
+        echo -e "${YELLOW}[!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
         # Enter confirmation text
         CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
         # Ask the user to enter the confirmation text
-        read -p " [?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
+        read -p "[?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
         # If the confirmation text is incorrect then exit
         if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
-            echo -e "${RED} [!] Aborting.${NO_COLOR}"
+            echo -e "${RED}[!] Aborting.${NO_COLOR}"
             exit 1
         fi
     fi
-    echo -e "${YELLOW} [+] Pulling all $TYPE images...${NO_COLOR}"
+    echo -e "${YELLOW}[+] Pulling all $TYPE images...${NO_COLOR}"
     # Ask for conirmation
-    read -p " [?] Are you sure you want to pull all $TYPE images? (y/n): " -r
+    read -p "[?] Are you sure you want to pull all $TYPE images? (y/n): " -r
     # If reply was no Y or y then exit
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${RED} [!] Aborting.${NO_COLOR}"
+        echo -e "${RED}[!] Aborting.${NO_COLOR}"
         exit 1
     fi
     # Get the list of all images
@@ -1014,12 +1243,13 @@ pull_all() {
     i=1
     total=$(echo "$IDS" | wc -l)
     for ID in $IDS; do
-        echo -e "${YELLOW} [+] Pulling image $i/$total...${NO_COLOR}"
+        echo -e "${YELLOW}[+] Pulling image $i/$total...${NO_COLOR}"
         ishare2 pull ${TYPE,,} $ID
         i=$((i + 1))
     done
 }
 
+# Function to pull lab images
 pull_lab_images() {
     # Pending to implement: corrections_for_bin_images_in_lab_"$IMAGE_NAME" "$LAB_PATH"
     # Pending to implement: corrections_for_qemu_images_in_lab_"$QEMU_NAME"
@@ -1051,10 +1281,9 @@ pull_lab_images() {
             fi
         fi
     done <"$filename1"
-
-    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
+# Function to check docker service status
 check_docker_service_status() {
     local status=$(service docker status)
 
@@ -1078,11 +1307,13 @@ check_docker_service_status() {
     fi
 }
 
+# Function to list docker images
 list_dockers() {
     echo -e "\nDocker images in server"
     docker images
 }
 
+# Function to count docker images
 count_dockers() {
     data=$(docker images | wc -l)
     docker_count=$((data - 1))
@@ -1094,6 +1325,7 @@ count_dockers() {
     fi
 }
 
+# Function to download lab docker images using the correct docker image name
 corrections_for_docker_images_in_lab_function() {
     DOCKER_NAME=$1
     LAB_PATH=$2
@@ -1145,6 +1377,7 @@ corrections_for_docker_images_in_lab_function() {
     done
 }
 
+# Function to download lab docker images
 download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
@@ -1166,23 +1399,27 @@ download_lab_docker_images() {
     count_dockers
 }
 
+# Function to get the version of ishare2
 ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
-    if [[ ! -s $ISHARE2_DIR/ishare2_version ]] || [[ $(cat $ISHARE2_DIR/ishare2_version) != "$VERSION" ]]; then
-        echo $VERSION >$ISHARE2_DIR/ishare2_version
+    echo $VERSION >$ISHARE2_DIR/ishare2_version
+    if [[ $1 == "show" ]]; then
+        echo -e "ishare2 version: $(cat $ISHARE2_DIR/ishare2_version)"
+        echo -e "Latest version: $(curl -s --insecure "$URL_VERSION")"
     fi
 }
 
+# Function to upgrade ishare2
 upgrade_ishare2() {
     LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
     UPSTREAM_VERSION=$(curl -s --insecure "$URL_VERSION")
 
     if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
-        echo -e "${YELLOW} [+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
-        echo -e "${YELLOW} [+] Do you want to reinstall it? (y/n) ${NO_COLOR}"
+        echo -e "${YELLOW}[+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
+        echo -e "${YELLOW}[+] Do you want to reinstall it? (y/n) ${NO_COLOR}"
         read -r answer
         if [[ $answer == "y" || $answer == "Y" ]]; then
-            echo -e "${YELLOW} [+] Reinstalling ishare2... ${NO_COLOR}"
+            echo -e "${YELLOW}[+] Reinstalling ishare2... ${NO_COLOR}"
         else
             exit 0
         fi
@@ -1191,14 +1428,15 @@ upgrade_ishare2() {
     rm /usr/sbin/ishare2
     download_file_wget "$URL_ISHARE2" /usr/sbin/ "ishare2"
 
-    echo -e "${GREEN} [+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
+    echo -e "${GREEN}[+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
     # Make ishare2 executable
-    echo -e "${YELLOW} [+] Setting ishare2 permissions${NO_COLOR}"
+    echo -e "${YELLOW}[+] Setting ishare2 permissions${NO_COLOR}"
     chmod +x /usr/sbin/ishare2
     # Show success message
-    echo -e "${GREEN} [+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
+    echo -e "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
 }
 
+# Function to show the ishare2 upgrade menu
 menu_ishare2_upgrade_pnetlab() {
     # Define the menu options
     options=(
@@ -1238,6 +1476,7 @@ menu_ishare2_upgrade_pnetlab() {
     done
 }
 
+# Function to show the ishare2 upgrade menu
 menu_ishare2_upgrade() {
     prompt="Please, select an option: "
     options=(
@@ -1273,6 +1512,7 @@ menu_ishare2_upgrade() {
     done
 }
 
+# Function to show the ishare2 changelog
 show_changelog() {
     FILE=/root/CHANGELOG.md
     if [[ -e $FILE ]]; then rm $FILE; fi
@@ -1282,36 +1522,42 @@ show_changelog() {
     rm $FILE
 }
 
+# Function to install ishare2 GUI
 ishare2_gui_install() {
     curl -sL "$URL_ISHARE2_GUI_INSTALL" | bash
 }
+
+# Function to start ishare2 GUI
 ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED}[-] Error starting ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
 
+# Function to stop ishare2 GUI
 ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error stopping ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED}[-] Error stopping ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
 
+# Function to restart ishare2 GUI
 ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error restarting ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED} [-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        echo -e "${RED}[-] Error restarting ishare2 GUI service. ${NO_COLOR}"
+        echo -e "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
         exit 1
     fi
 }
 
+# Function to search for images in the JSON index
 search_images() {
     TYPE=${1^^}
     if [[ -n $2 ]]; then # If the user passed a filter
@@ -1331,19 +1577,18 @@ search_images() {
         total_count=$(echo "$data" | wc -l)
         total_count=$((total_count - 2))
         if [[ $total_count -eq 0 ]]; then
-            echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
+            echo -e "\n${RED}No $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
         elif [[ $total_count -eq 1 ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE image found for \"$FILTER\"${NO_COLOR}"
+            echo -e "\n${GREEN}$total_count $TYPE image found for the term: \"$FILTER\"${NO_COLOR}"
         elif [[ $FILTER == "" ]]; then
             echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
         else
-            echo -e "\n${GREEN}$total_count $TYPE images found for \"$FILTER\"${NO_COLOR}"
+            echo -e "\n${GREEN}$total_count $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
         fi
     fi
-
-    rm "$TEMP_JSON" >/dev/null 2>&1
 }
 
+# Function to generate a new iourc license
 generate_iourc_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
 
@@ -1354,30 +1599,31 @@ generate_iourc_license() {
 
     wget -O $PYTHON_FILE "$URL_CISCO_IOU_KEYGEN_PY" -q
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error downloading CiscoIOUKeygen.py file. ${NO_COLOR}"
-        echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
+        echo -e "${RED}[-] Error downloading CiscoIOUKeygen.py file. ${NO_COLOR}"
+        echo -e "${RED}[-] Please check your internet connection and try again. ${NO_COLOR}"
         exit 1
     fi
-    echo -e "${YELLOW} [!] Running CiscoIOUKeygen.py file... ${NO_COLOR}"
+    echo -e "${YELLOW}[!] Running CiscoIOUKeygen.py file... ${NO_COLOR}"
     python $PYTHON_FILE
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED} [-] Error running CiscoIOUKeygen.py file. ${NO_COLOR}"
-        echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
+        echo -e "${RED}[-] Error running CiscoIOUKeygen.py file. ${NO_COLOR}"
+        echo -e "${RED}[-] Please check your internet connection and try again. ${NO_COLOR}"
         exit 1
     fi
 
     if ! [[ -e $PERL_FILE ]]; then
         wget -O $PERL_FILE "$URL_KEEPALIVE_PL" -q
         if [[ $? -ne 0 ]]; then
-            echo -e "${RED} [-] Error downloading keepalive.pl file. ${NO_COLOR}"
-            echo -e "${RED} [-] Please check your internet connection and try again. ${NO_COLOR}"
+            echo -e "${RED}[-] Error downloading keepalive.pl file. ${NO_COLOR}"
+            echo -e "${RED}[-] Please check your internet connection and try again. ${NO_COLOR}"
             exit 1
         fi
     fi
-    echo -e "${GREEN} [+] IOL license was generated successfully. ${NO_COLOR}"
+    echo -e "${GREEN}[+] IOL license was generated successfully. ${NO_COLOR}"
 }
 
-show_help_info() {
+# Function to show information about ishare2
+show_info() {
     echo -e "- For documentation about ishare2, visit: https://github.com/ishare2-org/ishare2-cli"
     echo -e "- If you face any issues with ishare2, please report them at @NetLabHub Telegram Group. Attach screenshots and relevant information."
     echo -e "- You can use ${YELLOW}ishare2 config${NO_COLOR} to change the chosen downloader."
@@ -1387,7 +1633,8 @@ show_help_info() {
     echo -e "- Email: contact@labhub.eu.org"
 }
 
-show_ishare2_usage() {
+# Function to show help for ishare2
+show_ishare2_help() {
     # For ishare2
     ISHARE2_VERSION_INFO=$(cat $ISHARE2_DIR/ishare2_version)
     UPSTREAM_VERSION=$(curl -s "$URL_VERSION")
@@ -1494,6 +1741,38 @@ $PNETLAB_INSTALLED
 EOF
 }
 
+# Function to show quick help for ishare2
+ishare2_quick_help() {
+    cat <<EOF
+Syntax
+
+ishare2 [action] [param1] [param2] [--overwrite]
+
+action:
+    search      : Search for images available on LabHub mirrors.
+    pull        : Download an image by specifying the type and id.
+    installed   : Shows images installed on the server.
+    labs        : Shows available labs and downloads the images for the selected lab.
+    mylabs      : Same as labs command but you can use a customized path.
+    relicense   : Generates an iourc license for iol images.
+    upgrade     : Shows a menu to upgrade ishare2 or PNETLab.
+    test        : Test internet connectivity to required sites.
+    help        : Shows full help information.
+
+param1:
+    type = all, iol, qemu, dynamips, docker or name.
+
+param2:
+    id = This can be obtained using ishare2 search <type>
+
+--overwrite:
+    Used to overwrite an existing image if it already exists on your system.
+
+Try: ishare2 help for more information.
+EOF
+}
+
+# Function to handle tgz archives
 handle_tgz_files() {
     FOLDERNAME=$1
 
@@ -1503,13 +1782,14 @@ handle_tgz_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
+# Function to handle tar.gz archives
 handle_tar_gz_files() {
     FOLDERNAME=$1
 
@@ -1519,13 +1799,14 @@ handle_tar_gz_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
+# Function to handle tar files
 handle_tar_files() {
     FOLDERNAME=$1
 
@@ -1535,13 +1816,14 @@ handle_tar_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
+# Function to handle zip files
 handle_zip_files() {
     FOLDERNAME=$1
 
@@ -1551,13 +1833,14 @@ handle_zip_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         unzip -a -j "$file" -d "$DIR"
         rm "$file"
-        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
+# Function to handle rar files
 handle_rar_files() {
     FOLDERNAME=$1
 
@@ -1572,13 +1855,14 @@ handle_rar_files() {
             apt -qq update >/dev/null 2>&1 && apt -qq install --assume-yes unrar >/dev/null 2>&1
         fi
 
-        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         unrar e "$file" "$DIR" >/dev/null 2>&1
-        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
         rm "$file"
     fi
 }
 
+# Function to handle OVA files
 handle_ova_files() {
     FOLDERNAME=$1
 
@@ -1588,13 +1872,14 @@ handle_ova_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         COMPRESSED_FILE=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW} [-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xvf "$COMPRESSED_FILE" -C "$DIR"
         rm "$COMPRESSED_FILE"
-        echo -e "${GREEN} [+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
     fi
 }
 
+# Function to handle ISO files
 handle_iso_files() {
     FOLDERNAME=$1
 
@@ -1607,11 +1892,11 @@ handle_iso_files() {
 
         if ! [[ "${ISO_FILE: -9}" == "cdrom.iso" ]]; then
             mv "$ISO_FILE" "$DIR"/cdrom.iso # Rename file
-            echo -e "${GREEN} [+] ISO file saved as: $DIR/cdrom.iso ${NO_COLOR}"
+            echo -e "${GREEN}[+] ISO file saved as: $DIR/cdrom.iso ${NO_COLOR}"
         fi
 
         if ! [[ -e /usr/bin/qemu-img ]]; then
-            echo -e "${YELLOW} [!] qemu-img is not installed. Attempting to install it... ${NO_COLOR}"
+            echo -e "${YELLOW}[!] qemu-img is not installed. Attempting to install it... ${NO_COLOR}"
             install_packages "qemu-utils"
         fi
 
@@ -1621,6 +1906,7 @@ handle_iso_files() {
     fi
 }
 
+# Function to handle yaml templates
 handle_yml_files() {
     FOLDERNAME=$1
 
@@ -1638,6 +1924,7 @@ handle_yml_files() {
     done
 }
 
+# Function to handle txt and md files
 handle_txt_files() {
     FOLDERNAME=$1
 
@@ -1657,6 +1944,7 @@ handle_txt_files() {
     done
 }
 
+# Function to handle sh files
 handle_sh_files() {
     FOLDERNAME=$1
 
@@ -1673,12 +1961,13 @@ handle_sh_files() {
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             bash "$file"
         else
-            echo -e "${YELLOW} [!] $file was not executed. ${NO_COLOR}"
-            echo -e "${YELLOW} [!] WARN: This script file might be needed for the image to work properly. ${NO_COLOR}"
+            echo -e "${YELLOW}[!] $file was not executed. ${NO_COLOR}"
+            echo -e "${YELLOW}[!] WARN: This script file might be needed for the image to work properly. ${NO_COLOR}"
         fi
     fi
 }
 
+# Function to handle png files (icons)
 handle_png_files() {
     FOLDERNAME=$1
 
@@ -1701,6 +1990,7 @@ handle_png_files() {
     fi
 }
 
+# Function to handle php files
 handle_php_files() {
     FOLDERNAME=$1
 
@@ -1715,6 +2005,7 @@ handle_php_files() {
     fi
 }
 
+# Function to handle vmdk files
 handle_vmdk_files() {
     FOLDERNAME=$1
 
@@ -1733,15 +2024,17 @@ handle_vmdk_files() {
     fi
 }
 
+# Function to install qemu-utils
 install_qemu_tools() {
     apt update
     apt install -y qemu-utils
     # check if qemu-img is installed
     if ! [[ -e /opt/qemu/bin/qemu-img ]]; then
-        echo -e "${RED} [-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
+        echo -e "${RED}[-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
     fi
 }
 
+# Function to pull images passed as parameters
 pull_images() {
     IMAGE_TYPE=$1
     IMAGE_ID=$2
@@ -1771,6 +2064,9 @@ pull_images() {
     local download_path # Pending: implement corrections_for_qemu_images with new JSON structure
     local image_name
     local image_size
+
+    # Rotate mirrors if enabled
+    rotate_mirrors
 
     # 1. Fetch the JSON file
     fetch_json
@@ -1815,6 +2111,8 @@ pull_images() {
     esac
 
     if [ -n "$download_urls" ]; then
+        # extract one of the download URLs to get the domain, then print the protocol and domain without the path
+        domain=$(echo "$download_urls" | head -n 1 | awk -F/ '{print $1"//"$3}')
         logger -s -t "ishare2" "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
         echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
         printf "%-20s: %s\n" " - Image Name" "$image_name"
@@ -1822,8 +2120,9 @@ pull_images() {
         printf "%-20s: %s\n" " - Image Type" "$IMAGE_TYPE"
         printf "%-20s: %s\n" " - Image ID" "$IMAGE_ID"
         printf "%-20s: %s\n" " - Download path" "$download_path"
+        printf "%-20s: %s\n" " - Downloading from" "$domain"
         # Create the directory if it doesn't exist
-        logger "Creating directory: $IMAGE_PATH"
+        logger "Creating directory for: $IMAGE_PATH"
         mkdir -p "$download_path"
 
         echo -e "${YELLOW}[!] DOWNLOADING IMAGE ${NO_COLOR}"
@@ -1874,15 +2173,17 @@ pull_images() {
     fi
 }
 
+# Function to fix permissions of the downloaded images
 fix_permissions() {
     /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
     if [[ $? -eq 0 ]]; then
-        echo -e "\n${GREEN} [+] Fix permissions command has been executed correctly ${NO_COLOR}"
+        echo -e "\n${GREEN}[+] Fix permissions command has been executed correctly ${NO_COLOR}"
     else
-        echo -e "\n${RED} [-] Failed to fix permissions ${NO_COLOR}"
+        echo -e "\n${RED}[-] Failed to fix permissions ${NO_COLOR}"
     fi
 }
 
+# Function to run Internet connection tests
 connection_tests() {
     # Define an associative array with service names and their respective IP addresses or domains
     declare -A SERVICES=(
@@ -1893,23 +2194,60 @@ connection_tests() {
         ["Google DNS"]="8.8.8.8"
     )
 
+    # Initialize a flag to track if all services are reachable
+    local all_services_reachable=true
+
     # Header
-    echo -e "${YELLOW} [-] Running connection tests... ${NO_COLOR}"
+    echo -e "${YELLOW}[-] Running connection tests... ${NO_COLOR}"
 
     # Loop through the services and check their reachability
     for service in "${!SERVICES[@]}"; do
-        echo -e "${YELLOW} [-] Checking if $service is reachable... ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Checking if $service is reachable... ${NO_COLOR}"
         if ping -q -c 5 -W 5 "${SERVICES[$service]}" >/dev/null; then
-            echo -e "${GREEN} [+] $service is reachable. ${NO_COLOR}"
+            echo -e "${GREEN}[+] $service is reachable. ${NO_COLOR}"
         else
-            echo -e "${RED} [-] $service is not reachable ${NO_COLOR}"
+            echo -e "${RED}[-] $service is not reachable. ${NO_COLOR}"
+            all_services_reachable=false
         fi
     done
 
     # Checks completed
-    echo -e "${YELLOW} [-] Connection tests completed. ${NO_COLOR}"
+    echo -e "${YELLOW}[-] Connection tests completed. ${NO_COLOR}"
+
+    # If any service is not reachable, attempt to fix DNS
+    if [ "$all_services_reachable" = false ]; then
+        echo -e "${YELLOW}[?] Some services are not reachable. Do you want to attempt to fix DNS? [y/n] ${NO_COLOR}"
+        read -r -n 1 -p "Choice: " choice
+        echo
+        case $choice in
+        y | Y)
+            fix_dns
+            ;;
+        n | N)
+            echo -e "${YELLOW}[-] DNS was not fixed. ${NO_COLOR}"
+            ;;
+        *)
+            echo -e "${RED}[-] Invalid choice. DNS was not fixed. ${NO_COLOR}"
+            ;;
+        esac
+    fi
 }
 
+# Function to fix DNS (common issue with resolv.conf)
+fix_dns() {
+    echo -e "${YELLOW}[-] Attempting to fix DNS... ${NO_COLOR}"
+    echo -e "${YELLOW}[-] Running: systemctl restart systemd-resolved.service ${NO_COLOR}"
+    systemctl restart systemd-resolved.service
+    echo -e "${YELLOW}[-] Attempting to fix DNS by setting nameserver to 8.8.8.8... ${NO_COLOR}"
+    echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
+    else
+        echo -e "${RED}[-] Failed to update DNS settings. ${NO_COLOR}"
+    fi
+}
+
+# Function to handle parameters passed to ishare2
 selector() {
     case "$1" in
     "search")
@@ -1971,27 +2309,26 @@ selector() {
         if [[ "$2" ]]; then
             case "$2" in
             "all")
-                print_separator "QEMU"
                 ishare2 installed qemu
-                print_separator "DYANMIPS"
                 ishare2 installed dynamips
-                print_separator "BIN"
-                ishare2 installed bin
-                print_separator "DOCKER"
+                ishare2 installed iol
                 ishare2 installed docker
                 ;;
             "qemu")
                 echo -e
+                print_separator "Showing installed ${2^^} images"
                 tree -hp /opt/unetlab/addons/qemu/
                 echo -e
                 ;;
             "dynamips")
                 echo -e
+                print_separator "Showing installed ${2^^} images"
                 tree -hp /opt/unetlab/addons/dynamips/
                 echo -e
                 ;;
-            "bin")
+            "bin" | "iol")
                 echo -e
+                print_separator "Showing installed ${2^^} images"
                 tree -hp /opt/unetlab/addons/iol/bin/
                 echo -e
                 ;;
@@ -2002,11 +2339,13 @@ selector() {
             *)
                 echo "Usage: $SCR_NAME installed <type>"
                 echo "       $SCR_NAME installed all"
+                echo "Types: qemu, dynamips, iol, docker"
                 ;;
             esac
         else
             echo "Usage: $SCR_NAME installed <type>"
             echo "       $SCR_NAME installed all"
+            echo "Types: qemu, dynamips, iol, docker"
         fi
         ;;
     "labs")
@@ -2070,7 +2409,7 @@ selector() {
         fi
         ;;
     "help")
-        show_help_info
+        show_ishare2_help
         ;;
     "test")
         connection_tests
@@ -2078,8 +2417,11 @@ selector() {
     "config")
         create_config
         ;;
+    "--version")
+        ishare2_version "show"
+        ;;
     *)
-        show_ishare2_usage
+        ishare2_quick_help
         ;;
     esac
 }
@@ -2093,10 +2435,11 @@ main() {
     fi
     check_user_is_root
     check_ishare2_dir
+    ishare2_sources
     check_config
+    check_motd
     set_max_log_lines
     set_yml_template_folder_location
-    fetch_sources
     ishare2_version
     selector "$1" "$2" "$3" "$4"
 }
