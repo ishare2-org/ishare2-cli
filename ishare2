@@ -582,24 +582,8 @@ is_site_accessible() {
     fi
 }
 
-# Function to attempt to fix APT sources
-fix_repositories() {
-    if is_site_accessible "https://repo.pnetlab.com"; then
-        echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
-    else
-        echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible. Checking alternative...${NO_COLOR}"
-        if is_site_accessible "https://pnetlab.labhub.eu.org"; then
-            check_pnetlab_sources
-            apt_get_update || echo -e "${RED}[-] Failed to update package lists after replacing sources.${NO_COLOR}"
-        else
-            echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
-            exit 1
-        fi
-    fi
-}
-
 # Function to check if the sources.list file is using the correct sources
-check_pnetlab_sources() {
+fix_repositories() {
     # Check if https://repo.pnetlab.com is accessible
     if ! is_site_accessible "https://repo.pnetlab.com"; then
         echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
