@@ -190,22 +190,29 @@ check_updates() {
 
 # Function to print a box-like component with adjusted width
 print_box() {
-    # Calculate the width based on the length of the longest message
     messages=("$@")
 
-    # Find the length of the longest message
+    # Split messages on line breaks and find the length of the longest line
     max_length=0
+    IFS=$'\n'    # Internal Field Separator set to newline for splitting
+    all_lines=() # Array to hold all lines of all messages
     for message in "${messages[@]}"; do
-        length=${#message}
-        if ((length > max_length)); then
-            max_length=$length
-        fi
+        # Split message into lines
+        readarray -t lines <<<"$message"
+        for line in "${lines[@]}"; do
+            all_lines+=("$line")
+            length=${#line}
+            if ((length > max_length)); then
+                max_length=$length
+            fi
+        done
     done
+    IFS=$' \t\n' # Reset IFS to default
 
     # Display information in a box-like component with adjusted width
     echo -e "${YELLOW}┌$(printf '─%.0s' $(seq 1 $((max_length + 4))))┐${NO_COLOR}"
-    for message in "${messages[@]}"; do
-        printf "${YELLOW}│${NO_COLOR} %-$(($max_length + 2))s ${YELLOW}│${NO_COLOR}\n" "$message"
+    for line in "${all_lines[@]}"; do
+        printf "${YELLOW}│${NO_COLOR} %-$(($max_length + 2))s ${YELLOW}│${NO_COLOR}\n" "$line"
     done
     echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
 }
