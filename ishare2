@@ -122,8 +122,10 @@ show_motd() {
     messages=(
         "MOTD from the ishare2 team:"
         "$message"
-        "Join our Telegram channel: https://t.me/NetLabHub"
+        ""
+        "Telegram: https://t.me/NetLabHub"
         "Donate: https://buymeacoffee.com/sudoalex"
+        "GitHub: https://github.com/ishare2-org/ishare2-cli"
     )
     print_box "${messages[@]}"
 }
@@ -183,6 +185,8 @@ check_updates() {
             "Current version: $VERSION"
             "Latest version: $LATEST_VERSION"
             "Run: ishare2 upgrade to update to the latest version."
+            "See more methods to update on GitHub:"
+            "https://github.com/ishare2-org/ishare2-cli"
         )
         print_box "${messages[@]}"
     fi
@@ -463,6 +467,11 @@ create_config() {
     messages=(
         "Configuration completed successfully."
         "You can start using ishare2!"
+        "[!] IMPORTANT NOTICES:"
+        "- ishare2 is a free and open-source project. If you paid"
+        "  for it, you have been scammed."
+        "- Do not download ishare2 from unofficial sources as they"
+        "  may contain arbitrary code."
     )
     print_box "${messages[@]}"
 
