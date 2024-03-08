@@ -2,13 +2,13 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.4.5-main
+# Version: 3.5.2-beta
 # Last Updated: 2024-03-05 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="main"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
+CHANNEL="beta"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
 MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
 JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
 # End of ishare2 configuration
@@ -17,7 +17,7 @@ JSON_URL=${MIRRORS[0]}                                                          
 ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
 TEMP_JSON="$ISHARE2_DIR/index.json"                                                            # Temporary JSON file
-VERSION="3.4.5-main"                                                                           # Current version of ishare2
+VERSION="3.5.2-beta"                                                                           # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
 MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
 REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
@@ -122,8 +122,10 @@ show_motd() {
     messages=(
         "MOTD from the ishare2 team:"
         "$message"
-        "Join our Telegram channel: https://t.me/NetLabHub"
+        ""
+        "Telegram: https://t.me/NetLabHub"
         "Donate: https://buymeacoffee.com/sudoalex"
+        "GitHub: https://github.com/ishare2-org/ishare2-cli"
     )
     print_box "${messages[@]}"
 }
@@ -183,6 +185,8 @@ check_updates() {
             "Current version: $VERSION"
             "Latest version: $LATEST_VERSION"
             "Run: ishare2 upgrade to update to the latest version."
+            "See more methods to update on GitHub:"
+            "https://github.com/ishare2-org/ishare2-cli"
         )
         print_box "${messages[@]}"
     fi
@@ -190,22 +194,29 @@ check_updates() {
 
 # Function to print a box-like component with adjusted width
 print_box() {
-    # Calculate the width based on the length of the longest message
     messages=("$@")
 
-    # Find the length of the longest message
+    # Split messages on line breaks and find the length of the longest line
     max_length=0
+    IFS=$'\n'    # Internal Field Separator set to newline for splitting
+    all_lines=() # Array to hold all lines of all messages
     for message in "${messages[@]}"; do
-        length=${#message}
-        if ((length > max_length)); then
-            max_length=$length
-        fi
+        # Split message into lines
+        readarray -t lines <<<"$message"
+        for line in "${lines[@]}"; do
+            all_lines+=("$line")
+            length=${#line}
+            if ((length > max_length)); then
+                max_length=$length
+            fi
+        done
     done
+    IFS=$' \t\n' # Reset IFS to default
 
     # Display information in a box-like component with adjusted width
     echo -e "${YELLOW}┌$(printf '─%.0s' $(seq 1 $((max_length + 4))))┐${NO_COLOR}"
-    for message in "${messages[@]}"; do
-        printf "${YELLOW}│${NO_COLOR} %-$(($max_length + 2))s ${YELLOW}│${NO_COLOR}\n" "$message"
+    for line in "${all_lines[@]}"; do
+        printf "${YELLOW}│${NO_COLOR} %-$(($max_length + 2))s ${YELLOW}│${NO_COLOR}\n" "$line"
     done
     echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
 }
@@ -395,6 +406,7 @@ create_config() {
     done
 
     # Ask the user to select a branch
+    local current_channel=$CHANNEL
     read -p "[*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
@@ -454,9 +466,22 @@ create_config() {
     clear
     messages=(
         "Configuration completed successfully."
-        "Starting ishare2..."
+        "You can start using ishare2!"
+        "[!] IMPORTANT NOTICES:"
+        "- ishare2 is a free and open-source project. If you paid"
+        "  for it, you have been scammed."
+        "- Do not download ishare2 from unofficial sources as they"
+        "  may contain arbitrary code."
     )
     print_box "${messages[@]}"
+
+    # Update to the latest version on the selected channel
+    if [[ $current_channel != $CHANNEL ]]; then
+        echo -e "${YELLOW}[!] Installing the latest version of ishare2 on the $CHANNEL channel...${NO_COLOR}"
+        curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2 >/usr/sbin/ishare2
+        chmod +x /usr/sbin/ishare2
+        echo -e "${GREEN}[+] ishare2 has been updated to the latest version on the $CHANNEL channel.${NO_COLOR}"
+    fi
 }
 
 # Function to remove duplicate lines from the configuration file
@@ -573,24 +598,8 @@ is_site_accessible() {
     fi
 }
 
-# Function to attempt to fix APT sources
-fix_repositories() {
-    if is_site_accessible "https://repo.pnetlab.com"; then
-        echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
-    else
-        echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible. Checking alternative...${NO_COLOR}"
-        if is_site_accessible "https://pnetlab.labhub.eu.org"; then
-            check_pnetlab_sources
-            apt_get_update || echo -e "${RED}[-] Failed to update package lists after replacing sources.${NO_COLOR}"
-        else
-            echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
-            exit 1
-        fi
-    fi
-}
-
 # Function to check if the sources.list file is using the correct sources
-check_pnetlab_sources() {
+fix_repositories() {
     # Check if https://repo.pnetlab.com is accessible
     if ! is_site_accessible "https://repo.pnetlab.com"; then
         echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
@@ -1403,6 +1412,8 @@ download_lab_docker_images() {
 ishare2_version() {
     # Check if file is empty or not exists or different from installed $VERSION
     echo $VERSION >$ISHARE2_DIR/ishare2_version
+    # Set CHANNEL on ishare2.conf
+    sed -i "s/CHANNEL=.*/CHANNEL=$CHANNEL/" $ISHARE2_CONF_FILE
     if [[ $1 == "show" ]]; then
         echo -e "ishare2 version: $(cat $ISHARE2_DIR/ishare2_version)"
         echo -e "Latest version: $(curl -s --insecure "$URL_VERSION")"
@@ -2436,11 +2447,11 @@ main() {
     check_user_is_root
     check_ishare2_dir
     ishare2_sources
+    ishare2_version
     check_config
     check_motd
     set_max_log_lines
     set_yml_template_folder_location
-    ishare2_version
     selector "$1" "$2" "$3" "$4"
 }
 
