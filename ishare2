@@ -294,9 +294,47 @@ set_max_log_lines() {
         fi
     fi
 }
+create_default_conf() {
+    install_dependencies
+    # If the --init argument is passed, display a message to the user
+    messages=(
+        "The default configuration will be used. Feel free to modify it later by running: ishare2 config"
+        "Press Enter to continue."
+    )
+    print_box "${messages[@]}"
+    read -n 1
+
+    # Write the default configuration to the configuration file
+    echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
+    echo "SSL_CHECK=true" >>$ISHARE2_CONF_FILE
+    echo "CHANNEL=$CHANNEL" >>$ISHARE2_CONF_FILE
+    echo "ROTATE=true" >>$ISHARE2_CONF_FILE
+    echo "JSON_URL=${MIRRORS[0]}" >>$ISHARE2_CONF_FILE
+
+    # Display values used
+    messages=(
+        "Configuration values:"
+        "USE_ARIA2C: false"
+        "SSL_CHECK: true"
+        "CHANNEL: $CHANNEL"
+        "ROTATE: true"
+        "JSON_URL: $JSON_URL"
+    )
+    print_box "${messages[@]}"
+}
 
 # Function to check if the configuration file exists, and validate it
 check_config() {
+    # get first argument
+    local first_arg=$1
+    if [[ $first_arg == "--init" ]]; then
+        # check if ishare2 directory exists otherwise create it
+        check_ishare2_dir
+        # create default configuration
+        create_default_conf
+        return
+    fi
+
     # check if config file exists
     if [[ ! -f $ISHARE2_CONF_FILE ]]; then
         create_config
