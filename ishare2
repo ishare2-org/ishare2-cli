@@ -2,13 +2,13 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.5.2-alpha
+# Version: 3.5.3-beta
 # Last Updated: 2024-03-05 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
 USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
 SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="alpha"                                                                                                                                                 # Set to main to use the main channel. Set to main to use the main channel.
+CHANNEL="beta"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
 MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
 JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
 # End of ishare2 configuration
@@ -17,7 +17,7 @@ JSON_URL=${MIRRORS[0]}                                                          
 ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
 TEMP_JSON="$ISHARE2_DIR/index.json"                                                            # Temporary JSON file
-VERSION="3.5.2-alpha"                                                                          # Current version of ishare2
+VERSION="3.5.3-beta"                                                                           # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
 MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
 REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
@@ -294,9 +294,47 @@ set_max_log_lines() {
         fi
     fi
 }
+create_default_conf() {
+    install_dependencies
+    # If the --init argument is passed, display a message to the user
+    messages=(
+        "The default configuration will be used. Feel free to modify it later"
+        "by running: ishare2 config"
+        "Press Enter to continue."
+    )
+    print_box "${messages[@]}"
+    read -n 1
+
+    # Write the default configuration to the configuration file
+    echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
+    echo "SSL_CHECK=true" >>$ISHARE2_CONF_FILE
+    echo "CHANNEL=$CHANNEL" >>$ISHARE2_CONF_FILE
+    echo "ROTATE=true" >>$ISHARE2_CONF_FILE
+    echo "JSON_URL=${MIRRORS[0]}" >>$ISHARE2_CONF_FILE
+
+    # Display values used
+    messages=(
+        "Configuration values:"
+        "USE_ARIA2C: false"
+        "SSL_CHECK: true"
+        "CHANNEL: $CHANNEL"
+        "ROTATE: true"
+    )
+    print_box "${messages[@]}"
+}
 
 # Function to check if the configuration file exists, and validate it
 check_config() {
+    # get first argument
+    local first_arg=$1
+    if [[ $first_arg == "--init" ]]; then
+        # check if ishare2 directory exists otherwise create it
+        check_ishare2_dir
+        # create default configuration
+        create_default_conf
+        return
+    fi
+
     # check if config file exists
     if [[ ! -f $ISHARE2_CONF_FILE ]]; then
         create_config
@@ -312,6 +350,7 @@ check_config() {
 
 # Function to create the configuration file
 create_config() {
+    fix_repositories
     clear
     messages=(
         "Welcome to the ishare2!"
@@ -558,7 +597,7 @@ remove_ishare_sources() {
 install_dependencies() {
     remove_ishare_sources
     echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
-    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
+    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip")
     echo -e "${YELLOW}[+] List of packages to be installed: ${NO_COLOR}"
     for package in "${packages[@]}"; do
         echo -e "${YELLOW} -${NO_COLOR} $package"
@@ -600,15 +639,19 @@ is_site_accessible() {
 
 # Function to check if the sources.list file is using the correct sources
 fix_repositories() {
+    # Immediately check for http://repo.pnetlab.com and replace it with https if found
+    if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
+        echo -e "${YELLOW}[+] Found http://repo.pnetlab.com in sources.list, replacing with https...${NO_COLOR}"
+        sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|deb [trusted=yes] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    fi
+
     # Check if https://repo.pnetlab.com is accessible
     if ! is_site_accessible "https://repo.pnetlab.com"; then
         echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
         echo -e "${YELLOW}[!] Checking alternative...${NO_COLOR}"
-        # Find if "deb [trusted=yes] http://repo.pnetlab.com ./" exists in sources.list
-        if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
-            echo -e "${YELLOW}[!] Found your sources.list is using http instead of https.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Replacing http with https...${NO_COLOR}"
-            sed -i 's|http://repo.pnetlab.com|https://repo.pnetlab.com|' /etc/apt/sources.list
+        # The script previously modified any http to https if necessary, so just check for https existence now
+        if grep -q "deb \[trusted=yes\] https://repo.pnetlab.com ./" /etc/apt/sources.list; then
+            echo -e "${YELLOW}[!] Your sources.list is already using https for repo.pnetlab.com.${NO_COLOR}"
         fi
         # Check if https://pnetlab.labhub.eu.org is accessible
         if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
@@ -624,10 +667,11 @@ fix_repositories() {
             # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
             echo -e "${YELLOW}[+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
             sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-            sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
             echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
-            echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
         fi
+    else
+        echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
+        # No further action needed if the site is accessible, assuming the earlier check already ensured https is used
     fi
 }
 
@@ -2448,7 +2492,7 @@ main() {
     check_ishare2_dir
     ishare2_sources
     ishare2_version
-    check_config
+    check_config "$1"
     check_motd
     set_max_log_lines
     set_yml_template_folder_location
