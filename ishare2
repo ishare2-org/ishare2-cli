@@ -312,6 +312,7 @@ check_config() {
 
 # Function to create the configuration file
 create_config() {
+    fix_repositories
     clear
     messages=(
         "Welcome to the ishare2!"
@@ -558,7 +559,7 @@ remove_ishare_sources() {
 install_dependencies() {
     remove_ishare_sources
     echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
-    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip" "qemu-utils")
+    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip")
     echo -e "${YELLOW}[+] List of packages to be installed: ${NO_COLOR}"
     for package in "${packages[@]}"; do
         echo -e "${YELLOW} -${NO_COLOR} $package"
@@ -600,15 +601,19 @@ is_site_accessible() {
 
 # Function to check if the sources.list file is using the correct sources
 fix_repositories() {
+    # Immediately check for http://repo.pnetlab.com and replace it with https if found
+    if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
+        echo -e "${YELLOW}[+] Found http://repo.pnetlab.com in sources.list, replacing with https...${NO_COLOR}"
+        sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|deb [trusted=yes] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
+    fi
+
     # Check if https://repo.pnetlab.com is accessible
     if ! is_site_accessible "https://repo.pnetlab.com"; then
         echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
         echo -e "${YELLOW}[!] Checking alternative...${NO_COLOR}"
-        # Find if "deb [trusted=yes] http://repo.pnetlab.com ./" exists in sources.list
-        if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
-            echo -e "${YELLOW}[!] Found your sources.list is using http instead of https.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Replacing http with https...${NO_COLOR}"
-            sed -i 's|http://repo.pnetlab.com|https://repo.pnetlab.com|' /etc/apt/sources.list
+        # The script previously modified any http to https if necessary, so just check for https existence now
+        if grep -q "deb \[trusted=yes\] https://repo.pnetlab.com ./" /etc/apt/sources.list; then
+            echo -e "${YELLOW}[!] Your sources.list is already using https for repo.pnetlab.com.${NO_COLOR}"
         fi
         # Check if https://pnetlab.labhub.eu.org is accessible
         if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
@@ -624,10 +629,11 @@ fix_repositories() {
             # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
             echo -e "${YELLOW}[+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
             sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-            sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
             echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
-            echo -e "If you want to revert this change, manually edit /etc/apt/sources.list and uncomment the pnetlab sources."
         fi
+    else
+        echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
+        # No further action needed if the site is accessible, assuming the earlier check already ensured https is used
     fi
 }
 
@@ -2448,7 +2454,7 @@ main() {
     check_ishare2_dir
     ishare2_sources
     ishare2_version
-    check_config
+    check_config "$1"
     check_motd
     set_max_log_lines
     set_yml_template_folder_location
