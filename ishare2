@@ -298,7 +298,8 @@ create_default_conf() {
     install_dependencies
     # If the --init argument is passed, display a message to the user
     messages=(
-        "The default configuration will be used. Feel free to modify it later by running: ishare2 config"
+        "The default configuration will be used. Feel free to modify it later"
+        "by running: ishare2 config"
         "Press Enter to continue."
     )
     print_box "${messages[@]}"
@@ -318,7 +319,6 @@ create_default_conf() {
         "SSL_CHECK: true"
         "CHANNEL: $CHANNEL"
         "ROTATE: true"
-        "JSON_URL: $JSON_URL"
     )
     print_box "${messages[@]}"
 }
