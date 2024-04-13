@@ -1,5 +1,5 @@
 {
-    "message": "Recent changes:\n -Fixed APT autofix\n -Install ishare2 version according to the\n  selected channel",
+    "message": "Important notice:\nThe main mirror: labhub.eu.org is down!\n -If you're facing issues while downloading images\n  switch to the Google Drive mirror.\n -Run: ishare2 config > Select Google Drive mirror",
     "last_shown_date": "",
     "show_count": 0
 }
