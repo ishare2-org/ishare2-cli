@@ -1,5 +1,5 @@
 {
-    "message": "Main mirror fixed:\nThe main mirror (labhub.eu.org) has been fixed!\nMore details: https://t.me/NetLabHub/203",
+    "message": "New size units:\nOriginally the index only returned human readable sizes (e.g. 1.2MiB)\nfor the size of files.\n This was good for users, but not very useful for comparing sizes of files accurately.\n Now the index has been updated to show the size of files in a human readable\nformat but also has a size in bytes that is not displayed in search results.",
     "last_shown_date": "",
     "show_count": 0
 }
