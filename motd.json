@@ -1,5 +1,5 @@
 {
-    "message": "New size units:\nOriginally the index only returned human readable sizes (e.g. 1.2MiB)\nfor the size of files.\n This was good for users, but not very useful for comparing sizes of files accurately.\n Now the index has been updated to show the size of files in a human readable\nformat but also has a size in bytes that is not displayed in search results.",
+    "message": "New size units:\nOriginally the index only returned human readable sizes\n(e.g. 1.2MiB) for the size of files.\nThis was good for users, but not for comparing\nsizes of files accurately.\nNow the index has been updated to show the size of files\nin a human readable format but also has a size in bytes that is\n not displayed in search results.",
     "last_shown_date": "",
     "show_count": 0
 }
