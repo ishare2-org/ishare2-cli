@@ -657,7 +657,12 @@ fix_repositories() {
         if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
             echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
             echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
-         # TODO: action if no sources are available 
+            # Ask the user if they want to continue anyway
+            echo -e "${YELLOW}[?] Do you want to continue anyway?${NO_COLOR}"
+            read -p "[?] (y/n): " -r
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                exit 1
+            fi
         fi
         # Ask the user if they want to replace the sources
         echo -e "${YELLOW}[!] The official pnetlab.com repository is not accessible.${NO_COLOR}"
