@@ -39,8 +39,25 @@ SCR_NAME=${SCR_NAME%.*}
 ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
 
 logger() {
+    local log_level=${1^^} # Convert log level to uppercase
+    shift                  # Remove log level from arguments
+
+    # Ensure LOG_FILE is set and writable
+    if [[ -z "$LOG_FILE" ]]; then
+        echo "LOG_FILE is not set" >&2
+        return 1
+    elif [[ ! -w "$LOG_FILE" && ! -e "$LOG_FILE" ]]; then
+        echo "Cannot write to LOG_FILE: $LOG_FILE" >&2
+        return 1
+    fi
+
+    # Ensure SCR_NAME is set
+    if [[ -z "$SCR_NAME" ]]; then
+        SCR_NAME="UNKNOWN_SCRIPT"
+    fi
+
     # Log the output to the log file
-    echo -e "$(date '+%Y-%m-%d %H:%M:%S') $1" >>$LOG_FILE
+    echo -e "[$log_level][$SCR_NAME] $(date '+%Y-%m-%d %H:%M:%S'): $*" >>"$LOG_FILE"
 }
 
 # Function to fetch the latest list of sources needed for ishare2
@@ -55,19 +72,19 @@ ishare2_sources() {
             curl -sL "$SOURCES_URL" >"$ISHARE2_DIR/sources.list"
             # Check if the sources.list file was downloaded successfully
             if [ $? -eq 0 ]; then
-                logger "The sources.list file has been downloaded successfully."
+                logger info "The sources.list file has been downloaded successfully."
             else
-                logger "Failed to download the sources.list file."
-                logger "Restoring the backup sources.list file..."
+                logger error "Failed to download the sources.list file."
+                logger info "Restoring the backup sources.list file..."
                 # Restore the backup sources.list file
                 if [ -f "$ISHARE2_DIR/sources.list.bak" ]; then
                     cp "$ISHARE2_DIR/sources.list.bak" $ISHARE2_DIR/sources.list
-                    logger "The backup sources.list file has been restored."
+                    logger info "The backup sources.list file has been restored."
                     echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
                     echo -e "${YELLOW}[!] Using the old sources.list file.${NO_COLOR}"
                     echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
                 else
-                    logger "The backup sources.list file does not exist."
+                    logger info "The backup sources.list file does not exist."
                     echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
                     echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
                     exit 1
@@ -92,7 +109,7 @@ check_motd() {
         # Update the MOTD information
         update_motd_info
     else
-        logger "MOTD is up to date. No changes were made."
+        logger info "MOTD is up to date. No changes were made."
         if should_show_motd; then
             # Display the current MOTD
             show_motd
@@ -135,14 +152,14 @@ update_motd_info() {
     current_date=$(date +"%Y-%m-%d")
     jq '.last_shown_date = $date | .show_count += 1' --arg date "$current_date" "$MOTD_FILE" >$ISHARE2_DIR/motd.tmp.json
     times_shown=$(jq -r '.show_count' "$ISHARE2_DIR/motd.tmp.json")
-    logger "MOTD has been shown $times_shown out of 3 times today."
+    logger info "MOTD has been shown $times_shown out of 3 times today."
     mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
 }
 
 # Function to fetch the latest MOTD from a remote source
 fetch_latest_motd() {
     if [ ! -f "$MOTD_FILE" ]; then
-        logger "MOTD file does not exist. Fetching the latest MOTD from the remote source."
+        logger info "MOTD file does not exist. Fetching the latest MOTD from the remote source."
         curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.json
         return
     fi
@@ -175,6 +192,7 @@ check_updates() {
     # Check if the version file could be fetched successfully
     if [ -z "$LATEST_VERSION" ]; then
         echo -e "${RED}[-] Failed to fetch the latest version information. Please check your internet connection.${NO_COLOR}"
+        logger error "Failed to fetch the latest version information from: $LATEST_VERSION"
         return
     fi
 
@@ -230,17 +248,17 @@ rotate_mirrors() {
         echo "JSON_URL=" >>"$ISHARE2_CONF_FILE"
     fi
     if [[ $ROTATE == true ]]; then
-        logger "Rotating mirrors..."
+        logger info "Rotating mirrors..."
         if [[ $JSON_URL == ${MIRRORS[0]} ]]; then
-            logger "Setting JSON_URL to ${MIRRORS[1]}"
+            logger info "Setting JSON_URL to ${MIRRORS[1]}"
             JSON_URL=${MIRRORS[1]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[1]}|" "$ISHARE2_CONF_FILE"
         elif [[ $JSON_URL == ${MIRRORS[1]} ]]; then
-            logger "Setting JSON_URL to ${MIRRORS[0]}"
+            logger info "Setting JSON_URL to ${MIRRORS[0]}"
             JSON_URL=${MIRRORS[0]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
         elif [[ -z $JSON_URL ]]; then # If JSON_URL is empty, set it to the first mirror
-            logger "Setting JSON_URL to ${MIRRORS[0]}"
+            logger info "Setting JSON_URL to ${MIRRORS[0]}"
             JSON_URL=${MIRRORS[0]}
             sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
         fi
@@ -270,8 +288,9 @@ is_pnetlab_installed() {
     data_array=("$data")
     pnetlab_version=${data_array[1]}
     if [[ -z $pnetlab_version ]]; then
-        echo -e "${YELLOW}[!] WARN: pnetlab is not installed.${NO_COLOR}"
+        echo -e "${YELLOW}[!] WARN: PNetLab was not found.${NO_COLOR}"
         echo -e "${YELLOW}[!]${NO_COLOR} This script has only been tested on PNetLab. If you are not using PNetLab, you may encounter issues."
+        logger warn "PNetLab is not installed."
         return 1
     fi
     return 0
@@ -362,7 +381,7 @@ create_config() {
     is_pnetlab_installed
     # check if pnetlab is installed
     if [[ -z $pnetlab_version ]]; then
-        logger "PNetLab is not installed."
+        logger warn "PNetLab is not installed."
     else
         echo -e "${GREEN}[+] PNetLab version: $pnetlab_version found.${NO_COLOR}"
         check_pnetlab_sources
@@ -377,6 +396,7 @@ create_config() {
             break
         fi
         echo -e "${RED}[-] Failed to install dependencies. Retrying...${NO_COLOR}"
+        logger error "Failed to install dependencies. Retrying..."
         retry_counter=$((retry_counter + 1))
         sleep 10
     done
@@ -389,11 +409,12 @@ create_config() {
                 break
             fi
             echo -e "${RED}[-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
+            logger error "Failed to replace PNetLab sources. Retrying..."
             retry_counter=$((retry_counter + 1))
             sleep 10
         done
     fi
-    logger "Starting configuration wizard..."
+    logger info "Starting configuration wizard..."
     # Create the configuration file
     clear
 
@@ -412,11 +433,11 @@ create_config() {
         echo -e "${YELLOW}[!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to the question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
         install_package "aria2"
-        echo "Press any key to continue..."
+        echo -e "Press ${YELLOW}[Enter]${NO_COLOR} to continue."
         read -n 1
     else
         echo
-        echo -e "${YELLOW}[!] Using wget is slower than aria2c, however, it is more stable.\nTo enable aria2c, run: ishare2 config and answer yes to this question.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Using wget is slower than aria2c, but it can be more stable.\nYou can change this later by running: ishare2 config${NO_COLOR}"
         echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
         sleep 3
     fi
@@ -462,7 +483,7 @@ create_config() {
 
     # Provisional mirror selection feature. Will be replaced with a better solution in the future.
     # Ask if the user wants to use the default mirror, another mirror or a custom mirror
-    echo -e "${YELLOW}[+] Choose a mirror.${NO_COLOR}"
+    echo -e "${YELLOW}[+] Choose a mirror. (default: Rotate mirrors)${NO_COLOR}"
     # Show list of mirrors
     echo " 1) Rotate mirrors (recommended)"
     echo " 2) Google Drive mirror"
@@ -496,6 +517,7 @@ create_config() {
     # Validate the configuration file
     if [ ! -f "$ISHARE2_CONF_FILE" ]; then
         echo -e "${RED}[!] Failed to create configuration file. Please try again.${NO_COLOR}"
+        logger error "Failed to create configuration file."
         exit 1
     fi
     remove_duplicates
@@ -530,13 +552,14 @@ remove_duplicates() {
     # Check if the configuration file exists
     if [ ! -f "$config_file" ]; then
         echo -e "${RED}[!] Configuration file does not exist.${NO_COLOR}"
+        logger error "Configuration file does not exist."
         return
     fi
 
     # Remove duplicate lines from the configuration file
     awk '!seen[$0]++' "$config_file" >"$config_file.tmp" && mv "$config_file.tmp" "$config_file"
 
-    logger "Removed duplicate lines from the configuration file."
+    logger info "Removed duplicate lines from the configuration file."
 }
 
 # Function to validate the configuration file
@@ -545,6 +568,7 @@ validate_conf_file() {
     # Check if the configuration file exists
     if [ ! -f "$ISHARE2_CONF_FILE" ]; then
         echo -e "${RED}[!] Configuration file does not exist.${NO_COLOR}"
+        logger error "Configuration file does not exist."
         return 1
     fi
 
@@ -574,14 +598,14 @@ validate_conf_file() {
         if $is_allowed || [[ "$line" != *=* ]]; then
             filtered_content+="$line"$'\n'
         else
-            logger "Removed invalid variable \"$var_name\" from the configuration file."
+            logger warn "Removed invalid variable \"$var_name\" from the configuration file."
         fi
     done <"$ISHARE2_CONF_FILE"
 
     # Write the filtered content back to the configuration file
     echo "$filtered_content" >"$ISHARE2_CONF_FILE"
 
-    logger "Validated the configuration file."
+    logger info "Validated the configuration file."
     # shellcheck source=/opt/ishare2/cli/ishare2.conf
     source "$ISHARE2_CONF_FILE"
     return 0
@@ -620,6 +644,7 @@ check_installed() {
         # Check success of package installation
         if ! command -v "$PACKAGE" &>/dev/null; then
             echo -e "${RED}[-] Error: Failed to install $PACKAGE.${NO_COLOR}"
+            logger error "Failed to install $PACKAGE."
             exit 1
         else # package is installed
             echo -e "${GREEN}[+] $PACKAGE has been installed successfully.${NO_COLOR}"
@@ -700,6 +725,7 @@ install_package() {
             fix_repositories
             if ! apt_get_update; then
                 echo -e "${RED}[-] Failed to fix APT sources.${NO_COLOR}"
+                logger error "Failed to fix APT sources."
                 exit 1
             fi
         fi
@@ -708,13 +734,14 @@ install_package() {
         if ! apt-get install -y "$package_name"; then
             echo -e "${RED}[-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
             echo -e "${YELLOW}[!] Run: apt-get install -y $package_name${NO_COLOR}"
+            logger error "Failed to install $package_name."
             exit 1
         fi
     else
-        logger "Package $package_name is already installed."
-        logger "Updating $package_name..."
+        logger info "Package $package_name is already installed."
+        logger info "Updating $package_name..."
         if ! apt-get install --only-upgrade "$package_name"; then
-            logger "Failed to update $package_name."
+            logger error "Failed to update $package_name."
             exit 1
         fi
     fi
@@ -775,7 +802,7 @@ create_ishare2_dir() {
         fi
         exit 1
     fi
-    logger "ishare2 directory created successfully."
+    logger info "ishare2 directory created successfully."
 }
 
 # Function to fetch JSON file with the list of files to download
@@ -783,12 +810,12 @@ fetch_json() {
     check_installed "jq"
 
     #
-    logger "Downloading JSON file from $JSON_URL..."
+    logger info "Downloading JSON file from $JSON_URL..."
     curl -sL "$JSON_URL" >"$TEMP_JSON"
 
     # Check if the curl command failed
     if [ $? -ne 0 ]; then
-        logger "Failed to download the JSON file."
+        logger error "Failed to download the JSON file."
         echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
         connection_tests
         exit 1
@@ -796,7 +823,7 @@ fetch_json() {
 
     # Check if the JSON file is valid
     if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
-        logger "Error: Invalid JSON file."
+        logger error "Error: Invalid JSON file."
         echo -e "${RED}[-] Error: Invalid JSON file.${NO_COLOR}"
         echo -e "${RED}[!] Debug information:${NO_COLOR}"
         echo -e "${YELLOW} - JSON file URL: $JSON_URL${NO_COLOR}"
@@ -806,7 +833,7 @@ fetch_json() {
         echo -e "${YELLOW} 2) If the issue persists, report the issue to the ishare2 team on Telegram: https://t.me/NetLabHub${NO_COLOR}"
         exit 1
     else
-        logger "JSON file downloaded successfully."
+        logger info "JSON file downloaded successfully."
     fi
 }
 
@@ -845,7 +872,7 @@ download_file_aria2() {
     local output_dir="$2"
     local output_name="$3"
 
-    logger "Downloading file from $url..."
+    logger info "Downloading file from $url..."
     rm -f error.log
     if [ "$SSL_CHECK" = true ]; then
         aria2c --console-log-level=warn -j 2 -c --split=4 --min-split-size=20M --max-connection-per-server=4 --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"
@@ -898,7 +925,7 @@ download_file_curl() { # $1 = url, $2 = output
     touch $ISHARE2_DIR/tmp/curl_error
     local url="$1"
     local output="$2"
-    logger "Downloading file from $url..."
+    logger info "Downloading file from $url..."
     if [ "$SSL_CHECK" = true ]; then
         curl -s -o "$output" "$url" 2>$ISHARE2_DIR/tmp/curl_error
     else
@@ -906,7 +933,7 @@ download_file_curl() { # $1 = url, $2 = output
     fi
 
     if [ $? -eq 0 ]; then
-        logger "The file has been downloaded successfully to $output."
+        logger info "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
         echo -e "${RED}[-] Error: Unable to download the file. ${NO_COLOR}"
@@ -932,7 +959,7 @@ download_file_wget() {
         output_name=$(basename "$url")
     fi
     local output="$output_dir/$output_name"
-    logger "Downloading file from $url..."
+    logger info "Downloading file from $url..."
 
     if [ "$SSL_CHECK" = true ]; then
         wget -O "$output" "$url" -q --show-progress --content-disposition
@@ -942,7 +969,7 @@ download_file_wget() {
 
     # Check if wget command failed
     if [ $? -eq 0 ]; then
-        logger "The file has been downloaded successfully to $output."
+        logger info "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
         echo -e "${RED}[-] Error: Unable to download the file. ${NO_COLOR}"
@@ -950,6 +977,7 @@ download_file_wget() {
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/wget_error)
         # Print the error message
         echo -e "${RED}[-] Read the logs above for more information. ${NO_COLOR}"
+        logger error "Failed to download the file. Error: $ERROR_MESSAGE"
         exit 1
     fi
 }
@@ -1648,6 +1676,33 @@ search_images() {
     fi
 }
 
+# Function to update iptables and add them to startup script
+block_cisco() {
+    # Remove entries containing "cisco xml" from /etc/hosts
+    sed -i '/cisco xml/d' /etc/hosts || {
+        echo "${RED}[-] Failed to remove entries containing 'cisco xml' from /etc/hosts${NO_COLOR}"
+        logger error "Failed to remove entries containing 'cisco xml' from /etc/hosts"
+        exit 1
+    }
+
+    # Add the iptables rule to block cisco xml requests to ovfstartup
+    echo 'iptables -I OUTPUT -p udp --dport 53 -m string --hex-string "|03|xml|05|cisco|03|com" --algo bm -j DROP' >>/opt/ovf/ovfstartup || {
+        echo "${RED}[-] Failed to add iptables rule to block cisco xml requests${NO_COLOR}"
+        logger "error Failed to add iptables rule to block cisco xml requests"
+        exit 1
+    }
+
+    # Restart the ovfstartup service
+    service ovfstartup restart || {
+        echo "${RED}[-] Failed to restart ovfstartup service${NO_COLOR}"
+        logger error "Failed to restart ovfstartup service"
+        exit 1
+    }
+
+    # If no errors occurred, show success message
+    echo "${GREEN}[+] Successfully updated iptables and added them to the ovfstartup script${NO_COLOR}"
+}
+
 # Function to generate a new iourc license
 generate_iourc_license() {
     BIN_PATH="/opt/unetlab/addons/iol/bin/"
@@ -1655,15 +1710,30 @@ generate_iourc_license() {
     PYTHON_FILE=$BIN_PATH"CiscoIOUKeygen.py"
     PERL_FILE=$BIN_PATH"keepalive.pl"
 
-    if [[ -e $PYTHON_FILE ]]; then rm $PYTHON_FILE; fi
-
-    wget -O $PYTHON_FILE "$URL_CISCO_IOU_KEYGEN_PY" -q
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED}[-] Error downloading CiscoIOUKeygen.py file. ${NO_COLOR}"
-        echo -e "${RED}[-] Please check your internet connection and try again. ${NO_COLOR}"
+    # Check if python2 is installed
+    if ! command -v python &>/dev/null; then
+        echo "${RED}[-] Python is not installed${NO_COLOR}"
+        logger error "Python is not installed"
         exit 1
     fi
-    echo -e "${YELLOW}[!] Running CiscoIOUKeygen.py file... ${NO_COLOR}"
+
+    # Block cisco xml requests
+    block_cisco || {
+        echo "${RED}[-] Failed to block cisco xml requests${NO_COLOR}"
+        logger error "Failed to block cisco xml requests"
+        exit 1
+    }
+
+    # Check if the CiscoIOUKeygen.py file exists in the bin directory
+    if ! [[ -e $PYTHON_FILE ]]; then
+        wget -O $PYTHON_FILE "$URL_CISCOIOUKEYGEN_PY" -q || {
+            echo "${RED}[-] Error downloading CiscoIOUKeygen.py file${NO_COLOR}"
+            logger error "Error downloading CiscoIOUKeygen.py file"
+            exit 1
+        }
+    fi
+
+    echo -e "${YELLOW}[!] Executing CiscoIOUKeygen.py file... ${NO_COLOR}"
     python $PYTHON_FILE
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}[-] Error running CiscoIOUKeygen.py file. ${NO_COLOR}"
@@ -2135,7 +2205,7 @@ pull_images() {
     download_urls=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_links[]' "$TEMP_JSON")
     download_path=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_path' "$TEMP_JSON")
     image_name=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .name' "$TEMP_JSON")
-    image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .size' "$TEMP_JSON")
+    image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .human_readable_size' "$TEMP_JSON")
 
     # 2. Download the image(s) for the specified type and ID
     # Skip download if the image is already installed
@@ -2173,7 +2243,7 @@ pull_images() {
     if [ -n "$download_urls" ]; then
         # extract one of the download URLs to get the domain, then print the protocol and domain without the path
         domain=$(echo "$download_urls" | head -n 1 | awk -F/ '{print $1"//"$3}')
-        logger -s -t "ishare2" "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
+        logger info "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
         echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
         printf "%-20s: %s\n" " - Image Name" "$image_name"
         printf "%-20s: %s\n" " - Image Size" "$image_size"
@@ -2182,7 +2252,7 @@ pull_images() {
         printf "%-20s: %s\n" " - Download path" "$download_path"
         printf "%-20s: %s\n" " - Downloading from" "$domain"
         # Create the directory if it doesn't exist
-        logger "Creating directory for: $IMAGE_PATH"
+        logger info "Creating directory for: $IMAGE_PATH"
         mkdir -p "$download_path"
 
         echo -e "${YELLOW}[!] DOWNLOADING IMAGE ${NO_COLOR}"
@@ -2235,12 +2305,17 @@ pull_images() {
 
 # Function to fix permissions of the downloaded images
 fix_permissions() {
-    /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
-    if [[ $? -eq 0 ]]; then
-        echo -e "\n${GREEN}[+] Fix permissions command has been executed correctly ${NO_COLOR}"
-    else
+    UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
+    echo -e "${YELLOW}[-] Fixing permissions... ${NO_COLOR}"
+    chmod +x $UNL_WRAPPER
+    $UNL_WRAPPER -a fixpermissions
+
+    if [ $? -ne 0 ]; then
         echo -e "\n${RED}[-] Failed to fix permissions ${NO_COLOR}"
+        exit 1
     fi
+
+    echo -e "\n${GREEN}[+] Fix permissions command has been executed correctly ${NO_COLOR}"
 }
 
 # Function to run Internet connection tests
@@ -2249,8 +2324,8 @@ connection_tests() {
     declare -A SERVICES=(
         ["GitHub"]="github.com"
         ["GitHub Raw Files"]="raw.githubusercontent.com"
-        ["LabHub (Onedrive)"]="labhub.eu.org"
-        ["LabHub (Google Drive)"]="drive.labhub.eu.org"
+        ["LabHub (Onedrive backend)"]="labhub.eu.org"
+        ["LabHub (Google Drive backend)"]="drive.labhub.eu.org"
         ["Google DNS"]="8.8.8.8"
     )
 
@@ -2432,7 +2507,7 @@ selector() {
         fi
         list_labs "$1"
         ;;
-    "relicense")
+    "relicense" | "license")
         generate_iourc_license
         ;;
     "upgrade")
