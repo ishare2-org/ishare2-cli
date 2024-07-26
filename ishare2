@@ -2441,6 +2441,29 @@ selector() {
     "changelog")
         show_changelog
         ;;
+    "fix")
+        # if $2 is not passed
+        if [[ -z "$2" ]]; then
+            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            echo -e "Usage: $SCR_NAME fix <action>"
+            echo -e "Actions: permissions, dns"
+            exit 1
+        fi
+        case "$2" in
+        "permissions")
+            fix_permissions
+            ;;
+        "dns")
+            fix_dns
+            ;;
+        *) # If the action is not specified, print the usage
+            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            echo -e "Usage: $SCR_NAME fix <action>"
+            echo -e "Actions: permissions, dns"
+            exit 1
+            ;;
+        esac
+        ;;
     "gui")
         if [[ "$2" ]]; then
             case "$2" in
