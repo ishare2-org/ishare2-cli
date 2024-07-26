@@ -1,5 +1,5 @@
 {
-    "message": "New size units:\nOriginally the index only returned human readable sizes\n(e.g. 1.2MiB) for the size of files.\nThis was good for users, but not for comparing sizes\nof files accurately.\nNow the index has been updated to show the size of files\nin a human readable format but also has a size in bytes\nthat is not displayed in search results.\nUpdate to the latest version of ishare2 to see\nthe file sizes in the right format!",
+    "message": "Changelog:\n- Added more error logging\n- Fixed size visual bug in image info\n- Added ishare2 fix command",
     "last_shown_date": "",
     "show_count": 0
 }
