@@ -448,7 +448,7 @@ create_config() {
         echo
         echo -e "${YELLOW}[!] Using wget is slower than aria2c, but it can be more stable.\nYou can change this later by running: ishare2 config${NO_COLOR}"
         echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
-        sleep 3
+        sleep 1
     fi
 
     # Ask if SSL certificate should be checked
@@ -818,13 +818,15 @@ create_ishare2_dir() {
 fetch_json() {
     check_installed "jq"
 
-    #
+    # Create a temporary directory
     logger info "Downloading JSON file from $JSON_URL..."
-    curl -sL "$JSON_URL" >"$TEMP_JSON"
+
+    curl -sL "$JSON_URL" -o "$TEMP_JSON"
 
     # Check if the curl command failed
     if [ $? -ne 0 ]; then
-        logger error "Failed to download the JSON file."
+        logger error "Failed to download the JSON file. From: $JSON_URL"
+        echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
         echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
         connection_tests
         exit 1
@@ -832,8 +834,8 @@ fetch_json() {
 
     # Check if the JSON file is valid
     if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
-        logger error "Error: Invalid JSON file."
-        echo -e "${RED}[-] Error: Invalid JSON file.${NO_COLOR}"
+        logger error "Error: Invalid JSON index file."
+        echo -e "${RED}[-] Error: Invalid JSON index file.${NO_COLOR}"
         echo -e "${RED}[!] Debug information:${NO_COLOR}"
         echo -e "${YELLOW} - JSON file URL: $JSON_URL${NO_COLOR}"
         echo -e "${YELLOW} - JSON file location: $TEMP_JSON${NO_COLOR}"
@@ -2225,22 +2227,22 @@ pull_images() {
     "QEMU")
         IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$FOLDERNAME"
         if [ -d "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "Folder $FOLDERNAME already exists in server for Type: $IMAGE_TYPE"
-            exit 1
+            echo "The folder '$FOLDERNAME' already exists on the server. Use the --overwrite option to overwrite it"
+            exit 0
         fi
         ;;
     "BIN" | "IOL")
         IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/bin/$image_name"
         if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "File $image_name already exists in server for Type: $IMAGE_TYPE. Use --overwrite to overwrite it"
-            exit 1
+            echo "The file '$image_name' already exists on the server'. Use the --overwrite option to overwrite it"
+            exit 0
         fi
         ;;
     "DYNAMIPS")
         IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$image_name"
         if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "File $image_name already exists in server for Type: $IMAGE_TYPE. Use --overwrite to overwrite it"
-            exit 1
+            echo "The file '$image_name' already exists on the server'. Use the --overwrite option to overwrite it"
+            exit 0
         fi
         ;;
     *)
@@ -2258,8 +2260,8 @@ pull_images() {
         printf "%-20s: %s\n" " - Image Size" "$image_size"
         printf "%-20s: %s\n" " - Image Type" "$IMAGE_TYPE"
         printf "%-20s: %s\n" " - Image ID" "$IMAGE_ID"
-        printf "%-20s: %s\n" " - Download path" "$download_path"
-        printf "%-20s: %s\n" " - Downloading from" "$domain"
+        printf "%-20s: %s\n" " - Image path" "$download_path"
+        printf "%-20s: %s\n" " - Using host" "$domain"
         # Create the directory if it doesn't exist
         logger info "Creating directory for: $IMAGE_PATH"
         mkdir -p "$download_path"
@@ -2530,7 +2532,7 @@ selector() {
         if [[ -z "$2" ]]; then
             echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
             echo -e "Usage: $SCR_NAME fix <action>"
-            echo -e "Actions: permissions, dns"
+            echo -e "Actions: permissions, dns, block_cisco"
             exit 1
         fi
         case "$2" in
@@ -2539,6 +2541,9 @@ selector() {
             ;;
         "dns")
             fix_dns
+            ;;
+        "block_cisco")
+            block_cisco
             ;;
         *) # If the action is not specified, print the usage
             echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
