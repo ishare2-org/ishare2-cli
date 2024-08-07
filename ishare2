@@ -71,6 +71,7 @@ logger() {
 
 # Function to fetch the latest list of sources needed for ishare2
 ishare2_sources() {
+    check_installed "curl"
     # Check if the sources.list file exists in the ishare2 directory
     if [ ! -f "$ISHARE2_DIR/sources.list" ]; then
         # If the sources.list file is older than 1 day, backup the file and download the latest sources.list
