@@ -1,5 +1,5 @@
 {
-    "message": "Changelog:\n- Added more error logging\n- Fixed failure to write to logs file\n- Fixed size visual bug in image info\n- Added ishare2 fix command",
+    "message": "Changelog:\n- Added basic integrity checks by comparing\nexpected size from server vs. downloaded image size.- Misc. bug fixes and improvements.",
     "last_shown_date": "",
     "show_count": 0
 }
