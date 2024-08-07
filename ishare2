@@ -1691,21 +1691,21 @@ search_images() {
 block_cisco() {
     # Remove entries containing "cisco xml" from /etc/hosts
     sed -i '/cisco xml/d' /etc/hosts || {
-        echo "${RED}[-] Failed to remove entries containing 'cisco xml' from /etc/hosts${NO_COLOR}"
+        echo -e "${RED}[-] Failed to remove entries containing 'cisco xml' from /etc/hosts${NO_COLOR}"
         logger error "Failed to remove entries containing 'cisco xml' from /etc/hosts"
         exit 1
     }
 
     # Add the iptables rule to block cisco xml requests to ovfstartup
     echo 'iptables -I OUTPUT -p udp --dport 53 -m string --hex-string "|03|xml|05|cisco|03|com" --algo bm -j DROP' >>/opt/ovf/ovfstartup || {
-        echo "${RED}[-] Failed to add iptables rule to block cisco xml requests${NO_COLOR}"
+        echo -e "${RED}[-] Failed to add iptables rule to block cisco xml requests${NO_COLOR}"
         logger "error Failed to add iptables rule to block cisco xml requests"
         exit 1
     }
 
     # Restart the ovfstartup service
     service ovfstartup restart || {
-        echo "${RED}[-] Failed to restart ovfstartup service${NO_COLOR}"
+        echo -e "${RED}[-] Failed to restart ovfstartup service${NO_COLOR}"
         logger error "Failed to restart ovfstartup service"
         exit 1
     }
@@ -1723,7 +1723,7 @@ generate_iourc_license() {
 
     # Check if python2 is installed
     if ! command -v python &>/dev/null; then
-        echo "${RED}[-] Python is not installed${NO_COLOR}"
+        echo -e "${RED}[-] Python is not installed${NO_COLOR}"
         logger error "Python is not installed"
         # Ask the user if they want to install python
         read -p "[?] Do you want to install python? (y/n): " -r
@@ -1745,7 +1745,7 @@ generate_iourc_license() {
     # Check if the CiscoIOUKeygen.py file exists in the bin directory
     if ! [[ -e $PYTHON_FILE ]]; then
         wget -O $PYTHON_FILE "$URL_CISCOIOUKEYGEN_PY" -q || {
-            echo "${RED}[-] Error downloading CiscoIOUKeygen.py file${NO_COLOR}"
+            echo -e "${RED}[-] Error downloading CiscoIOUKeygen.py file${NO_COLOR}"
             logger error "Error downloading CiscoIOUKeygen.py file"
             exit 1
         }
