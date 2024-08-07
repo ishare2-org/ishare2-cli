@@ -1725,7 +1725,14 @@ generate_iourc_license() {
     if ! command -v python &>/dev/null; then
         echo "${RED}[-] Python is not installed${NO_COLOR}"
         logger error "Python is not installed"
-        exit 1
+        # Ask the user if they want to install python
+        read -p "[?] Do you want to install python? (y/n): " -r
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            install_package python
+        else
+            echo -e "${RED}[-] Python2 is required to generate the iourc license${NO_COLOR}"
+            exit 1
+        fi
     fi
 
     # Block cisco xml requests
