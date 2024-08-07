@@ -812,6 +812,43 @@ create_ishare2_dir() {
     logger info "ishare2 directory created successfully."
 }
 
+# Function to check image size against the downloaded image
+check_image_size() {
+    local image_path=$1
+    local image_name=$2
+    local image_size_from_json=$3
+
+    # Check if the image file exists
+    if [ ! -f "$image_path$image_name" ]; then
+        echo -e "${RED}[-] Error: The image file does not exist.${NO_COLOR}"
+        logger error "The image file does not exist: $image_path$image_name"
+        exit 1
+    fi
+
+    # Get the size of the downloaded image
+    local image_size=$(stat -c%s "$image_path$image_name")
+
+    # Check if the image size is less than 20KB
+    if [ $image_size -lt 20000 ]; then
+        echo -e "${RED}[-] Error: The image file size is too small. The file may be corrupted.${NO_COLOR}"
+        logger error "The image file size is too small: $image_path$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
+        exit 1
+    fi
+
+    # Check if the image size matches the size from the JSON file
+    if [ $image_size -ne $image_size_from_json ]; then
+        echo -e "${RED}[-] Error: The image file size does not match the size expected by the index.${NO_COLOR}"
+        echo -e "${RED}[!] Debug information:${NO_COLOR}"
+        echo -e "${YELLOW} Expected size: $image_size_from_json${NO_COLOR}"
+        echo -e "${YELLOW} Actual size: $image_size${NO_COLOR}"
+        echo -e "${YELLOW} JSON file URL: $JSON_URL${NO_COLOR}"
+        logger error "The image file size does not match the size from the JSON index: $image_path$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
+        exit 1
+    fi
+
+    echo -e "${GREEN}[+] Basic integrity checks passed. The downloaded image is the expected size.${NO_COLOR}"
+}
+
 # Function to fetch JSON file with the list of files to download
 fetch_json() {
     check_installed "jq"
