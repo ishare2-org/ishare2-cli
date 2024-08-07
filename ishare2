@@ -716,7 +716,7 @@ fix_repositories() {
 
 # Function to run apt-get update
 apt_get_update() {
-    if ! apt-get update -y; then
+    if ! apt-get update -y -qq; then
         return 1
     fi
 }
@@ -740,7 +740,7 @@ install_package() {
         fi
 
         echo -e "${YELLOW}[+] Installing $package_name...${NO_COLOR}"
-        if ! apt-get install -y "$package_name"; then
+        if ! apt-get install -qq -y "$package_name"; then
             echo -e "${RED}[-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
             echo -e "${YELLOW}[!] Run: apt-get install -y $package_name${NO_COLOR}"
             logger error "Failed to install $package_name."
@@ -749,7 +749,7 @@ install_package() {
     else
         logger info "Package $package_name is already installed."
         logger info "Updating $package_name..."
-        if ! apt-get install --only-upgrade "$package_name"; then
+        if ! apt-get install --only-upgrade -qq "$package_name"; then
             logger error "Failed to update $package_name."
             exit 1
         fi
