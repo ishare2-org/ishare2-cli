@@ -2261,6 +2261,7 @@ pull_images() {
     image_name=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .name' "$TEMP_JSON")
     image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .human_readable_size' "$TEMP_JSON")
     image_size_bytes=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .size' "$TEMP_JSON")
+    image_file_format=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .format' "$TEMP_JSON")
 
     # 2. Download the image(s) for the specified type and ID
     # Skip download if the image is already installed
@@ -2317,7 +2318,11 @@ pull_images() {
         "QEMU")
             for download_url in $download_urls; do
                 download_file "$download_url" "$download_path"
-                check_image_size "$download_path" "$image_name" "$image_size_bytes"
+                # Only check if it's a single file with archive format: tgz, tar.gz, tar, zip, rar, ova, iso
+                local archive_extensions=(".tgz" ".tar.gz" ".tar" ".zip" ".rar" ".ova" ".iso")
+                if [[ $download_path == *"${archive_extensions[@]}" ]]; then
+                    check_image_size "$download_path" "$image_name$image_file_format" "$image_size_bytes"
+                fi
             done
             ;;
         "BIN" | "DYNAMIPS" | "IOL")
