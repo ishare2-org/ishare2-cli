@@ -1,5 +1,5 @@
 {
-    "message": "Changelog:\n- Added basic integrity checks by comparing\nexpected size from server vs. downloaded image size.- Misc. bug fixes and improvements.",
+    "message": "Changelog:\n- Fixed bug when doing integrity checks againts qemu images.",
     "last_shown_date": "",
     "show_count": 0
 }
