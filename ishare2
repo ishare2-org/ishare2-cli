@@ -864,7 +864,25 @@ fetch_json() {
         logger error "Failed to download the JSON file. From: $JSON_URL"
         echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
         echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
+        # Run connection tests and get return code
         connection_tests
+        local connection_test_result=$?
+        if [ $connection_test_result -eq 0 ]; then
+            echo -e "${GREEN}[+] Connection test passed. Your internet connection is working.${NO_COLOR}"
+            # Ask the user if they want to reconfigure ishare2
+            echo -e "${YELLOW}[?] Do you want to reconfigure ishare2?${NO_COLOR}"
+            read -p "[?] (y/n): " -r
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                # Reconfigure ishare2
+                echo -e "${YELLOW}[+] Reconfiguring ishare2...${NO_COLOR}"
+                create_config
+            else
+                echo -e "${RED}[-] Check the log file for more information.${NO_COLOR}"
+                echo -e "${YELLOW}[!] Log file: $LOG_FILE${NO_COLOR}"
+            fi
+        else
+            echo -e "${RED}[-] Connection test failed. Please check your internet connection.${NO_COLOR}"
+        fi
         exit 1
     fi
 
