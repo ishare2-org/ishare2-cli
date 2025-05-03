@@ -2385,6 +2385,19 @@ pull_images() {
     fi
 }
 
+show_logs() {
+    # Show logs for ishare2
+    echo -e "${YELLOW}[-] Showing logs for ishare2... ${NO_COLOR}"
+    tail -n 50 $ISHARE2_DIR/ishare2.log
+}
+
+clear_logs() {
+    # Clear logs for ishare2
+    echo -e "${YELLOW}[-] Clearing logs for ishare2... ${NO_COLOR}"
+    true >$ISHARE2_DIR/ishare2.log
+    echo -e "${GREEN}[+] Logs cleared successfully. ${NO_COLOR}"
+}
+
 # Function to fix permissions of the downloaded images
 fix_permissions() {
     UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
@@ -2633,7 +2646,31 @@ selector() {
             ;;
         esac
         ;;
+    "logs")
+        if [[ "$2" ]]; then
+            case "$2" in
+            "show")
+                show_logs
+                ;;
+            "clear")
+                clear_logs
+                ;;
+            *)
+                echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+                echo -e "Usage: $SCR_NAME logs <action>"
+                echo -e "Actions: show, clear"
+                exit 1
+                ;;
+            esac
+        else
+            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            echo -e "Usage: $SCR_NAME logs <action>"
+            echo -e "Actions: show, clear"
+            exit 1
+        fi
+        ;;
     "gui")
+        echo -e "${RED}[-] This feature won't work most of the time. ${NO_COLOR}"
         if [[ "$2" ]]; then
             case "$2" in
             "install")
