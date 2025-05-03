@@ -2448,6 +2448,15 @@ connection_tests() {
             ;;
         esac
     fi
+
+    # Report the overall status
+    if [ "$all_services_reachable" = true ]; then
+        echo -e "${GREEN}[+] All services are reachable. ${NO_COLOR}"
+        return 0
+    else
+        echo -e "${RED}[-] Some services are not reachable. ${NO_COLOR}"
+        return 1
+    fi
 }
 
 # Function to fix DNS (common issue with resolv.conf)
