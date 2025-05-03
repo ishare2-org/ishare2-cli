@@ -11,3 +11,8 @@ URL_PNETLAB_V5=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab
 URL_PNETLAB_V5_BETA=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/bionic/install_pnetlab_v5_testing.sh
 URL_PNETLAB_V6=https://labhub.eu.org/api/raw/?path=/UNETLAB%20I/upgrades_pnetlab/Focal/install_pnetlab_v6.sh
 URL_ISHARE2_GUI_INSTALL=https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2_gui_install.sh
+MIRRORS=("https://github.com/ishare2-org/mirrors/releases/download/LabHub/labhub.json")
+LABHUB_INDEX="https://github.com/ishare2-org/mirrors/releases/download/LabHub/labhub.json"
+LABHUB_INDEX_IOL="https://github.com/ishare2-org/mirrors/releases/download/LabHub/iol.json"
+LABHUB_INDEX_QEMU="https://github.com/ishare2-org/mirrors/releases/download/LabHub/qemu.json"
+LABHUB_INDEX_DYNAMIPS="https://github.com/ishare2-org/mirrors/releases/download/LabHub/dynamips.json

@@ -2,22 +2,21 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.5.8-main
+# Version: 4.0.0
 # Last Updated: 2024-08-08 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
-USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
-SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="main"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
-MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
-JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
+USE_ARIA2C=false       # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
+SSL_CHECK="true"       # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
+CHANNEL="dev"          # Set to main to use the main channel. Set to main to use the main channel.
+JSON_URL=${MIRRORS[0]} # Set to the default mirror
 # End of ishare2 configuration
 
 # Initialize variables
 ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
-TEMP_JSON="$ISHARE2_DIR/index.json"                                                            # Temporary JSON file
-VERSION="3.5.8-main"                                                                           # Current version of ishare2
+TEMP_JSON="$ISHARE2_DIR/labhub.json"                                                           # Temporary JSON file
+VERSION="4.0.0"                                                                                # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
 MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
 REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
@@ -182,11 +181,13 @@ fetch_latest_motd() {
 
 # Function to compare the current MOTD with the fetched MOTD
 motds_are_different() {
+    local current_motd
+    local fetched_motd
     if [ ! -f "$MOTD_FILE" ] || [ ! -f "$ISHARE2_DIR/motd.tmp.json" ]; then
         return 0
     fi
-    local current_motd=$(jq -r '.message' "$MOTD_FILE")
-    local fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
+    current_motd=$(jq -r '.message' "$MOTD_FILE")
+    fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
     # Compare the current MOTD with the fetched MOTD
     if [ "$current_motd" != "$fetched_motd" ]; then
         mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
@@ -379,7 +380,6 @@ check_config() {
 
 # Function to create the configuration file
 create_config() {
-    fix_repositories
     clear
     messages=(
         "Welcome to the ishare2!"
@@ -394,6 +394,7 @@ create_config() {
         logger warn "PNetLab is not installed."
     else
         echo -e "${GREEN}[+] PNetLab version: $pnetlab_version found.${NO_COLOR}"
+        fix_repositories
         check_pnetlab_sources
     fi
 
@@ -2238,151 +2239,109 @@ install_qemu_tools() {
 
 # Function to pull images passed as parameters
 pull_images() {
-    IMAGE_TYPE=$1
-    IMAGE_ID=$2
-    OVERWRITE=$3
+    local IMAGE_TYPE=$1
+    local IMAGE_ID=$2
+    local OVERWRITE=$3
 
-    # 0. Check parameters
-    # Check if IMAGE_TYPE is not empty
-    if [[ -z "$IMAGE_TYPE" ]]; then
-        echo "Usage: $SCR_NAME pull <type> <id>"
-        echo "Types: qemu, iol, dynamips"
-        echo "Example: $SCR_NAME pull bin <id>"
+    # Validate parameters
+    [[ -z "$IMAGE_TYPE" ]] && {
+        echo "Usage: $0 pull <type> <id>"
         exit 1
-    fi
-    # Check if IMAGE_ID is not empty and is a number
-    if [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]]; then
-        echo "Usage: $SCR_NAME pull ${IMAGE_TYPE,,} <id>"
-        echo "Example: $SCR_NAME pull ${IMAGE_TYPE,,} 1"
+    }
+    [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]] && {
+        echo "Invalid ID"
         exit 1
-    fi
+    }
 
-    if [ "$IMAGE_TYPE" = "BIN" ]; then
-        IMAGE_TYPE="IOL"
-    else
-        IMAGE_TYPE="$1"
-    fi
-    local download_urls
-    local download_path # Pending: implement corrections_for_qemu_images with new JSON structure
-    local image_name
-    local image_size
+    # Normalize image type
+    IMAGE_TYPE=${IMAGE_TYPE^^}
+    [[ "$IMAGE_TYPE" == "BIN" ]] && IMAGE_TYPE="IOL"
+    [[ ! "$IMAGE_TYPE" =~ ^(QEMU|IOL|DYNAMIPS)$ ]] && {
+        echo "Invalid type"
+        exit 1
+    }
 
-    # Rotate mirrors if enabled
-    rotate_mirrors
+    # Fetch JSON index
+    fetch_json || {
+        echo "Failed to fetch index"
+        exit 1
+    }
 
-    # 1. Fetch the JSON file
-    fetch_json
+    # Extract image data
+    local image_data=$(jq -r --arg type "$IMAGE_TYPE" --argjson id "$IMAGE_ID" \
+        '.[$type][] | select(.id == $id)' "$TEMP_JSON")
+    [[ -z "$image_data" ]] && {
+        echo "Image not found"
+        exit 1
+    }
 
-    # Extract the download URLs, path, name, and size for the specified type and ID
-    download_urls=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_links[]' "$TEMP_JSON")
-    download_path=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_path' "$TEMP_JSON")
-    image_name=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .name' "$TEMP_JSON")
-    image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .human_readable_size' "$TEMP_JSON")
-    image_size_bytes=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .size' "$TEMP_JSON")
-    image_file_format=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .format' "$TEMP_JSON")
+    # Parse common properties
+    local image_name=$(jq -r '.name' <<<"$image_data")
+    local mirror=$(jq -r '.mirror // "drive"' <<<"$image_data")
+    local install_path=$(jq -r '.metadata.install_path' <<<"$image_data")
 
-    # 2. Download the image(s) for the specified type and ID
-    # Skip download if the image is already installed
-    FOLDERNAME="$image_name"
-    IMAGE_TYPE_LOWER=$(echo "$IMAGE_TYPE" | tr '[:upper:]' '[:lower:]')
+    # Get URL components from global properties
+    local protocol=$(jq -r '.url_properties.protocol' "$TEMP_JSON")
+    local hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
+    local prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
 
+    # Set up paths using your existing logic
     case "$IMAGE_TYPE" in
     "QEMU")
-        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$FOLDERNAME"
-        if [ -d "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "The folder '$FOLDERNAME' already exists on the server. Use the --overwrite option to overwrite it"
-            exit 0
-        fi
+        FOLDERNAME="$image_name"
+        download_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
         ;;
-    "BIN" | "IOL")
-        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/bin/$image_name"
-        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "The file '$image_name' already exists on the server'. Use the --overwrite option to overwrite it"
-            exit 0
-        fi
+    "IOL")
+        download_path="/opt/unetlab/addons/iol/bin"
         ;;
     "DYNAMIPS")
-        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$image_name"
-        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "The file '$image_name' already exists on the server'. Use the --overwrite option to overwrite it"
-            exit 0
-        fi
-        ;;
-    *)
-        echo "Invalid image type: $IMAGE_TYPE"
-        exit 1
+        download_path="/opt/unetlab/addons/dynamips"
         ;;
     esac
 
-    if [ -n "$download_urls" ]; then
-        # extract one of the download URLs to get the domain, then print the protocol and domain without the path
-        domain=$(echo "$download_urls" | head -n 1 | awk -F/ '{print $1"//"$3}')
-        logger info "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
-        echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
-        printf "%-20s: %s\n" " - Image Name" "$image_name"
-        printf "%-20s: %s\n" " - Image Size" "$image_size"
-        printf "%-20s: %s\n" " - Image Type" "$IMAGE_TYPE"
-        printf "%-20s: %s\n" " - Image ID" "$IMAGE_ID"
-        printf "%-20s: %s\n" " - Image path" "$download_path"
-        printf "%-20s: %s\n" " - Using host" "$domain"
-        # Create the directory if it doesn't exist
-        logger info "Creating directory for: $IMAGE_PATH"
-        mkdir -p "$download_path"
-
-        echo -e "${YELLOW}[!] DOWNLOADING IMAGE ${NO_COLOR}"
-
-        # Iterate through the download URLs and download each file
-        case $IMAGE_TYPE in
-        "QEMU")
-            for download_url in $download_urls; do
-                download_file "$download_url" "$download_path"
-                # Only check if it's a single file with archive format: tgz, tar.gz, tar, zip, rar, ova, iso
-                local archive_extensions=(".tgz" ".tar.gz" ".tar" ".zip" ".rar" ".ova" ".iso")
-                if [[ $download_path == *"${archive_extensions[@]}" ]]; then
-                    check_image_size "$download_path" "$image_name$image_file_format" "$image_size_bytes"
-                fi
-            done
-            ;;
-        "BIN" | "DYNAMIPS" | "IOL")
-            for download_url in $download_urls; do
-                download_file "$download_url" "$download_path" "$image_name"
-                # Check image size against the downloaded file
-                check_image_size "$download_path" "$image_name" "$image_size_bytes"
-            done
-            ;;
-        *)
-            echo "Something went wrong. Invalid image type provided: $IMAGE_TYPE"
-            ;;
-        esac
-
-        echo -e "${YELLOW}[+] ${BLUE}DOWNLOAD COMPLETED! ${NO_COLOR}"
-    else
-        echo "Image id $IMAGE_ID ($image_name) not found for type $IMAGE_TYPE in the index of images"
-        exit 1
+    # Check existing files using your original logic
+    if [ -e "$download_path/$image_name" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+        echo "File exists. Use --overwrite"
+        exit 0
     fi
 
-    # 3. Handle downloaded files if TYPE is QEMU
+    # Prepare download URLs using your existing pattern
+    download_urls=()
+    while IFS= read -r url; do
+        full_url="$protocol://$hostname$prefix$url"
+        download_urls+=("$full_url")
+    done < <(jq -r '.files[].path' <<<"$image_data")
+
+    # Use your existing download logic
+    logger info "Downloading $image_name (ID: $IMAGE_ID)"
+    echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
+    printf "%-20s: %s\n" "Name" "$image_name"
+    printf "%-20s: %s\n" "Type" "$IMAGE_TYPE"
+    printf "%-20s: %s\n" "Path" "$download_path"
+    printf "%-20s: %s\n" "Host" "$hostname"
+
+    mkdir -p "$download_path"
+    echo -e "${YELLOW}[!] DOWNLOADING... ${NO_COLOR}"
+
+    # Use your existing download_file function
+    for url in "${download_urls[@]}"; do
+        filename=$(basename "$url")
+        download_file "$url" "$download_path" "$filename"
+
+        # Use your existing check_image_size function
+        expected_size=$(jq -r --arg url "$url" '.files[] | select(.path == $url) | .size' <<<"$image_data")
+        check_image_size "$download_path/$filename" "$filename" "$expected_size"
+    done
+
+    # Use your existing post-processing
     if [ "$IMAGE_TYPE" = "QEMU" ]; then
-        # 3.1. Extract archives
         handle_tgz_files "$FOLDERNAME"
         handle_tar_gz_files "$FOLDERNAME"
-        handle_tar_files "$FOLDERNAME"
         handle_zip_files "$FOLDERNAME"
-        handle_rar_files "$FOLDERNAME"
-        handle_ova_files "$FOLDERNAME"
-        handle_iso_files "$FOLDERNAME"
-
-        # 3.2. Handle other files
-        handle_yml_files "$FOLDERNAME"
-        handle_txt_files "$FOLDERNAME"
-        handle_sh_files "$FOLDERNAME"
-        handle_png_files "$FOLDERNAME"
-        handle_php_files "$FOLDERNAME"
-        handle_vmdk_files "$FOLDERNAME"
-
-        # 3.3. Apply fix permissions command
         fix_permissions
     fi
+
+    echo -e "${GREEN}[+] Download completed!${NO_COLOR}"
 }
 
 show_logs() {
@@ -2440,9 +2399,6 @@ connection_tests() {
             all_services_reachable=false
         fi
     done
-
-    # Checks completed
-    echo -e "${YELLOW}[-] Connection tests completed. ${NO_COLOR}"
 
     # If any service is not reachable, attempt to fix DNS
     if [ "$all_services_reachable" = false ]; then
