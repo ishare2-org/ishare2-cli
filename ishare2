@@ -860,8 +860,27 @@ fetch_json() {
 
     curl -sL "$JSON_URL" -o "$TEMP_JSON"
 
-    # Check if the curl command failed
-    if [ $? -ne 0 ]; then
+    # Get latest mirrors from GitHub
+    REPO_URL="https://api.github.com/repos/ishare2-org/mirrors/releases/latest"
+
+    # Fetch the JSON data from GitHub
+    response=$(curl -s "$REPO_URL")
+
+    # Extract the browser_download_url for labhub.json
+    labhub_url=$(echo "$response" | jq -r '.assets[] | select(.name == "labhub.json") | .browser_download_url')
+
+    # Check if URL was found
+    if [[ -z "$labhub_url" ]]; then
+        echo "labhub.json not found in the latest release."
+        exit 1
+    fi
+
+    # Download labhub.json
+    echo "Downloading labhub.json..."
+    if curl -L -o $TEMP_JSON "$labhub_url"; then
+        logger info "labhub.json downloaded successfully."
+    else
+        logger error "Failed to download labhub.json."
         logger error "Failed to download the JSON file. From: $JSON_URL"
         echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
         echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
