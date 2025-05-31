@@ -2500,36 +2500,40 @@ fix_dns() {
 selector() {
     case "$1" in
     "search")
-        QUERY="$3"
-        # Switch case to determine the type of the device to be displayed
-        case "$2" in
+        TYPE_INPUT="${2,,}" # normalize to lowercase
+        QUERY="${3:-}"      # optional filter
+
+        case "$TYPE_INPUT" in
         "qemu" | "iol" | "dynamips")
-            TYPE="${2^^}" # Convert to uppercase
+            TYPE="${TYPE_INPUT^^}" # convert to uppercase
             search_images "$TYPE" "$QUERY"
             ;;
-        "bin")
-            TYPE="IOL" # Treat "bin" as "iol" in uppercase
+
+        "bin") # alias for iol
+            TYPE="IOL"
             search_images "$TYPE" "$QUERY"
             ;;
+
         "all")
-            for type in "QEMU" "IOL" "DYNAMIPS"; do
-                TYPE="${type^^}" # Convert to uppercase
-                search_images "$TYPE"
-                echo
-            done
-            ;;
-        *)
-            if [ -n "$2" ]; then
-                FILTER="$2"
+            # If keyword is passed, search across all types
+            if [[ -n "$QUERY" ]]; then
+                search_images "any" "$QUERY"
+            else
                 for type in "QEMU" "IOL" "DYNAMIPS"; do
-                    TYPE="${type^^}"
-                    search_images "$TYPE"
+                    search_images "$type"
                     echo
                 done
+            fi
+            ;;
+
+        *)
+            if [ -n "$2" ]; then
+                # Assume $2 is a filter term, so search across all types
+                search_images "any" "$2"
             else
                 echo "Usage: $SCR_NAME search <type> [keyword]"
-                echo "       $SCR_NAME search all"
-                echo "Types: qemu, iol, dynamips"
+                echo "       $SCR_NAME search all [keyword]"
+                echo "Types: qemu, iol, dynamips, bin, all"
                 exit 1
             fi
             ;;
