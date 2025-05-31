@@ -2339,7 +2339,7 @@ pull_images() {
     local hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
     local prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
 
-    # Set up paths using your existing logic
+    # Set up paths
     case "$IMAGE_TYPE" in
     "QEMU")
         FOLDERNAME="$image_name"
@@ -2353,20 +2353,20 @@ pull_images() {
         ;;
     esac
 
-    # Check existing files using your original logic
+    # Check existing files
     if [ -e "$download_path/$image_name" ] && [ "$OVERWRITE" != "--overwrite" ]; then
         echo "File exists. Use --overwrite"
         exit 0
     fi
 
-    # Prepare download URLs using your existing pattern
+    # Prepare download URLs
     download_urls=()
     while IFS= read -r url; do
         full_url="$protocol://$hostname$prefix$url"
         download_urls+=("$full_url")
     done < <(jq -r '.files[].path' <<<"$image_data")
 
-    # Use your existing download logic
+    # Show download information
     logger info "Downloading $image_name (ID: $IMAGE_ID)"
     echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
     printf "%-20s: %s\n" "Name" "$image_name"
@@ -2377,23 +2377,25 @@ pull_images() {
     mkdir -p "$download_path"
     echo -e "${YELLOW}[!] DOWNLOADING... ${NO_COLOR}"
 
-    # Use your existing download_file function
+    # Download image
     for url in "${download_urls[@]}"; do
         filename=$(basename "$url")
-        download_file "$url" "$download_path" "$filename"
+        download_file "$url" "$download_path" "$image_name"
 
-        # Use your existing check_image_size function
+        # # Check image size
         expected_size=$(jq -r --arg url "$url" '.files[] | select(.path == $url) | .size' <<<"$image_data")
-        check_image_size "$download_path/$filename" "$filename" "$expected_size"
+        check_image_size "$download_path/$image_name" "$expected_size"
     done
 
-    # Use your existing post-processing
+    # Post-processing
     if [ "$IMAGE_TYPE" = "QEMU" ]; then
         handle_tgz_files "$FOLDERNAME"
         handle_tar_gz_files "$FOLDERNAME"
         handle_zip_files "$FOLDERNAME"
-        fix_permissions
     fi
+
+    # Fix permissions
+    fix_permissions
 
     echo -e "${GREEN}[+] Download completed!${NO_COLOR}"
 }
