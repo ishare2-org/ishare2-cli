@@ -2,7 +2,7 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 4.0.0
+# Version: 4.0.0-dev
 # Last Updated: 2024-08-08 yyyy-mm-dd
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
@@ -16,7 +16,7 @@ JSON_URL=${MIRRORS[0]} # Set to the default mirror
 ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
 TEMP_JSON="$ISHARE2_DIR/labhub.json"                                                           # Temporary JSON file
-VERSION="4.0.0"                                                                                # Current version of ishare2
+VERSION="4.0.0-dev"                                                                            # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
 MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
 REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
@@ -814,6 +814,48 @@ create_ishare2_dir() {
     logger info "ishare2 directory created successfully."
 }
 
+check_image_hash() {
+    local image_path=$1
+    local image_name=$2
+    local expected_hash=$3
+    local hash_type=${4,,} # Convert to lowercase (e.g., "SHA1" → "sha1")
+
+    echo -e "${YELLOW}[+] Checking ${hash_type^^} hash for ${image_name}${NO_COLOR}"
+
+    if [[ -z "$expected_hash" ]]; then
+        echo -e "${YELLOW}[!] No ${hash_type^^} hash provided in the index. Skipping check.${NO_COLOR}"
+        return
+    fi
+
+    if [ ! -f "$image_path/$image_name" ]; then
+        echo -e "${RED}[-] File not found: $image_path/$image_name${NO_COLOR}"
+        return 1
+    fi
+
+    local actual_hash
+    case "$hash_type" in
+    sha1)
+        actual_hash=$(sha1sum "$image_path/$image_name" | awk '{print $1}')
+        ;;
+    md5)
+        actual_hash=$(md5sum "$image_path/$image_name" | awk '{print $1}')
+        ;;
+    *)
+        echo -e "${RED}[-] Unsupported hash type: $hash_type${NO_COLOR}"
+        return 1
+        ;;
+    esac
+
+    if [[ "$actual_hash" != "$expected_hash" ]]; then
+        echo -e "${RED}[-] ${hash_type^^} mismatch for $image_name${NO_COLOR}"
+        echo -e "${YELLOW} Expected: $expected_hash${NO_COLOR}"
+        echo -e "${YELLOW} Actual  : $actual_hash${NO_COLOR}"
+        return 1
+    fi
+
+    echo -e "${GREEN}[+] ${hash_type^^} hash is valid.${NO_COLOR}"
+}
+
 # Function to check image size against the downloaded image
 check_image_size() {
     local image_path=$1
@@ -821,79 +863,83 @@ check_image_size() {
     local image_size_from_json=$3
 
     # Check if the image file exists
-    if [ ! -f "$image_path$image_name" ]; then
-        echo -e "${RED}[-] Error: The image file does not exist.${NO_COLOR}"
-        logger error "The image file does not exist: $image_path$image_name"
-        exit 1
+    if [ ! -f "$image_path/$image_name" ]; then
+        echo -e "${RED}[-] Error: The image file was not found at $image_path/$image_name while checking its size.${NO_COLOR}"
+        logger error "The image file was not found: $image_path/$image_name"
+        return 1
     fi
 
-    # Get the size of the downloaded image
-    local image_size=$(stat -c%s "$image_path$image_name")
+    local image_size
+    image_size=$(stat -c%s "$image_path/$image_name" 2>/dev/null)
+
+    # Validate image_size is numeric
+    if [[ -z "$image_size" || ! "$image_size" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}[-] Error: Unable to determine image size for $image_path/$image_name.${NO_COLOR}"
+        logger error "Invalid or missing image size for: $image_path/$image_name"
+        return 1
+    fi
 
     # Check if the image size is less than 20KB
     if [ $image_size -lt 20000 ]; then
         echo -e "${RED}[-] Error: The image file size is too small. The file may be corrupted.${NO_COLOR}"
-        logger error "The image file size is too small: $image_path$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
-        exit 1
+        logger error "The image file size is too small: $image_path/$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
+        return 1
     fi
 
     # Check if the image size matches the size from the JSON file
-    if [ $image_size -ne $image_size_from_json ]; then
+    if [[ -z "$image_size_from_json" || ! "$image_size_from_json" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}[-] Error: Invalid or missing expected size from JSON for $image_name.${NO_COLOR}"
+        logger error "Missing or non-numeric image_size_from_json: $image_size_from_json"
+    fi
+
+    if [ "$image_size" -ne "$image_size_from_json" ]; then
         echo -e "${RED}[-] Error: The image file size does not match the size expected by the index.${NO_COLOR}"
         echo -e "${RED}[!] Debug information:${NO_COLOR}"
         echo -e "${YELLOW} Expected size: $image_size_from_json${NO_COLOR}"
         echo -e "${YELLOW} Actual size: $image_size${NO_COLOR}"
         echo -e "${YELLOW} JSON file URL: $JSON_URL${NO_COLOR}"
-        logger error "The image file size does not match the size from the JSON index: $image_path$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
-        exit 1
+        logger error "Mismatch: expected $image_size_from_json, got $image_size ($image_path/$image_name)"
     fi
 
     echo -e "${GREEN}[+] Basic integrity checks passed. The downloaded image is the expected size.${NO_COLOR}"
 }
 
-# Function to fetch JSON file with the list of files to download
 fetch_json() {
     check_installed "jq"
 
-    # Create a temporary directory
-    logger info "Downloading JSON file from $JSON_URL..."
-
-    curl -sL "$JSON_URL" -o "$TEMP_JSON"
-
-    # Get latest mirrors from GitHub
+    # Constants
     REPO_URL="https://api.github.com/repos/ishare2-org/mirrors/releases/latest"
 
-    # Fetch the JSON data from GitHub
-    response=$(curl -s "$REPO_URL")
+    logger info "Fetching the latest release information from: $REPO_URL"
 
-    # Extract the browser_download_url for labhub.json
+    # Fetch release metadata quietly
+    response=$(curl -sL "$REPO_URL")
+
+    # Extract labhub.json URL
     labhub_url=$(echo "$response" | jq -r '.assets[] | select(.name == "labhub.json") | .browser_download_url')
 
-    # Check if URL was found
     if [[ -z "$labhub_url" ]]; then
-        echo "labhub.json not found in the latest release."
+        logger error "labhub.json not found in release metadata from: $REPO_URL"
+        echo -e "${RED}[-] Error: Failed to get image index URL from the LabHub repository.${NO_COLOR}"
         exit 1
     fi
 
-    # Download labhub.json
-    echo "Downloading labhub.json..."
-    if curl -L -o $TEMP_JSON "$labhub_url"; then
+    logger info "Downloading labhub.json from: $labhub_url"
+    if curl -sSL -o "$TEMP_JSON" "$labhub_url"; then
         logger info "labhub.json downloaded successfully."
     else
-        logger error "Failed to download labhub.json."
-        logger error "Failed to download the JSON file. From: $JSON_URL"
+        logger error "Failed to download labhub.json from: $labhub_url"
         echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
-        # Run connection tests and get return code
+        echo -e "${YELLOW}[!] Running connection test...${NO_COLOR}"
+
         connection_tests
         local connection_test_result=$?
-        if [ $connection_test_result -eq 0 ]; then
-            echo -e "${GREEN}[+] Connection test passed. Your internet connection is working.${NO_COLOR}"
-            # Ask the user if they want to reconfigure ishare2
+
+        if [[ $connection_test_result -eq 0 ]]; then
+            echo -e "${GREEN}[+] Internet connection is working.${NO_COLOR}"
             echo -e "${YELLOW}[?] Do you want to reconfigure ishare2?${NO_COLOR}"
             read -p "[?] (y/n): " -r
             if [[ $REPLY =~ ^[Yy]$ ]]; then
-                # Reconfigure ishare2
                 echo -e "${YELLOW}[+] Reconfiguring ishare2...${NO_COLOR}"
                 create_config
             else
@@ -906,19 +952,14 @@ fetch_json() {
         exit 1
     fi
 
-    # Check if the JSON file is valid
-    if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
-        logger error "Error: Invalid JSON index file."
+    # Validate downloaded JSON
+    if ! jq -e . <"$TEMP_JSON" >/dev/null 2>&1; then
+        logger error "Invalid JSON structure in: $TEMP_JSON"
         echo -e "${RED}[-] Error: Invalid JSON index file.${NO_COLOR}"
-        echo -e "${RED}[!] Debug information:${NO_COLOR}"
-        echo -e "${YELLOW} - JSON file URL: $JSON_URL${NO_COLOR}"
-        echo -e "${YELLOW} - JSON file location: $TEMP_JSON${NO_COLOR}"
-        echo -e "${RED}[!] Troubleshooting:${NO_COLOR}"
-        echo -e "${YELLOW} 1) Check if the JSON file is accessible through your web browser.${NO_COLOR}"
-        echo -e "${YELLOW} 2) If the issue persists, report the issue to the ishare2 team on Telegram: https://t.me/NetLabHub${NO_COLOR}"
+        logger info "Debug information: The downloaded JSON file is not valid. Please check the file at: $TEMP_JSON"
         exit 1
     else
-        logger info "JSON file downloaded successfully."
+        logger info "Valid JSON file confirmed: $TEMP_JSON"
     fi
 }
 
@@ -928,6 +969,7 @@ download_file() {
     local output="$2"
     local options="$3"
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
+    logger info "Downloading file from $url to $output with options: $options"
 
     if [[ $USE_ARIA2C == "true" ]]; then
         # Check if aria2c is installed
@@ -947,7 +989,7 @@ download_file() {
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
         download_file_aria2 "$url" "$output" "$options"
     else
-        download_file_wget "$url" "$output" "$options"
+        download_file_wget "$url" "$output"
     fi
 }
 
@@ -2059,7 +2101,7 @@ handle_tar_gz_files() {
         echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR."
     fi
 }
 
@@ -2307,7 +2349,6 @@ pull_images() {
         exit 1
     }
 
-    # Normalize image type
     IMAGE_TYPE=${IMAGE_TYPE^^}
     [[ "$IMAGE_TYPE" == "BIN" ]] && IMAGE_TYPE="IOL"
     [[ ! "$IMAGE_TYPE" =~ ^(QEMU|IOL|DYNAMIPS)$ ]] && {
@@ -2315,86 +2356,109 @@ pull_images() {
         exit 1
     }
 
-    # Fetch JSON index
+    logger debug "Image type: $IMAGE_TYPE"
+    logger debug "Image ID: $IMAGE_ID"
+
     fetch_json || {
         echo "Failed to fetch index"
         exit 1
     }
 
-    # Extract image data
-    local image_data=$(jq -r --arg type "$IMAGE_TYPE" --argjson id "$IMAGE_ID" \
+    local image_data image_name mirror install_path protocol hostname prefix download_path
+
+    image_data=$(jq -r --arg type "$IMAGE_TYPE" --argjson id "$IMAGE_ID" \
         '.[$type][] | select(.id == $id)' "$TEMP_JSON")
     [[ -z "$image_data" ]] && {
         echo "Image not found"
         exit 1
     }
 
-    # Parse common properties
-    local image_name=$(jq -r '.name' <<<"$image_data")
-    local mirror=$(jq -r '.mirror // "drive"' <<<"$image_data")
-    local install_path=$(jq -r '.metadata.install_path' <<<"$image_data")
+    image_name=$(jq -r '.name' <<<"$image_data")
+    mirror=$(jq -r '.mirror // "drive"' <<<"$image_data")
+    install_path=$(jq -r '.metadata.install_path' <<<"$image_data")
+    protocol=$(jq -r '.url_properties.protocol' "$TEMP_JSON")
+    hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
+    prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
+    download_path="$install_path"
 
-    # Get URL components from global properties
-    local protocol=$(jq -r '.url_properties.protocol' "$TEMP_JSON")
-    local hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
-    local prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
+    logger debug "image_name: $image_name"
+    logger debug "mirror: $mirror"
+    logger debug "install_path (raw): $install_path"
+    logger debug "URL base: $protocol://$hostname$prefix"
+    logger debug "download_path: $download_path"
 
-    # Set up paths
-    case "$IMAGE_TYPE" in
-    "QEMU")
-        FOLDERNAME="$image_name"
-        download_path="/opt/unetlab/addons/qemu/$FOLDERNAME"
-        ;;
-    "IOL")
-        download_path="/opt/unetlab/addons/iol/bin"
-        ;;
-    "DYNAMIPS")
-        download_path="/opt/unetlab/addons/dynamips"
-        ;;
-    esac
-
-    # Check existing files
+    # Check if file exists
     if [ -e "$download_path/$image_name" ] && [ "$OVERWRITE" != "--overwrite" ]; then
         echo "File exists. Use --overwrite"
         exit 0
     fi
 
-    # Prepare download URLs
+    # Build download URLs
     download_urls=()
     while IFS= read -r url; do
         full_url="$protocol://$hostname$prefix$url"
         download_urls+=("$full_url")
     done < <(jq -r '.files[].path' <<<"$image_data")
 
-    # Show download information
-    logger info "Downloading $image_name (ID: $IMAGE_ID)"
     echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
     printf "%-20s: %s\n" "Name" "$image_name"
+    printf "%-20s: %s\n" "Size" "$(jq -r '.metadata.total_human_size' <<<"$image_data")"
     printf "%-20s: %s\n" "Type" "$IMAGE_TYPE"
-    printf "%-20s: %s\n" "Path" "$download_path"
+    printf "%-20s: %s\n" "Path" "$install_path"
     printf "%-20s: %s\n" "Host" "$hostname"
 
-    mkdir -p "$download_path"
-    echo -e "${YELLOW}[!] DOWNLOADING... ${NO_COLOR}"
-
-    # Download image
-    for url in "${download_urls[@]}"; do
-        filename=$(basename "$url")
-        download_file "$url" "$download_path" "$image_name"
-
-        # # Check image size
-        expected_size=$(jq -r --arg url "$url" '.files[] | select(.path == $url) | .size' <<<"$image_data")
-        check_image_size "$download_path/$image_name" "$expected_size"
-    done
-
-    # Post-processing
-    if [ "$IMAGE_TYPE" = "QEMU" ]; then
-        handle_tgz_files "$FOLDERNAME"
-        handle_tar_gz_files "$FOLDERNAME"
-        handle_zip_files "$FOLDERNAME"
+    logger debug "mkdir -p $install_path"
+    if [ -e "$install_path" ]; then
+        if [ ! -d "$install_path" ]; then
+            echo -e "${RED}[-] Error: $install_path exists but is not a directory.${NO_COLOR}"
+            logger error "$install_path exists but is not a directory"
+            exit 1
+        else
+            logger debug "Directory already exists, continuing."
+        fi
+    else
+        mkdir -p "$install_path"
     fi
 
-    # Fix permissions
+    for url in "${download_urls[@]}"; do
+        filename=$(basename "$url")
+
+        logger debug "Remote URL: $url"
+        logger debug "filename resolved: $filename"
+        logger debug "download_file $url -> $install_path/$filename"
+
+        download_file "$url" "$install_path" "$filename"
+
+        expected_size=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .size' <<<"$image_data")
+        expected_sha1=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.sha1' <<<"$image_data")
+        expected_md5=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.md5' <<<"$image_data")
+
+        echo -e "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        check_image_size "$install_path" "$filename" "$expected_size"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] Size check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        check_image_hash "$install_path" "$filename" "$expected_sha1" "sha1"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] SHA1 check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        check_image_hash "$install_path" "$filename" "$expected_md5" "md5"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] MD5 check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        echo -e "${GREEN}[+] Downloaded and verified: $filename !${NO_COLOR}"
+    done
+
+    # Post-processing for QEMU
+    if [ "$IMAGE_TYPE" = "QEMU" ]; then
+        handle_tgz_files "$image_name"
+        handle_tar_gz_files "$image_name"
+        handle_zip_files "$image_name"
+    fi
+
     fix_permissions
 
     echo -e "${GREEN}[+] Download completed!${NO_COLOR}"
@@ -2416,6 +2480,17 @@ clear_logs() {
 # Function to fix permissions of the downloaded images
 fix_permissions() {
     UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
+    if ! [[ -e $UNL_WRAPPER ]]; then
+        echo -e "${RED}[-] unl_wrapper not found at $UNL_WRAPPER or it is not accessible. ${NO_COLOR}"
+        echo -e "${YELLOW}[-] Attempting to fix permissions manually... ${NO_COLOR}"
+        if chmod 755 -R /opt/unetlab/addons; then
+            echo -e "${GREEN}[+] Permissions fixed manually. ${NO_COLOR}"
+        else
+            echo -e "${RED}[-] Failed to fix permissions manually. ${NO_COLOR}"
+        fi
+
+        return
+    fi
     echo -e "${YELLOW}[-] Fixing permissions... ${NO_COLOR}"
     chmod +x $UNL_WRAPPER
     $UNL_WRAPPER -a fixpermissions
