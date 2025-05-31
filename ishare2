@@ -1733,32 +1733,67 @@ ishare2_gui_restart() {
 # Function to search for images in the JSON index
 search_images() {
     TYPE=${1^^}
-    if [[ -n $2 ]]; then # If the user passed a filter
-        FILTER=$2
+    FILTER=${2:-}
+    VALID_TYPES=("IOL" "QEMU" "DYNAMIPS")
+
+    if [[ "$TYPE" == "ANY" || ! " ${VALID_TYPES[*]} " =~ " ${TYPE} " ]]; then
+        SEARCH_ACROSS=true
+    else
+        SEARCH_ACROSS=false
     fi
-    # Download the JSON and store it in a temporary file
+
     fetch_json
-    print_separator "Available $TYPE images"
 
-    # Filter rows with jq and keep the table headers
-    data=$(jq -r '(["ID","NAME","SIZE"] | (., map(length*"-"))), (.["'$TYPE'"][] | select(.name | contains("'$FILTER'")) | [.id, .name, .human_readable_size]) | @tsv' "$TEMP_JSON")
+    if [[ "$SEARCH_ACROSS" == true ]]; then
+        print_separator "Searching across all types for \"$FILTER\""
 
-    # Check if there are matching data rows
-    if [ -n "$data" ]; then
-        echo -e "$data" | column -t -s $'\t'
-        # Calculate and display the total count
-        total_count=$(echo "$data" | wc -l)
-        total_count=$((total_count - 2))
-        if [[ $total_count -eq 0 ]]; then
-            echo -e "\n${RED}No $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
-        elif [[ $total_count -eq 1 ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE image found for the term: \"$FILTER\"${NO_COLOR}"
-        elif [[ $FILTER == "" ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
+        data=$(jq -r --arg filter "$FILTER" '
+          . as $root
+          | ["IOL", "QEMU", "DYNAMIPS"] 
+          | map($root[.][] 
+            | select(($filter | length == 0) or (.name | test($filter; "i")))
+            | [.id, .name, ., .metadata.total_human_size] 
+            | [.[0], .[1], .[2].type, .[3]]) 
+          | .[] 
+          | @tsv
+        ' "$TEMP_JSON")
+
+        if [[ -z "$data" ]]; then
+            echo -e "\n${RED}No matching images found for \"$FILTER\"${NO_COLOR}"
         else
-            echo -e "\n${GREEN}$total_count $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
+            {
+                echo -e "ID\tNAME\tTYPE\tSIZE"
+                echo -e "--\t----\t----\t----"
+                echo "$data"
+            } | column -t -s $'\t'
+
+            total_count=$(echo "$data" | wc -l)
+            echo -e "\n${GREEN}$total_count image(s) found${NO_COLOR}"
+        fi
+
+    else
+        print_separator "Available $TYPE images"
+
+        data=$(jq -r --arg type "$TYPE" --arg filter "$FILTER" '
+          .[$type][] 
+          | select(($filter | length == 0) or (.name | test($filter; "i"))) 
+          | [.id, .name, .metadata.total_human_size] 
+          | @tsv' "$TEMP_JSON")
+
+        if [[ -z "$data" ]]; then
+            echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
+        else
+            {
+                echo -e "ID\tNAME\tSIZE"
+                echo -e "--\t----\t----"
+                echo "$data"
+            } | column -t -s $'\t'
+
+            total_count=$(echo "$data" | wc -l)
+            echo -e "\n${GREEN}$total_count $TYPE image(s) found${NO_COLOR}"
         fi
     fi
+    echo -e "${YELLOW}[!] ${NO_COLOR}You can use the command \033[32mishare2 pull <type> <id>\033[0m to download the image"
 }
 
 # Function to update iptables and add them to startup script
