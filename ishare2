@@ -509,36 +509,50 @@ create_config() {
         echo -e "${YELLOW}[!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
     fi
 
-    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_CONF_FILE
+    local available_mirrors=($(get_available_mirrors))
+    [[ ${#available_mirrors[@]} -eq 0 ]] && available_mirrors=("drive" "main")
 
-    # Provisional mirror selection feature. Will be replaced with a better solution in the future.
-    # Ask if the user wants to use the default mirror, another mirror or a custom mirror
-    echo -e "${YELLOW}[+] Choose a mirror. (default: Rotate mirrors)${NO_COLOR}"
-    # Show list of mirrors
-    echo " 1) Rotate mirrors (recommended)"
-    echo " 2) Google Drive mirror"
-    echo " 3) Onedrive mirror"
-    echo " 4) Custom mirror"
-    # Ask the user to select a mirror
-    read -p "[*] Enter the number of the mirror you want to use (default: 1): " -r
-    case $REPLY in
-    2)
-        JSON_URL=${MIRRORS[0]}
-        echo -e "${YELLOW}[!] Using Google Drive mirror.${NO_COLOR}"
-        ;;
-    3)
-        JSON_URL=${MIRRORS[1]}
-        echo -e "${YELLOW}[!] Using Onedrive mirror.${NO_COLOR}"
-        ;;
-    4)
-        echo -e "${YELLOW}[+] Enter the URL of the mirror.${NO_COLOR}"
-        read -p "[*] Enter the URL of the mirror you want to use: " -r
-        JSON_URL="$REPLY"
-        echo -e "${YELLOW}[!] Using custom mirror: $JSON_URL.${NO_COLOR}"
+    declare -A mirror_descriptions=(
+        ["drive"]="Google Drive mirror"
+        ["main"]="OneDrive mirror"
+        ["backup"]="Backup server"
+        ["cdn"]="Content Delivery Network"
+    )
+
+    echo -e "\n${YELLOW}[!] Mirror Selection${NO_COLOR}"
+    echo "iShare2 can download files from multiple mirror sources."
+    echo
+    echo " 1) Automatically rotate mirrors for reliability"
+
+    local counter=2
+    declare -A mirror_options
+    for mirror in "${available_mirrors[@]}"; do
+        local desc="${mirror_descriptions[$mirror]:-$mirror mirror}"
+        echo " $counter) Always use: $desc"
+        mirror_options[$counter]=$mirror
+        ((counter++))
+    done
+
+    echo
+    read -p "[?] Enter your choice (default: 1): " -r choice
+    choice=${choice:-1}
+
+    case $choice in
+    1)
+        echo -e "${GREEN}[✓] Mirror rotation enabled (${#available_mirrors[@]} sources).${NO_COLOR}"
+        echo "ROTATE=true" >>"$ISHARE2_CONF_FILE"
         ;;
     *)
-        echo -e "${YELLOW}[!] ishare2 will rotate among the available mirrors.${NO_COLOR}"
-        echo "ROTATE=true" >>$ISHARE2_CONF_FILE
+        if [[ -n "${mirror_options[$choice]}" ]]; then
+            local selected_mirror="${mirror_options[$choice]}"
+            local selected_desc="${mirror_descriptions[$selected_mirror]:-$selected_mirror mirror}"
+            echo -e "${GREEN}[✓] Mirror locked to: $selected_desc${NO_COLOR}"
+            echo "ROTATE=false" >>"$ISHARE2_CONF_FILE"
+            echo "MIRROR=\"$selected_mirror\"" >>"$ISHARE2_CONF_FILE"
+        else
+            echo -e "${RED}[✗] Invalid choice. Mirror rotation will be used.${NO_COLOR}"
+            echo "ROTATE=true" >>"$ISHARE2_CONF_FILE"
+        fi
         ;;
     esac
 
