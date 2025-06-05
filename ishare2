@@ -2405,15 +2405,52 @@ pull_images() {
     }
 
     image_name=$(jq -r '.name' <<<"$image_data")
-    mirror=$(jq -r '.mirror // "drive"' <<<"$image_data")
     install_path=$(jq -r '.metadata.install_path' <<<"$image_data")
     protocol=$(jq -r '.url_properties.protocol' "$TEMP_JSON")
+
+    # Mirror selection logic
+    local state_file="$ISHARE2_DIR/last_mirror"
+    local available_mirrors=("drive" "main")
+
+    if [[ "$ROTATE" == "true" ]]; then
+        # Read last used mirror or default to first available
+        if [[ -f "$state_file" ]]; then
+            last_mirror=$(<"$state_file")
+            # Find next mirror in rotation
+            for i in "${!available_mirrors[@]}"; do
+                if [[ "${available_mirrors[$i]}" == "$last_mirror" ]]; then
+                    next_index=$(((i + 1) % ${#available_mirrors[@]}))
+                    mirror="${available_mirrors[$next_index]}"
+                    break
+                fi
+            done
+        else
+            mirror="${available_mirrors[0]}"
+        fi
+        # Save selected mirror for next rotation
+        mkdir -p "$(dirname "$state_file")"
+        echo "$mirror" >"$state_file"
+    else
+        # Use MIRROR environment variable if set and valid
+        if [[ -n "$MIRROR" ]]; then
+            # Check if MIRROR value is valid
+            if [[ " ${available_mirrors[*]} " == *" $MIRROR "* ]]; then
+                mirror="$MIRROR"
+            else
+                mirror="main" # Default to main if invalid
+                logger warn "Invalid MIRROR value '$MIRROR'. Defaulting to 'main'"
+            fi
+        else
+            mirror="main" # Default to main if MIRROR not set
+        fi
+    fi
+
     hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
     prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
     download_path="$install_path"
 
+    logger debug "Using mirror: $mirror"
     logger debug "image_name: $image_name"
-    logger debug "mirror: $mirror"
     logger debug "install_path (raw): $install_path"
     logger debug "URL base: $protocol://$hostname$prefix"
     logger debug "download_path: $download_path"
@@ -2437,6 +2474,7 @@ pull_images() {
     printf "%-20s: %s\n" "Type" "$IMAGE_TYPE"
     printf "%-20s: %s\n" "Path" "$install_path"
     printf "%-20s: %s\n" "Host" "$hostname"
+    printf "%-20s: %s\n" "Mirror" "$mirror"
 
     logger debug "mkdir -p $install_path"
     if [ -e "$install_path" ]; then
@@ -2465,6 +2503,7 @@ pull_images() {
         expected_md5=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.md5' <<<"$image_data")
 
         echo -e "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        logger info "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
         check_image_size "$install_path" "$filename" "$expected_size"
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}[-] Size check failed for $filename. ${NO_COLOR}"
