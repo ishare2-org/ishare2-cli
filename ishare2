@@ -250,32 +250,6 @@ print_box() {
     echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
 }
 
-# Function to rotate among the available mirrors
-rotate_mirrors() {
-    # Rotate mirrors
-    source $ISHARE2_CONF_FILE
-    # Create unset JSON_URL if it does not exist
-    if ! grep -q "JSON_URL" "$ISHARE2_CONF_FILE"; then
-        echo "JSON_URL=" >>"$ISHARE2_CONF_FILE"
-    fi
-    if [[ $ROTATE == true ]]; then
-        logger info "Rotating mirrors..."
-        if [[ $JSON_URL == ${MIRRORS[0]} ]]; then
-            logger info "Setting JSON_URL to ${MIRRORS[1]}"
-            JSON_URL=${MIRRORS[1]}
-            sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[1]}|" "$ISHARE2_CONF_FILE"
-        elif [[ $JSON_URL == ${MIRRORS[1]} ]]; then
-            logger info "Setting JSON_URL to ${MIRRORS[0]}"
-            JSON_URL=${MIRRORS[0]}
-            sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
-        elif [[ -z $JSON_URL ]]; then # If JSON_URL is empty, set it to the first mirror
-            logger info "Setting JSON_URL to ${MIRRORS[0]}"
-            JSON_URL=${MIRRORS[0]}
-            sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
-        fi
-    fi
-}
-
 # Function to print a separator with a title
 print_separator() {
     local TITLE=$1
@@ -404,23 +378,24 @@ get_available_mirrors() {
 create_config() {
     clear
     messages=(
-        "Welcome to the ishare2!"
+        "Welcome to ishare2!"
         "This script will guide you through the initial configuration process."
-        "But first, let's check if the required dependencies are installed."
+        "First, let's ensure all required dependencies are installed."
     )
     print_box "${messages[@]}"
     sleep 3
+
     is_pnetlab_installed
-    # check if pnetlab is installed
+
     if [[ -z $pnetlab_version ]]; then
         logger warn "PNetLab is not installed."
     else
-        echo -e "${GREEN}[+] PNetLab version: $pnetlab_version found.${NO_COLOR}"
+        echo -e "${GREEN}[✓] Detected PNetLab version: $pnetlab_version${NO_COLOR}"
         fix_repositories
         check_pnetlab_sources
     fi
 
-    echo -e "${BLUE}[*] Installing ishare2 dependencies...${NO_COLOR}"
+    echo -e "${BLUE}[i] Installing iShare2 dependencies...${NO_COLOR}"
     MAX_RETRIES=3
     retry_counter=0
 
@@ -428,10 +403,10 @@ create_config() {
         if install_dependencies; then
             break
         fi
-        echo -e "${RED}[-] Failed to install dependencies. Retrying...${NO_COLOR}"
+        echo -e "${RED}[✗] Dependency installation failed. Retrying... (${retry_counter}/${MAX_RETRIES})${NO_COLOR}"
         logger error "Failed to install dependencies. Retrying..."
         retry_counter=$((retry_counter + 1))
-        sleep 10
+        sleep 5
     done
 
     if [[ $retry_counter -eq $MAX_RETRIES ]]; then
@@ -441,73 +416,64 @@ create_config() {
             if check_pnetlab_sources; then
                 break
             fi
-            echo -e "${RED}[-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
+            echo -e "${RED}[✗] Could not update PNetLab sources. Retrying... (${retry_counter}/${MAX_RETRIES})${NO_COLOR}"
             logger error "Failed to replace PNetLab sources. Retrying..."
             retry_counter=$((retry_counter + 1))
-            sleep 10
+            sleep 5
         done
     fi
-    logger info "Starting configuration wizard..."
-    # Create the configuration file
-    clear
 
+    logger info "Launching configuration wizard..."
+    clear
     messages=(
-        "Welcome to the ishare2 configuration wizard."
-        "- This wizard will guide you through the configuration process."
-        "- Press Enter to accept the default value."
-        "- You can modify the configuration later by running: ishare2 config."
-        "- Press Ctrl+C to cancel."
+        "ishare2 Configuration Wizard"
+        "- This wizard will guide you through essential setup steps."
+        "- Press Enter to accept default values when applicable."
+        "- To reconfigure later, run: ishare2 config"
+        "- Press Ctrl+C at any time to cancel."
     )
     print_box "${messages[@]}"
     sleep 3
-    # Ask whether to use aria2c or not
-    echo -e "${YELLOW}[+] Use aria2c for faster downloads? (default: no)${NO_COLOR}"
-    read -p "[+] (y/n): " -r
+
+    echo -e "${YELLOW}[?] Enable aria2c for accelerated downloads? (default: no)${NO_COLOR}"
+    read -p "[y/N]: " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW}[!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to this question.${NO_COLOR}"
-        echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
+        echo -e "${YELLOW}[!] aria2c can improve download speeds, but may cause issues for some users."
+        echo "To disable later, run: ishare2 config and answer no to this question.${NO_COLOR}"
+        echo "USE_ARIA2C=true" >"$ISHARE2_CONF_FILE"
         install_package "aria2"
         read -n 1
     else
-        echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
+        echo "USE_ARIA2C=false" >"$ISHARE2_CONF_FILE"
     fi
 
-    # Ask if SSL certificate should be checked
-    echo -e "${YELLOW}[+] Check SSL certificate? (default: yes)${NO_COLOR}"
-    read -p "[+] (y/n): " -r
+    echo -e "${YELLOW}[?] Perform SSL certificate validation for downloads? (default: yes)${NO_COLOR}"
+    read -p "[y/N]: " -r
     case $REPLY in
-    [Nn])
-        SSL_CHECK=false
-        ;;
-    *)
-        SSL_CHECK=true
-        ;;
+    [Nn]) SSL_CHECK=false ;;
+    *) SSL_CHECK=true ;;
     esac
-    echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_CONF_FILE
+    echo "SSL_CHECK=\"$SSL_CHECK\"" >>"$ISHARE2_CONF_FILE"
 
-    echo -e "${YELLOW}[+] Choose the update channel.${NO_COLOR}"
-
-    # Get branches as an array instead of a single string with spaces
+    echo -e "${YELLOW}[?] Select update channel (branch).${NO_COLOR}"
     mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
-
-    # Display branches with correct indexing
     for ((i = 0; i < ${#branches[@]}; i++)); do
         echo " $((i + 1))) ${branches[i]}"
     done
 
-    # Ask the user to select a branch
     local current_channel=$CHANNEL
-    read -p "[*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
+    read -p "[*] Enter the number of the desired branch (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
-        echo -e "${YELLOW}[!] Using the default branch.${NO_COLOR}"
+        echo -e "${YELLOW}[i] Default branch selected: $CHANNEL${NO_COLOR}"
     elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
-        echo -e "${RED}[!] Invalid input. Using the default branch.${NO_COLOR}"
+        echo -e "${RED}[✗] Invalid input. Falling back to default branch: $CHANNEL${NO_COLOR}"
     else
         CHANNEL=${branches[REPLY - 1]}
-        echo -e "${YELLOW}[!] Using the $CHANNEL branch.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
+        echo -e "${GREEN}[✓] Branch selected: $CHANNEL${NO_COLOR}"
+        echo -e "${BLUE}[i] Running 'ishare2 upgrade' to switch to this branch.${NO_COLOR}"
     fi
+    echo "CHANNEL=\"$CHANNEL\"" >>"$ISHARE2_CONF_FILE"
 
     local available_mirrors=($(get_available_mirrors))
     [[ ${#available_mirrors[@]} -eq 0 ]] && available_mirrors=("drive" "main")
@@ -556,36 +522,31 @@ create_config() {
         ;;
     esac
 
-    echo "JSON_URL=\"$JSON_URL\"" >>$ISHARE2_CONF_FILE
+    echo >>"$ISHARE2_CONF_FILE"
 
-    # Validate the configuration file
-    if [ ! -f "$ISHARE2_CONF_FILE" ]; then
-        echo -e "${RED}[!] Failed to create configuration file. Please try again.${NO_COLOR}"
-        logger error "Failed to create configuration file."
+    if [[ ! -f "$ISHARE2_CONF_FILE" ]]; then
+        echo -e "${RED}[✗] Failed to create configuration file.${NO_COLOR}"
+        logger error "Configuration file creation failed."
         exit 1
     fi
+
     remove_duplicates
     validate_conf_file
 
-    sleep 1
-    clear
     messages=(
         "Configuration completed successfully."
-        "You can start using ishare2!"
-        "[!] IMPORTANT NOTICES:"
-        "- ishare2 is a free and open-source project. If you paid"
-        "  for it, you have been scammed."
-        "- Do not download ishare2 from unofficial sources as they"
-        "  may contain arbitrary code."
+        "You can now start using ishare2."
+        "[!] IMPORTANT:"
+        "- ishare2 is a free, open-source tool. If someone charged you for it, you've been scammed."
+        "- Avoid unofficial sources. They may contain malicious code."
     )
     print_box "${messages[@]}"
 
-    # Update to the latest version on the selected channel
     if [[ $current_channel != $CHANNEL ]]; then
-        echo -e "${YELLOW}[!] Installing the latest version of ishare2 on the $CHANNEL channel...${NO_COLOR}"
-        curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2 >/usr/sbin/ishare2
+        echo -e "${YELLOW}[i] Updating ishare2 to the selected '$CHANNEL' branch...${NO_COLOR}"
+        curl -sL "https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2" >/usr/sbin/ishare2
         chmod +x /usr/sbin/ishare2
-        echo -e "${GREEN}[+] ishare2 has been updated to the latest version on the $CHANNEL channel.${NO_COLOR}"
+        echo -e "${GREEN}[✓] iShare2 has been updated to the latest version from the '$CHANNEL' branch.${NO_COLOR}"
     fi
 }
 
@@ -617,7 +578,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL" "ROTATE" "MOTD")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "ROTATE" "MOTD")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
@@ -851,15 +812,15 @@ check_image_hash() {
     local expected_hash=$3
     local hash_type=${4,,} # Convert to lowercase (e.g., "SHA1" → "sha1")
 
-    echo -e "${YELLOW}[+] Checking ${hash_type^^} hash for ${image_name}${NO_COLOR}"
+    logger info "${YELLOW}[+] Checking ${hash_type^^} hash for ${image_name}${NO_COLOR}"
 
     if [[ -z "$expected_hash" ]]; then
-        echo -e "${YELLOW}[!] No ${hash_type^^} hash provided in the index. Skipping check.${NO_COLOR}"
+        logger info "${YELLOW}[!] No ${hash_type^^} hash provided in the index. Skipping check.${NO_COLOR}"
         return
     fi
 
     if [ ! -f "$image_path/$image_name" ]; then
-        echo -e "${RED}[-] File not found: $image_path/$image_name${NO_COLOR}"
+        logger error "${RED}[-] File not found: $image_path/$image_name${NO_COLOR}"
         return 1
     fi
 
@@ -884,7 +845,7 @@ check_image_hash() {
         return 1
     fi
 
-    echo -e "${GREEN}[+] ${hash_type^^} hash is valid.${NO_COLOR}"
+    echo -e "${GREEN}[✓] ${hash_type^^} hash is valid.${NO_COLOR}"
 }
 
 # Function to check image size against the downloaded image
@@ -932,7 +893,7 @@ check_image_size() {
         logger error "Mismatch: expected $image_size_from_json, got $image_size ($image_path/$image_name)"
     fi
 
-    echo -e "${GREEN}[+] Basic integrity checks passed. The downloaded image is the expected size.${NO_COLOR}"
+    echo -e "${GREEN}[✓] The downloaded image is the expected size.${NO_COLOR}"
 }
 
 fetch_json() {
@@ -944,7 +905,10 @@ fetch_json() {
     logger info "Fetching the latest release information from: $REPO_URL"
 
     # Fetch release metadata quietly
-    response=$(curl -sL "$REPO_URL")
+    response=$(curl -sL "$REPO_URL") || {
+        logger error "Failed to fetch release metadata from: $REPO_URL"
+        exit 1
+    }
 
     # Extract labhub.json URL
     labhub_url=$(echo "$response" | jq -r '.assets[] | select(.name == "labhub.json") | .browser_download_url')
@@ -2519,7 +2483,7 @@ pull_images() {
             echo -e "${RED}[-] MD5 check failed for $filename. ${NO_COLOR}"
             echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
         fi
-        echo -e "${GREEN}[+] Downloaded and verified: $filename !${NO_COLOR}"
+        echo -e "${GREEN}[✓] Downloaded and verified: $filename!${NO_COLOR}"
     done
 
     # Post-processing for QEMU
@@ -2531,7 +2495,7 @@ pull_images() {
 
     fix_permissions
 
-    echo -e "${GREEN}[+] Download completed!${NO_COLOR}"
+    echo -e "${GREEN}[✓] Installation completed successfully! ${NO_COLOR}"
 }
 
 show_logs() {
@@ -2552,9 +2516,10 @@ fix_permissions() {
     UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
     if ! [[ -e $UNL_WRAPPER ]]; then
         echo -e "${RED}[-] unl_wrapper not found at $UNL_WRAPPER or it is not accessible. ${NO_COLOR}"
-        echo -e "${YELLOW}[-] Attempting to fix permissions manually... ${NO_COLOR}"
+        logger error "unl_wrapper not found at $UNL_WRAPPER or it is not accessible"
+        logger info "Trying to fix permissions manually"
         if chmod 755 -R /opt/unetlab/addons; then
-            echo -e "${GREEN}[+] Permissions fixed manually. ${NO_COLOR}"
+            echo -e "${GREEN}[✓] Permissions fixed manually. ${NO_COLOR}"
         else
             echo -e "${RED}[-] Failed to fix permissions manually. ${NO_COLOR}"
         fi
