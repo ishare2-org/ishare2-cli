@@ -1,0 +1,11 @@
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get install -y \
+    curl wget sudo bash bsdmainutils \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser
