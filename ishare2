@@ -378,6 +378,28 @@ check_config() {
     validate_conf_file
 }
 
+get_available_mirrors() {
+    # Ensure we have the latest index file
+    fetch_json || {
+        logger error "Failed to fetch index while getting mirrors"
+        return 1
+    }
+
+    # Extract mirror names from the JSON structure
+    local mirrors=()
+    while IFS= read -r mirror_name; do
+        mirrors+=("$mirror_name")
+    done < <(jq -r '.url_properties.hostnames | keys[]' "$TEMP_JSON" 2>/dev/null)
+
+    # Return default mirrors if none found
+    if [ ${#mirrors[@]} -eq 0 ]; then
+        logger error "No mirrors found in index."
+        exit 1
+    else
+        echo "${mirrors[@]}"
+    fi
+}
+
 # Function to create the configuration file
 create_config() {
     clear
