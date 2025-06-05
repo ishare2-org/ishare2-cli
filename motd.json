@@ -1,5 +1,5 @@
 {
-    "message": "Changelog:\n- Using new index structure.\n- Added SHA1 and MD5 integrity checks.\n- Update PNetLab installation sources.",
-    "last_shown_date": "",
-    "show_count": 0
+  "message": "Changelog:\n- Using new index structure.- Added working rotation.",
+  "last_shown_date": "2025-06-04",
+  "show_count": 0
 }
