@@ -1,5 +1,5 @@
 {
-    "message": "Changelog:\n- Fixed bug when doing integrity checks againts qemu images.",
-    "last_shown_date": "",
-    "show_count": 0
+  "message": "Changelog:\n- Added mirror rotation- Added dynamic mirror \noptions",
+  "last_shown_date": "2025-06-04",
+  "show_count": 0
 }

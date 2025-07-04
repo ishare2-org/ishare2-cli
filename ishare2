@@ -2,22 +2,21 @@
 # Initial release date: October 2022
 # Authors: @mativ00 & @sudoalx on Telegram
 # Description: This bash script was created to automate the installation of images hosted on labhub.eu.org
-# Version: 3.5.8-main
-# Last Updated: 2024-08-08 yyyy-mm-dd
+# Version: 4.0.1-dev
+# Last Updated: 2025-06-04
 
 # Default ishare2 configuration: this configuration will be overwritten when defined in the configuration file.
-USE_ARIA2C=false                                                                                                                                                # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
-SSL_CHECK="true"                                                                                                                                                # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
-CHANNEL="main"                                                                                                                                                  # Set to main to use the main channel. Set to main to use the main channel.
-MIRRORS=("https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.gd.json" "https://raw.githubusercontent.com/ishare2-org/mirrors/main/index.od.json") # List of mirrors
-JSON_URL=${MIRRORS[0]}                                                                                                                                          # Set to the default mirror
+USE_ARIA2C=false       # Set to true to use aria2c for faster downloads. Set to false to use wget instead.
+SSL_CHECK="true"       # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
+CHANNEL="dev"          # Set to main to use the main channel. Set to main to use the main channel.
+JSON_URL=${MIRRORS[0]} # Set to the default mirror
 # End of ishare2 configuration
 
 # Initialize variables
 ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
 LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
-TEMP_JSON="$ISHARE2_DIR/index.json"                                                            # Temporary JSON file
-VERSION="3.5.8-main"                                                                           # Current version of ishare2
+TEMP_JSON="$ISHARE2_DIR/labhub.json"                                                           # Temporary JSON file
+VERSION="4.0.1-dev"                                                                     # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL
 MOTD_FILE="$ISHARE2_DIR/motd.json"                                                             # MOTD file
 REMOTE_MOTD_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/motd.json" # Remote MOTD URL
@@ -182,11 +181,13 @@ fetch_latest_motd() {
 
 # Function to compare the current MOTD with the fetched MOTD
 motds_are_different() {
+    local current_motd
+    local fetched_motd
     if [ ! -f "$MOTD_FILE" ] || [ ! -f "$ISHARE2_DIR/motd.tmp.json" ]; then
         return 0
     fi
-    local current_motd=$(jq -r '.message' "$MOTD_FILE")
-    local fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
+    current_motd=$(jq -r '.message' "$MOTD_FILE")
+    fetched_motd=$(jq -r '.message' "$ISHARE2_DIR/motd.tmp.json")
     # Compare the current MOTD with the fetched MOTD
     if [ "$current_motd" != "$fetched_motd" ]; then
         mv $ISHARE2_DIR/motd.tmp.json "$MOTD_FILE"
@@ -247,32 +248,6 @@ print_box() {
         printf "${YELLOW}│${NO_COLOR} %-$(($max_length + 2))s ${YELLOW}│${NO_COLOR}\n" "$line"
     done
     echo -e "${YELLOW}└$(printf '─%.0s' $(seq 1 $((max_length + 4))))┘${NO_COLOR}"
-}
-
-# Function to rotate among the available mirrors
-rotate_mirrors() {
-    # Rotate mirrors
-    source $ISHARE2_CONF_FILE
-    # Create unset JSON_URL if it does not exist
-    if ! grep -q "JSON_URL" "$ISHARE2_CONF_FILE"; then
-        echo "JSON_URL=" >>"$ISHARE2_CONF_FILE"
-    fi
-    if [[ $ROTATE == true ]]; then
-        logger info "Rotating mirrors..."
-        if [[ $JSON_URL == ${MIRRORS[0]} ]]; then
-            logger info "Setting JSON_URL to ${MIRRORS[1]}"
-            JSON_URL=${MIRRORS[1]}
-            sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[1]}|" "$ISHARE2_CONF_FILE"
-        elif [[ $JSON_URL == ${MIRRORS[1]} ]]; then
-            logger info "Setting JSON_URL to ${MIRRORS[0]}"
-            JSON_URL=${MIRRORS[0]}
-            sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
-        elif [[ -z $JSON_URL ]]; then # If JSON_URL is empty, set it to the first mirror
-            logger info "Setting JSON_URL to ${MIRRORS[0]}"
-            JSON_URL=${MIRRORS[0]}
-            sed -i "s|JSON_URL=.*|JSON_URL=${MIRRORS[0]}|" "$ISHARE2_CONF_FILE"
-        fi
-    fi
 }
 
 # Function to print a separator with a title
@@ -377,27 +352,50 @@ check_config() {
     validate_conf_file
 }
 
+get_available_mirrors() {
+    # Ensure we have the latest index file
+    fetch_json || {
+        logger error "Failed to fetch index while getting mirrors"
+        return 1
+    }
+
+    # Extract mirror names from the JSON structure
+    local mirrors=()
+    while IFS= read -r mirror_name; do
+        mirrors+=("$mirror_name")
+    done < <(jq -r '.url_properties.hostnames | keys[]' "$TEMP_JSON" 2>/dev/null)
+
+    # Return default mirrors if none found
+    if [ ${#mirrors[@]} -eq 0 ]; then
+        logger error "No mirrors found in index."
+        exit 1
+    else
+        echo "${mirrors[@]}"
+    fi
+}
+
 # Function to create the configuration file
 create_config() {
-    fix_repositories
     clear
     messages=(
-        "Welcome to the ishare2!"
+        "Welcome to ishare2!"
         "This script will guide you through the initial configuration process."
-        "But first, let's check if the required dependencies are installed."
+        "First, let's ensure all required dependencies are installed."
     )
     print_box "${messages[@]}"
     sleep 3
+
     is_pnetlab_installed
-    # check if pnetlab is installed
+
     if [[ -z $pnetlab_version ]]; then
         logger warn "PNetLab is not installed."
     else
-        echo -e "${GREEN}[+] PNetLab version: $pnetlab_version found.${NO_COLOR}"
+        echo -e "${GREEN}[✓] Detected PNetLab version: $pnetlab_version${NO_COLOR}"
+        fix_repositories
         check_pnetlab_sources
     fi
 
-    echo -e "${BLUE}[*] Installing ishare2 dependencies...${NO_COLOR}"
+    echo -e "${BLUE}[i] Installing iShare2 dependencies...${NO_COLOR}"
     MAX_RETRIES=3
     retry_counter=0
 
@@ -405,10 +403,10 @@ create_config() {
         if install_dependencies; then
             break
         fi
-        echo -e "${RED}[-] Failed to install dependencies. Retrying...${NO_COLOR}"
+        echo -e "${RED}[✗] Dependency installation failed. Retrying... (${retry_counter}/${MAX_RETRIES})${NO_COLOR}"
         logger error "Failed to install dependencies. Retrying..."
         retry_counter=$((retry_counter + 1))
-        sleep 10
+        sleep 5
     done
 
     if [[ $retry_counter -eq $MAX_RETRIES ]]; then
@@ -418,137 +416,137 @@ create_config() {
             if check_pnetlab_sources; then
                 break
             fi
-            echo -e "${RED}[-] Failed to replace pnetlab sources. Retrying...${NO_COLOR}"
+            echo -e "${RED}[✗] Could not update PNetLab sources. Retrying... (${retry_counter}/${MAX_RETRIES})${NO_COLOR}"
             logger error "Failed to replace PNetLab sources. Retrying..."
             retry_counter=$((retry_counter + 1))
-            sleep 10
+            sleep 5
         done
     fi
-    logger info "Starting configuration wizard..."
-    # Create the configuration file
-    clear
 
+    logger info "Launching configuration wizard..."
+    clear
     messages=(
-        "Welcome to the ishare2 configuration wizard."
-        "- This wizard will guide you through the configuration process."
-        "- Press Enter to accept the default value."
-        "- You can modify the configuration later by running: ishare2 config."
-        "- Press Ctrl+C to cancel."
+        "ishare2 Configuration Wizard"
+        "- This wizard will guide you through essential setup steps."
+        "- Press Enter to accept default values when applicable."
+        "- To reconfigure later, run: ishare2 config"
+        "- Press Ctrl+C at any time to cancel."
     )
     print_box "${messages[@]}"
     sleep 3
-    # Ask whether to use aria2c or not
-    echo -e "${YELLOW}[+] Use aria2c for faster downloads? (default: no)${NO_COLOR}"
-    read -p "[+] (y/n): " -r
+
+    echo -e "${YELLOW}[?] Enable aria2c for accelerated downloads? (default: no)${NO_COLOR}"
+    read -p "[y/N]: " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW}[!] Using aria2c allows you to download files faster, however, many users reported having issues with it.\nTo disable it, run: ishare2 config and answer no to this question.${NO_COLOR}"
-        echo "USE_ARIA2C=true" >$ISHARE2_CONF_FILE
+        echo -e "${YELLOW}[!] aria2c can improve download speeds, but may cause issues for some users."
+        echo "To disable later, run: ishare2 config and answer no to this question.${NO_COLOR}"
+        echo "USE_ARIA2C=true" >"$ISHARE2_CONF_FILE"
         install_package "aria2"
         read -n 1
     else
-        echo "USE_ARIA2C=false" >$ISHARE2_CONF_FILE
+        echo "USE_ARIA2C=false" >"$ISHARE2_CONF_FILE"
     fi
 
-    # Ask if SSL certificate should be checked
-    echo -e "${YELLOW}[+] Check SSL certificate? (default: yes)${NO_COLOR}"
-    read -p "[+] (y/n): " -r
+    echo -e "${YELLOW}[?] Perform SSL certificate validation for downloads? (default: yes)${NO_COLOR}"
+    read -p "[y/N]: " -r
     case $REPLY in
-    [Nn])
-        SSL_CHECK=false
-        ;;
-    *)
-        SSL_CHECK=true
-        ;;
+    [Nn]) SSL_CHECK=false ;;
+    *) SSL_CHECK=true ;;
     esac
-    echo "SSL_CHECK=\"$SSL_CHECK\"" >>$ISHARE2_CONF_FILE
+    echo "SSL_CHECK=\"$SSL_CHECK\"" >>"$ISHARE2_CONF_FILE"
 
-    echo -e "${YELLOW}[+] Choose the update channel.${NO_COLOR}"
-
-    # Get branches as an array instead of a single string with spaces
+    echo -e "${YELLOW}[?] Select update channel (branch).${NO_COLOR}"
     mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
-
-    # Display branches with correct indexing
     for ((i = 0; i < ${#branches[@]}; i++)); do
         echo " $((i + 1))) ${branches[i]}"
     done
 
-    # Ask the user to select a branch
     local current_channel=$CHANNEL
-    read -p "[*] Enter the number of the branch you want to use (default: $CHANNEL): " -r
+    read -p "[*] Enter the number of the desired branch (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
-        echo -e "${YELLOW}[!] Using the default branch.${NO_COLOR}"
+        echo -e "${YELLOW}[i] Default branch selected: $CHANNEL${NO_COLOR}"
     elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
-        echo -e "${RED}[!] Invalid input. Using the default branch.${NO_COLOR}"
+        echo -e "${RED}[✗] Invalid input. Falling back to default branch: $CHANNEL${NO_COLOR}"
     else
         CHANNEL=${branches[REPLY - 1]}
-        echo -e "${YELLOW}[!] Using the $CHANNEL branch.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Running: ishare2 upgrade, will update ishare2 to the $CHANNEL branch.${NO_COLOR}"
+        echo -e "${GREEN}[✓] Branch selected: $CHANNEL${NO_COLOR}"
+        echo -e "${BLUE}[i] Running 'ishare2 upgrade' to switch to this branch.${NO_COLOR}"
     fi
+    echo "CHANNEL=\"$CHANNEL\"" >>"$ISHARE2_CONF_FILE"
 
-    echo "CHANNEL=\"$CHANNEL\"" >>$ISHARE2_CONF_FILE
+    local available_mirrors=($(get_available_mirrors))
+    [[ ${#available_mirrors[@]} -eq 0 ]] && available_mirrors=("drive" "main")
 
-    # Provisional mirror selection feature. Will be replaced with a better solution in the future.
-    # Ask if the user wants to use the default mirror, another mirror or a custom mirror
-    echo -e "${YELLOW}[+] Choose a mirror. (default: Rotate mirrors)${NO_COLOR}"
-    # Show list of mirrors
-    echo " 1) Rotate mirrors (recommended)"
-    echo " 2) Google Drive mirror"
-    echo " 3) Onedrive mirror"
-    echo " 4) Custom mirror"
-    # Ask the user to select a mirror
-    read -p "[*] Enter the number of the mirror you want to use (default: 1): " -r
-    case $REPLY in
-    2)
-        JSON_URL=${MIRRORS[0]}
-        echo -e "${YELLOW}[!] Using Google Drive mirror.${NO_COLOR}"
-        ;;
-    3)
-        JSON_URL=${MIRRORS[1]}
-        echo -e "${YELLOW}[!] Using Onedrive mirror.${NO_COLOR}"
-        ;;
-    4)
-        echo -e "${YELLOW}[+] Enter the URL of the mirror.${NO_COLOR}"
-        read -p "[*] Enter the URL of the mirror you want to use: " -r
-        JSON_URL="$REPLY"
-        echo -e "${YELLOW}[!] Using custom mirror: $JSON_URL.${NO_COLOR}"
+    declare -A mirror_descriptions=(
+        ["drive"]="Google Drive mirror"
+        ["main"]="OneDrive mirror"
+        ["backup"]="Backup server"
+        ["cdn"]="Content Delivery Network"
+    )
+
+    echo -e "\n${YELLOW}[!] Mirror Selection${NO_COLOR}"
+    echo "iShare2 can download files from multiple mirror sources."
+    echo
+    echo " 1) Automatically rotate mirrors for reliability"
+
+    local counter=2
+    declare -A mirror_options
+    for mirror in "${available_mirrors[@]}"; do
+        local desc="${mirror_descriptions[$mirror]:-$mirror mirror}"
+        echo " $counter) Always use: $desc"
+        mirror_options[$counter]=$mirror
+        ((counter++))
+    done
+
+    echo
+    read -p "[?] Enter your choice (default: 1): " -r choice
+    choice=${choice:-1}
+
+    case $choice in
+    1)
+        echo -e "${GREEN}[✓] Mirror rotation enabled (${#available_mirrors[@]} sources).${NO_COLOR}"
+        echo "ROTATE=true" >>"$ISHARE2_CONF_FILE"
         ;;
     *)
-        echo -e "${YELLOW}[!] ishare2 will rotate among the available mirrors.${NO_COLOR}"
-        echo "ROTATE=true" >>$ISHARE2_CONF_FILE
+        if [[ -n "${mirror_options[$choice]}" ]]; then
+            local selected_mirror="${mirror_options[$choice]}"
+            local selected_desc="${mirror_descriptions[$selected_mirror]:-$selected_mirror mirror}"
+            echo -e "${GREEN}[✓] Mirror locked to: $selected_desc${NO_COLOR}"
+            echo "ROTATE=false" >>"$ISHARE2_CONF_FILE"
+            echo "MIRROR=\"$selected_mirror\"" >>"$ISHARE2_CONF_FILE"
+        else
+            echo -e "${RED}[✗] Invalid choice. Mirror rotation will be used.${NO_COLOR}"
+            echo "ROTATE=true" >>"$ISHARE2_CONF_FILE"
+        fi
         ;;
     esac
 
-    echo "JSON_URL=\"$JSON_URL\"" >>$ISHARE2_CONF_FILE
+    echo >>"$ISHARE2_CONF_FILE"
 
-    # Validate the configuration file
-    if [ ! -f "$ISHARE2_CONF_FILE" ]; then
-        echo -e "${RED}[!] Failed to create configuration file. Please try again.${NO_COLOR}"
-        logger error "Failed to create configuration file."
+    if [[ ! -f "$ISHARE2_CONF_FILE" ]]; then
+        echo -e "${RED}[✗] Failed to create configuration file.${NO_COLOR}"
+        logger error "Configuration file creation failed."
         exit 1
     fi
+
     remove_duplicates
     validate_conf_file
 
-    sleep 1
-    clear
     messages=(
         "Configuration completed successfully."
-        "You can start using ishare2!"
-        "[!] IMPORTANT NOTICES:"
-        "- ishare2 is a free and open-source project. If you paid"
-        "  for it, you have been scammed."
-        "- Do not download ishare2 from unofficial sources as they"
-        "  may contain arbitrary code."
+        "You can now start using ishare2."
+        "[!] IMPORTANT:"
+        "- ishare2 is a free, open-source tool. If someone charged you for it, you've been scammed."
+        "- Avoid unofficial sources. They may contain malicious code."
     )
     print_box "${messages[@]}"
 
-    # Update to the latest version on the selected channel
     if [[ $current_channel != $CHANNEL ]]; then
-        echo -e "${YELLOW}[!] Installing the latest version of ishare2 on the $CHANNEL channel...${NO_COLOR}"
-        curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2 >/usr/sbin/ishare2
+        echo -e "${YELLOW}[i] Updating ishare2 to the selected '$CHANNEL' branch...${NO_COLOR}"
+        curl -sL "https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2" >/usr/sbin/ishare2
         chmod +x /usr/sbin/ishare2
-        echo -e "${GREEN}[+] ishare2 has been updated to the latest version on the $CHANNEL channel.${NO_COLOR}"
+        echo -e "${GREEN}[✓] iShare2 has been updated to the latest version from the '$CHANNEL' branch.${NO_COLOR}"
     fi
 }
 
@@ -580,7 +578,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "JSON_URL" "ROTATE" "MOTD")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "ROTATE" "MOTD")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
@@ -728,13 +726,8 @@ install_package() {
         echo -e "${YELLOW}[+] $package_name is not installed.${NO_COLOR}"
         if ! apt_get_update; then
             echo -e "${RED}[-] Failed to update package lists.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Attempting to fix APT sources...${NO_COLOR}"
-            fix_repositories
-            if ! apt_get_update; then
-                echo -e "${RED}[-] Failed to fix APT sources.${NO_COLOR}"
-                logger error "Failed to fix APT sources."
-                exit 1
-            fi
+            echo -e "${YELLOW}[!] Please check your internet connection and try again or fix your repositories.${NO_COLOR}"
+            logger error "Failed to update package lists."
         fi
 
         echo -e "${YELLOW}[+] Installing $package_name...${NO_COLOR}"
@@ -813,6 +806,48 @@ create_ishare2_dir() {
     logger info "ishare2 directory created successfully."
 }
 
+check_image_hash() {
+    local image_path=$1
+    local image_name=$2
+    local expected_hash=$3
+    local hash_type=${4,,} # Convert to lowercase (e.g., "SHA1" → "sha1")
+
+    logger info "${YELLOW}[+] Checking ${hash_type^^} hash for ${image_name}${NO_COLOR}"
+
+    if [[ -z "$expected_hash" ]]; then
+        logger info "${YELLOW}[!] No ${hash_type^^} hash provided in the index. Skipping check.${NO_COLOR}"
+        return
+    fi
+
+    if [ ! -f "$image_path/$image_name" ]; then
+        logger error "${RED}[-] File not found: $image_path/$image_name${NO_COLOR}"
+        return 1
+    fi
+
+    local actual_hash
+    case "$hash_type" in
+    sha1)
+        actual_hash=$(sha1sum "$image_path/$image_name" | awk '{print $1}')
+        ;;
+    md5)
+        actual_hash=$(md5sum "$image_path/$image_name" | awk '{print $1}')
+        ;;
+    *)
+        echo -e "${RED}[-] Unsupported hash type: $hash_type${NO_COLOR}"
+        return 1
+        ;;
+    esac
+
+    if [[ "$actual_hash" != "$expected_hash" ]]; then
+        echo -e "${RED}[-] ${hash_type^^} mismatch for $image_name${NO_COLOR}"
+        echo -e "${YELLOW} Expected: $expected_hash${NO_COLOR}"
+        echo -e "${YELLOW} Actual  : $actual_hash${NO_COLOR}"
+        return 1
+    fi
+
+    echo -e "${GREEN}[✓] ${hash_type^^} hash is valid.${NO_COLOR}"
+}
+
 # Function to check image size against the downloaded image
 check_image_size() {
     local image_path=$1
@@ -820,67 +855,106 @@ check_image_size() {
     local image_size_from_json=$3
 
     # Check if the image file exists
-    if [ ! -f "$image_path$image_name" ]; then
-        echo -e "${RED}[-] Error: The image file does not exist.${NO_COLOR}"
-        logger error "The image file does not exist: $image_path$image_name"
-        exit 1
+    if [ ! -f "$image_path/$image_name" ]; then
+        echo -e "${RED}[-] Error: The image file was not found at $image_path/$image_name while checking its size.${NO_COLOR}"
+        logger error "The image file was not found: $image_path/$image_name"
+        return 1
     fi
 
-    # Get the size of the downloaded image
-    local image_size=$(stat -c%s "$image_path$image_name")
+    local image_size
+    image_size=$(stat -c%s "$image_path/$image_name" 2>/dev/null)
+
+    # Validate image_size is numeric
+    if [[ -z "$image_size" || ! "$image_size" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}[-] Error: Unable to determine image size for $image_path/$image_name.${NO_COLOR}"
+        logger error "Invalid or missing image size for: $image_path/$image_name"
+        return 1
+    fi
 
     # Check if the image size is less than 20KB
     if [ $image_size -lt 20000 ]; then
         echo -e "${RED}[-] Error: The image file size is too small. The file may be corrupted.${NO_COLOR}"
-        logger error "The image file size is too small: $image_path$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
-        exit 1
+        logger error "The image file size is too small: $image_path/$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
+        return 1
     fi
 
     # Check if the image size matches the size from the JSON file
-    if [ $image_size -ne $image_size_from_json ]; then
+    if [[ -z "$image_size_from_json" || ! "$image_size_from_json" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}[-] Error: Invalid or missing expected size from JSON for $image_name.${NO_COLOR}"
+        logger error "Missing or non-numeric image_size_from_json: $image_size_from_json"
+    fi
+
+    if [ "$image_size" -ne "$image_size_from_json" ]; then
         echo -e "${RED}[-] Error: The image file size does not match the size expected by the index.${NO_COLOR}"
         echo -e "${RED}[!] Debug information:${NO_COLOR}"
         echo -e "${YELLOW} Expected size: $image_size_from_json${NO_COLOR}"
         echo -e "${YELLOW} Actual size: $image_size${NO_COLOR}"
         echo -e "${YELLOW} JSON file URL: $JSON_URL${NO_COLOR}"
-        logger error "The image file size does not match the size from the JSON index: $image_path$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
-        exit 1
+        logger error "Mismatch: expected $image_size_from_json, got $image_size ($image_path/$image_name)"
     fi
 
-    echo -e "${GREEN}[+] Basic integrity checks passed. The downloaded image is the expected size.${NO_COLOR}"
+    echo -e "${GREEN}[✓] The downloaded image is the expected size.${NO_COLOR}"
 }
 
-# Function to fetch JSON file with the list of files to download
 fetch_json() {
     check_installed "jq"
 
-    # Create a temporary directory
-    logger info "Downloading JSON file from $JSON_URL..."
+    # Constants
+    REPO_URL="https://api.github.com/repos/ishare2-org/mirrors/releases/latest"
 
-    curl -sL "$JSON_URL" -o "$TEMP_JSON"
+    logger info "Fetching the latest release information from: $REPO_URL"
 
-    # Check if the curl command failed
-    if [ $? -ne 0 ]; then
-        logger error "Failed to download the JSON file. From: $JSON_URL"
-        echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Running connection test to check your internet connection.${NO_COLOR}"
-        connection_tests
+    # Fetch release metadata quietly
+    response=$(curl -sL "$REPO_URL") || {
+        logger error "Failed to fetch release metadata from: $REPO_URL"
+        exit 1
+    }
+
+    # Extract labhub.json URL
+    labhub_url=$(echo "$response" | jq -r '.assets[] | select(.name == "labhub.json") | .browser_download_url')
+
+    if [[ -z "$labhub_url" ]]; then
+        logger error "labhub.json not found in release metadata from: $REPO_URL"
+        echo -e "${RED}[-] Error: Failed to get image index URL from the LabHub repository.${NO_COLOR}"
         exit 1
     fi
 
-    # Check if the JSON file is valid
-    if ! jq -e . >/dev/null 2>&1 <"$TEMP_JSON"; then
-        logger error "Error: Invalid JSON index file."
+    logger info "Downloading labhub.json from: $labhub_url"
+    if curl -sSL -o "$TEMP_JSON" "$labhub_url"; then
+        logger info "labhub.json downloaded successfully."
+    else
+        logger error "Failed to download labhub.json from: $labhub_url"
+        echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Running connection test...${NO_COLOR}"
+
+        connection_tests
+        local connection_test_result=$?
+
+        if [[ $connection_test_result -eq 0 ]]; then
+            echo -e "${GREEN}[+] Internet connection is working.${NO_COLOR}"
+            echo -e "${YELLOW}[?] Do you want to reconfigure ishare2?${NO_COLOR}"
+            read -p "[?] (y/n): " -r
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo -e "${YELLOW}[+] Reconfiguring ishare2...${NO_COLOR}"
+                create_config
+            else
+                echo -e "${RED}[-] Check the log file for more information.${NO_COLOR}"
+                echo -e "${YELLOW}[!] Log file: $LOG_FILE${NO_COLOR}"
+            fi
+        else
+            echo -e "${RED}[-] Connection test failed. Please check your internet connection.${NO_COLOR}"
+        fi
+        exit 1
+    fi
+
+    # Validate downloaded JSON
+    if ! jq -e . <"$TEMP_JSON" >/dev/null 2>&1; then
+        logger error "Invalid JSON structure in: $TEMP_JSON"
         echo -e "${RED}[-] Error: Invalid JSON index file.${NO_COLOR}"
-        echo -e "${RED}[!] Debug information:${NO_COLOR}"
-        echo -e "${YELLOW} - JSON file URL: $JSON_URL${NO_COLOR}"
-        echo -e "${YELLOW} - JSON file location: $TEMP_JSON${NO_COLOR}"
-        echo -e "${RED}[!] Troubleshooting:${NO_COLOR}"
-        echo -e "${YELLOW} 1) Check if the JSON file is accessible through your web browser.${NO_COLOR}"
-        echo -e "${YELLOW} 2) If the issue persists, report the issue to the ishare2 team on Telegram: https://t.me/NetLabHub${NO_COLOR}"
+        logger info "Debug information: The downloaded JSON file is not valid. Please check the file at: $TEMP_JSON"
         exit 1
     else
-        logger info "JSON file downloaded successfully."
+        logger info "Valid JSON file confirmed: $TEMP_JSON"
     fi
 }
 
@@ -890,6 +964,7 @@ download_file() {
     local output="$2"
     local options="$3"
     USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
+    logger info "Downloading file from $url to $output with options: $options"
 
     if [[ $USE_ARIA2C == "true" ]]; then
         # Check if aria2c is installed
@@ -909,7 +984,7 @@ download_file() {
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
         download_file_aria2 "$url" "$output" "$options"
     else
-        download_file_wget "$url" "$output" "$options"
+        download_file_wget "$url" "$output"
     fi
 }
 
@@ -1695,32 +1770,67 @@ ishare2_gui_restart() {
 # Function to search for images in the JSON index
 search_images() {
     TYPE=${1^^}
-    if [[ -n $2 ]]; then # If the user passed a filter
-        FILTER=$2
+    FILTER=${2:-}
+    VALID_TYPES=("IOL" "QEMU" "DYNAMIPS")
+
+    if [[ "$TYPE" == "ANY" || ! " ${VALID_TYPES[*]} " =~ " ${TYPE} " ]]; then
+        SEARCH_ACROSS=true
+    else
+        SEARCH_ACROSS=false
     fi
-    # Download the JSON and store it in a temporary file
+
     fetch_json
-    print_separator "Available $TYPE images"
 
-    # Filter rows with jq and keep the table headers
-    data=$(jq -r '(["ID","NAME","SIZE"] | (., map(length*"-"))), (.["'$TYPE'"][] | select(.name | contains("'$FILTER'")) | [.id, .name, .human_readable_size]) | @tsv' "$TEMP_JSON")
+    if [[ "$SEARCH_ACROSS" == true ]]; then
+        print_separator "Searching across all types for \"$FILTER\""
 
-    # Check if there are matching data rows
-    if [ -n "$data" ]; then
-        echo -e "$data" | column -t -s $'\t'
-        # Calculate and display the total count
-        total_count=$(echo "$data" | wc -l)
-        total_count=$((total_count - 2))
-        if [[ $total_count -eq 0 ]]; then
-            echo -e "\n${RED}No $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
-        elif [[ $total_count -eq 1 ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE image found for the term: \"$FILTER\"${NO_COLOR}"
-        elif [[ $FILTER == "" ]]; then
-            echo -e "\n${GREEN}$total_count $TYPE images found${NO_COLOR}"
+        data=$(jq -r --arg filter "$FILTER" '
+          . as $root
+          | ["IOL", "QEMU", "DYNAMIPS"] 
+          | map($root[.][] 
+            | select(($filter | length == 0) or (.name | test($filter; "i")))
+            | [.id, .name, ., .metadata.total_human_size] 
+            | [.[0], .[1], .[2].type, .[3]]) 
+          | .[] 
+          | @tsv
+        ' "$TEMP_JSON")
+
+        if [[ -z "$data" ]]; then
+            echo -e "\n${RED}No matching images found for \"$FILTER\"${NO_COLOR}"
         else
-            echo -e "\n${GREEN}$total_count $TYPE images found for the term: \"$FILTER\"${NO_COLOR}"
+            {
+                echo -e "ID\tNAME\tTYPE\tSIZE"
+                echo -e "--\t----\t----\t----"
+                echo "$data"
+            } | column -t -s $'\t'
+
+            total_count=$(echo "$data" | wc -l)
+            echo -e "\n${GREEN}$total_count image(s) found${NO_COLOR}"
+        fi
+
+    else
+        print_separator "Available $TYPE images"
+
+        data=$(jq -r --arg type "$TYPE" --arg filter "$FILTER" '
+          .[$type][] 
+          | select(($filter | length == 0) or (.name | test($filter; "i"))) 
+          | [.id, .name, .metadata.total_human_size] 
+          | @tsv' "$TEMP_JSON")
+
+        if [[ -z "$data" ]]; then
+            echo -e "\n${RED}No $TYPE images found for \"$FILTER\"${NO_COLOR}"
+        else
+            {
+                echo -e "ID\tNAME\tSIZE"
+                echo -e "--\t----\t----"
+                echo "$data"
+            } | column -t -s $'\t'
+
+            total_count=$(echo "$data" | wc -l)
+            echo -e "\n${GREEN}$total_count $TYPE image(s) found${NO_COLOR}"
         fi
     fi
+    echo -e "${YELLOW}[!] ${NO_COLOR}You can use the command \033[32mishare2 pull <type> <id>\033[0m to download the image"
 }
 
 # Function to update iptables and add them to startup script
@@ -1986,7 +2096,7 @@ handle_tar_gz_files() {
         echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        echo -e "${GREEN}[+] Extracted: $DIR."
     fi
 }
 
@@ -2220,156 +2330,202 @@ install_qemu_tools() {
 
 # Function to pull images passed as parameters
 pull_images() {
-    IMAGE_TYPE=$1
-    IMAGE_ID=$2
-    OVERWRITE=$3
+    local IMAGE_TYPE=$1
+    local IMAGE_ID=$2
+    local OVERWRITE=$3
 
-    # 0. Check parameters
-    # Check if IMAGE_TYPE is not empty
-    if [[ -z "$IMAGE_TYPE" ]]; then
-        echo "Usage: $SCR_NAME pull <type> <id>"
-        echo "Types: qemu, iol, dynamips"
-        echo "Example: $SCR_NAME pull bin <id>"
+    # Validate parameters
+    [[ -z "$IMAGE_TYPE" ]] && {
+        echo "Usage: $0 pull <type> <id>"
         exit 1
-    fi
-    # Check if IMAGE_ID is not empty and is a number
-    if [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]]; then
-        echo "Usage: $SCR_NAME pull ${IMAGE_TYPE,,} <id>"
-        echo "Example: $SCR_NAME pull ${IMAGE_TYPE,,} 1"
+    }
+    [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]] && {
+        echo "Invalid ID"
         exit 1
-    fi
+    }
 
-    if [ "$IMAGE_TYPE" = "BIN" ]; then
-        IMAGE_TYPE="IOL"
-    else
-        IMAGE_TYPE="$1"
-    fi
-    local download_urls
-    local download_path # Pending: implement corrections_for_qemu_images with new JSON structure
-    local image_name
-    local image_size
-
-    # Rotate mirrors if enabled
-    rotate_mirrors
-
-    # 1. Fetch the JSON file
-    fetch_json
-
-    # Extract the download URLs, path, name, and size for the specified type and ID
-    download_urls=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_links[]' "$TEMP_JSON")
-    download_path=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .download_path' "$TEMP_JSON")
-    image_name=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .name' "$TEMP_JSON")
-    image_size=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .human_readable_size' "$TEMP_JSON")
-    image_size_bytes=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .size' "$TEMP_JSON")
-    image_file_format=$(jq -r --arg type "$IMAGE_TYPE" --arg id "$IMAGE_ID" '.[$type][] | select(.id == ($id | tonumber)) | .format' "$TEMP_JSON")
-
-    # 2. Download the image(s) for the specified type and ID
-    # Skip download if the image is already installed
-    FOLDERNAME="$image_name"
-    IMAGE_TYPE_LOWER=$(echo "$IMAGE_TYPE" | tr '[:upper:]' '[:lower:]')
-
-    case "$IMAGE_TYPE" in
-    "QEMU")
-        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$FOLDERNAME"
-        if [ -d "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "The folder '$FOLDERNAME' already exists on the server. Use the --overwrite option to overwrite it"
-            exit 0
-        fi
-        ;;
-    "BIN" | "IOL")
-        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/bin/$image_name"
-        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "The file '$image_name' already exists on the server'. Use the --overwrite option to overwrite it"
-            exit 0
-        fi
-        ;;
-    "DYNAMIPS")
-        IMAGE_PATH="/opt/unetlab/addons/$IMAGE_TYPE_LOWER/$image_name"
-        if [ -e "$IMAGE_PATH" ] && [ "$OVERWRITE" != "--overwrite" ]; then
-            echo "The file '$image_name' already exists on the server'. Use the --overwrite option to overwrite it"
-            exit 0
-        fi
-        ;;
-    *)
-        echo "Invalid image type: $IMAGE_TYPE"
+    IMAGE_TYPE=${IMAGE_TYPE^^}
+    [[ "$IMAGE_TYPE" == "BIN" ]] && IMAGE_TYPE="IOL"
+    [[ ! "$IMAGE_TYPE" =~ ^(QEMU|IOL|DYNAMIPS)$ ]] && {
+        echo "Invalid type"
         exit 1
-        ;;
-    esac
+    }
 
-    if [ -n "$download_urls" ]; then
-        # extract one of the download URLs to get the domain, then print the protocol and domain without the path
-        domain=$(echo "$download_urls" | head -n 1 | awk -F/ '{print $1"//"$3}')
-        logger info "Downloading Image: $image_name, Type: $IMAGE_TYPE, ID: $IMAGE_ID"
-        echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
-        printf "%-20s: %s\n" " - Image Name" "$image_name"
-        printf "%-20s: %s\n" " - Image Size" "$image_size"
-        printf "%-20s: %s\n" " - Image Type" "$IMAGE_TYPE"
-        printf "%-20s: %s\n" " - Image ID" "$IMAGE_ID"
-        printf "%-20s: %s\n" " - Image path" "$download_path"
-        printf "%-20s: %s\n" " - Using host" "$domain"
-        # Create the directory if it doesn't exist
-        logger info "Creating directory for: $IMAGE_PATH"
-        mkdir -p "$download_path"
+    logger debug "Image type: $IMAGE_TYPE"
+    logger debug "Image ID: $IMAGE_ID"
 
-        echo -e "${YELLOW}[!] DOWNLOADING IMAGE ${NO_COLOR}"
+    fetch_json || {
+        echo "Failed to fetch index"
+        exit 1
+    }
 
-        # Iterate through the download URLs and download each file
-        case $IMAGE_TYPE in
-        "QEMU")
-            for download_url in $download_urls; do
-                download_file "$download_url" "$download_path"
-                # Only check if it's a single file with archive format: tgz, tar.gz, tar, zip, rar, ova, iso
-                local archive_extensions=(".tgz" ".tar.gz" ".tar" ".zip" ".rar" ".ova" ".iso")
-                if [[ $download_path == *"${archive_extensions[@]}" ]]; then
-                    check_image_size "$download_path" "$image_name$image_file_format" "$image_size_bytes"
+    local image_data image_name mirror install_path protocol hostname prefix download_path
+
+    image_data=$(jq -r --arg type "$IMAGE_TYPE" --argjson id "$IMAGE_ID" \
+        '.[$type][] | select(.id == $id)' "$TEMP_JSON")
+    [[ -z "$image_data" ]] && {
+        echo "Image not found"
+        exit 1
+    }
+
+    image_name=$(jq -r '.name' <<<"$image_data")
+    install_path=$(jq -r '.metadata.install_path' <<<"$image_data")
+    protocol=$(jq -r '.url_properties.protocol' "$TEMP_JSON")
+
+    # Mirror selection logic
+    local state_file="$ISHARE2_DIR/last_mirror"
+    local available_mirrors=("drive" "main")
+
+    if [[ "$ROTATE" == "true" ]]; then
+        # Read last used mirror or default to first available
+        if [[ -f "$state_file" ]]; then
+            last_mirror=$(<"$state_file")
+            # Find next mirror in rotation
+            for i in "${!available_mirrors[@]}"; do
+                if [[ "${available_mirrors[$i]}" == "$last_mirror" ]]; then
+                    next_index=$(((i + 1) % ${#available_mirrors[@]}))
+                    mirror="${available_mirrors[$next_index]}"
+                    break
                 fi
             done
-            ;;
-        "BIN" | "DYNAMIPS" | "IOL")
-            for download_url in $download_urls; do
-                download_file "$download_url" "$download_path" "$image_name"
-                # Check image size against the downloaded file
-                check_image_size "$download_path" "$image_name" "$image_size_bytes"
-            done
-            ;;
-        *)
-            echo "Something went wrong. Invalid image type provided: $IMAGE_TYPE"
-            ;;
-        esac
-
-        echo -e "${YELLOW}[+] ${BLUE}DOWNLOAD COMPLETED! ${NO_COLOR}"
+        else
+            mirror="${available_mirrors[0]}"
+        fi
+        # Save selected mirror for next rotation
+        mkdir -p "$(dirname "$state_file")"
+        echo "$mirror" >"$state_file"
     else
-        echo "Image id $IMAGE_ID ($image_name) not found for type $IMAGE_TYPE in the index of images"
-        exit 1
+        # Use MIRROR environment variable if set and valid
+        if [[ -n "$MIRROR" ]]; then
+            # Check if MIRROR value is valid
+            if [[ " ${available_mirrors[*]} " == *" $MIRROR "* ]]; then
+                mirror="$MIRROR"
+            else
+                mirror="main" # Default to main if invalid
+                logger warn "Invalid MIRROR value '$MIRROR'. Defaulting to 'main'"
+            fi
+        else
+            mirror="main" # Default to main if MIRROR not set
+        fi
     fi
 
-    # 3. Handle downloaded files if TYPE is QEMU
+    hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
+    prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
+    download_path="$install_path"
+
+    logger debug "Using mirror: $mirror"
+    logger debug "image_name: $image_name"
+    logger debug "install_path (raw): $install_path"
+    logger debug "URL base: $protocol://$hostname$prefix"
+    logger debug "download_path: $download_path"
+
+    # Check if file exists
+    if [ -e "$download_path/$image_name" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+        echo "File exists. Use --overwrite"
+        exit 0
+    fi
+
+    # Build download URLs
+    download_urls=()
+    while IFS= read -r url; do
+        full_url="$protocol://$hostname$prefix$url"
+        download_urls+=("$full_url")
+    done < <(jq -r '.files[].path' <<<"$image_data")
+
+    echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
+    printf "%-20s: %s\n" "Name" "$image_name"
+    printf "%-20s: %s\n" "Size" "$(jq -r '.metadata.total_human_size' <<<"$image_data")"
+    printf "%-20s: %s\n" "Type" "$IMAGE_TYPE"
+    printf "%-20s: %s\n" "Path" "$install_path"
+    printf "%-20s: %s\n" "Host" "$hostname"
+    printf "%-20s: %s\n" "Mirror" "$mirror"
+
+    logger debug "mkdir -p $install_path"
+    if [ -e "$install_path" ]; then
+        if [ ! -d "$install_path" ]; then
+            echo -e "${RED}[-] Error: $install_path exists but is not a directory.${NO_COLOR}"
+            logger error "$install_path exists but is not a directory"
+            exit 1
+        else
+            logger debug "Directory already exists, continuing."
+        fi
+    else
+        mkdir -p "$install_path"
+    fi
+
+    for url in "${download_urls[@]}"; do
+        filename=$(basename "$url")
+
+        logger debug "Remote URL: $url"
+        logger debug "filename resolved: $filename"
+        logger debug "download_file $url -> $install_path/$filename"
+
+        download_file "$url" "$install_path" "$filename"
+
+        expected_size=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .size' <<<"$image_data")
+        expected_sha1=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.sha1' <<<"$image_data")
+        expected_md5=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.md5' <<<"$image_data")
+
+        echo -e "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        logger info "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        check_image_size "$install_path" "$filename" "$expected_size"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] Size check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        check_image_hash "$install_path" "$filename" "$expected_sha1" "sha1"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] SHA1 check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        check_image_hash "$install_path" "$filename" "$expected_md5" "md5"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] MD5 check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        echo -e "${GREEN}[✓] Downloaded and verified: $filename!${NO_COLOR}"
+    done
+
+    # Post-processing for QEMU
     if [ "$IMAGE_TYPE" = "QEMU" ]; then
-        # 3.1. Extract archives
-        handle_tgz_files "$FOLDERNAME"
-        handle_tar_gz_files "$FOLDERNAME"
-        handle_tar_files "$FOLDERNAME"
-        handle_zip_files "$FOLDERNAME"
-        handle_rar_files "$FOLDERNAME"
-        handle_ova_files "$FOLDERNAME"
-        handle_iso_files "$FOLDERNAME"
-
-        # 3.2. Handle other files
-        handle_yml_files "$FOLDERNAME"
-        handle_txt_files "$FOLDERNAME"
-        handle_sh_files "$FOLDERNAME"
-        handle_png_files "$FOLDERNAME"
-        handle_php_files "$FOLDERNAME"
-        handle_vmdk_files "$FOLDERNAME"
-
-        # 3.3. Apply fix permissions command
-        fix_permissions
+        handle_tgz_files "$image_name"
+        handle_tar_gz_files "$image_name"
+        handle_zip_files "$image_name"
     fi
+
+    fix_permissions
+
+    echo -e "${GREEN}[✓] Installation completed successfully! ${NO_COLOR}"
+}
+
+show_logs() {
+    # Show logs for ishare2
+    echo -e "${YELLOW}[-] Showing logs for ishare2... ${NO_COLOR}"
+    tail -n 50 $ISHARE2_DIR/ishare2.log
+}
+
+clear_logs() {
+    # Clear logs for ishare2
+    echo -e "${YELLOW}[-] Clearing logs for ishare2... ${NO_COLOR}"
+    true >$ISHARE2_DIR/ishare2.log
+    echo -e "${GREEN}[+] Logs cleared successfully. ${NO_COLOR}"
 }
 
 # Function to fix permissions of the downloaded images
 fix_permissions() {
     UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
+    if ! [[ -e $UNL_WRAPPER ]]; then
+        echo -e "${RED}[-] unl_wrapper not found at $UNL_WRAPPER or it is not accessible. ${NO_COLOR}"
+        logger error "unl_wrapper not found at $UNL_WRAPPER or it is not accessible"
+        logger info "Trying to fix permissions manually"
+        if chmod 755 -R /opt/unetlab/addons; then
+            echo -e "${GREEN}[✓] Permissions fixed manually. ${NO_COLOR}"
+        else
+            echo -e "${RED}[-] Failed to fix permissions manually. ${NO_COLOR}"
+        fi
+
+        return
+    fi
     echo -e "${YELLOW}[-] Fixing permissions... ${NO_COLOR}"
     chmod +x $UNL_WRAPPER
     $UNL_WRAPPER -a fixpermissions
@@ -2410,9 +2566,6 @@ connection_tests() {
         fi
     done
 
-    # Checks completed
-    echo -e "${YELLOW}[-] Connection tests completed. ${NO_COLOR}"
-
     # If any service is not reachable, attempt to fix DNS
     if [ "$all_services_reachable" = false ]; then
         echo -e "${YELLOW}[?] Some services are not reachable. Do you want to attempt to fix DNS? [y/n] ${NO_COLOR}"
@@ -2429,6 +2582,15 @@ connection_tests() {
             echo -e "${RED}[-] Invalid choice. DNS was not fixed. ${NO_COLOR}"
             ;;
         esac
+    fi
+
+    # Report the overall status
+    if [ "$all_services_reachable" = true ]; then
+        echo -e "${GREEN}[+] All services are reachable. ${NO_COLOR}"
+        return 0
+    else
+        echo -e "${RED}[-] Some services are not reachable. ${NO_COLOR}"
+        return 1
     fi
 }
 
@@ -2450,36 +2612,40 @@ fix_dns() {
 selector() {
     case "$1" in
     "search")
-        QUERY="$3"
-        # Switch case to determine the type of the device to be displayed
-        case "$2" in
+        TYPE_INPUT="${2,,}" # normalize to lowercase
+        QUERY="${3:-}"      # optional filter
+
+        case "$TYPE_INPUT" in
         "qemu" | "iol" | "dynamips")
-            TYPE="${2^^}" # Convert to uppercase
+            TYPE="${TYPE_INPUT^^}" # convert to uppercase
             search_images "$TYPE" "$QUERY"
             ;;
-        "bin")
-            TYPE="IOL" # Treat "bin" as "iol" in uppercase
+
+        "bin") # alias for iol
+            TYPE="IOL"
             search_images "$TYPE" "$QUERY"
             ;;
+
         "all")
-            for type in "QEMU" "IOL" "DYNAMIPS"; do
-                TYPE="${type^^}" # Convert to uppercase
-                search_images "$TYPE"
-                echo
-            done
-            ;;
-        *)
-            if [ -n "$2" ]; then
-                FILTER="$2"
+            # If keyword is passed, search across all types
+            if [[ -n "$QUERY" ]]; then
+                search_images "any" "$QUERY"
+            else
                 for type in "QEMU" "IOL" "DYNAMIPS"; do
-                    TYPE="${type^^}"
-                    search_images "$TYPE"
+                    search_images "$type"
                     echo
                 done
+            fi
+            ;;
+
+        *)
+            if [ -n "$2" ]; then
+                # Assume $2 is a filter term, so search across all types
+                search_images "any" "$2"
             else
                 echo "Usage: $SCR_NAME search <type> [keyword]"
-                echo "       $SCR_NAME search all"
-                echo "Types: qemu, iol, dynamips"
+                echo "       $SCR_NAME search all [keyword]"
+                echo "Types: qemu, iol, dynamips, bin, all"
                 exit 1
             fi
             ;;
@@ -2606,7 +2772,31 @@ selector() {
             ;;
         esac
         ;;
+    "logs")
+        if [[ "$2" ]]; then
+            case "$2" in
+            "show")
+                show_logs
+                ;;
+            "clear")
+                clear_logs
+                ;;
+            *)
+                echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+                echo -e "Usage: $SCR_NAME logs <action>"
+                echo -e "Actions: show, clear"
+                exit 1
+                ;;
+            esac
+        else
+            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            echo -e "Usage: $SCR_NAME logs <action>"
+            echo -e "Actions: show, clear"
+            exit 1
+        fi
+        ;;
     "gui")
+        echo -e "${RED}[-] This feature won't work most of the time. ${NO_COLOR}"
         if [[ "$2" ]]; then
             case "$2" in
             "install")
