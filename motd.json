@@ -1,5 +1,5 @@
 {
-  "message": "Changelog:\n- Added mirror rotation- Added dynamic mirror \noptions",
-  "last_shown_date": "2025-06-04",
+  "message": "Changelog:\n- New indexing sources\n- More robust integrity \nchecks with MD5, SHA1",
+  "last_shown_date": "2025-07-03",
   "show_count": 0
 }
