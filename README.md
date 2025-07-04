@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="https://media1.giphy.com/media/wvQIqJyNBOCjK/giphy.gif" width="100"/>
+  <img src="./ishare2.png" width="100"/>
 
 ishare2-cli
 </h1>
