@@ -1,5 +1,5 @@
 {
-  "message": "Changelog:\n- New indexing sources\n- More robust integrity \nchecks with MD5, SHA1",
+  "message": "Old versions of ishare2 (<4.x.x), will be deprecated on July 13th, 2025. Please update ishare2 ASAP.\nChangelog:\n- New indexing sources\n- More robust integrity \nchecks with MD5, SHA1",
   "last_shown_date": "2025-07-03",
   "show_count": 0
 }
