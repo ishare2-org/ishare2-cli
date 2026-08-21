@@ -45,51 +45,10 @@ upgrade_ishare2() {
 }
 
 # Function to show the ishare2 upgrade menu
-menu_ishare2_upgrade_pnetlab() {
-    # Define the menu options
-    options=(
-        "Upgrade PNETLab v5 STABLE"
-        "Upgrade PNETLab v5 BETA"
-        "Upgrade PNETLab v6 BETA"
-    )
-
-    # Set the prompt for the select menu
-    PS3="Please, select an option: "
-
-    # Print the menu and wait for user input
-    select opt in "${options[@]}" "Exit"; do
-        case "$REPLY" in
-        1)
-            # Upgrade PNETLab v5
-            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5")"
-            ;;
-        2)
-            # Upgrade PNETLab v5 Beta
-            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V5_BETA")"
-            ;;
-        3)
-            # Upgrade PNETLab v6
-            bash -c "$(curl -sL --insecure "$URL_PNETLAB_V6")"
-            ;;
-        $((${#options[@]} + 1)))
-            break
-            ;;
-        *)
-            # Invalid option
-            total_options=${#options[@]}
-            echo -e "${RED}Invalid option: Select a number from 1 to $total_options${NO_COLOR}"
-            continue
-            ;;
-        esac
-    done
-}
-
-# Function to show the ishare2 upgrade menu
 menu_ishare2_upgrade() {
     prompt="Please, select an option: "
     options=(
         "Upgrade ishare2"
-        "Upgrade PNETLab"
         "Upgrade ishare2 GUI"
     )
 
@@ -101,10 +60,6 @@ menu_ishare2_upgrade() {
             break
             ;;
         2)
-            menu_ishare2_upgrade_pnetlab
-            break
-            ;;
-        3)
             ishare2 gui install
             break
             ;;
@@ -112,7 +67,7 @@ menu_ishare2_upgrade() {
             break
             ;;
         *)
-            STR="Invalid option: Select a number from 1 to 4"
+            STR="Invalid option: Select a number from 1 to 2"
             echo -e "${RED}$STR${NO_COLOR}"
             continue
             ;;

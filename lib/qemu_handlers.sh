@@ -1,3 +1,11 @@
+# Check if a file is a script that could execute arbitrary code
+is_risky_script() {
+    case "${1,,}" in
+    *.sh | *.php) return 0 ;;
+    *) return 1 ;;
+    esac
+}
+
 # Function to handle tgz archives
 handle_tgz_files() {
     FOLDERNAME=$1
@@ -139,7 +147,7 @@ handle_yml_files() {
     DIR="/opt/unetlab/addons/qemu/$FOLDERNAME"
 
     EXTENSIONS=(".yml" ".yaml")
-    #YML_DIR="/opt/unetlab/html/templates/" # Value passed from set_yml_template_folder_location()
+    YML_DIR="${YML_DIR:-/opt/unetlab/html/templates/}"
 
     for ext in "${EXTENSIONS[@]}"; do
         if ls "${DIR}"/*"$ext" &>/dev/null; then
@@ -180,8 +188,9 @@ handle_sh_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
+        echo -e "${RED}[!] WARNING: This image includes a shell script: $file${NO_COLOR}"
+        echo -e "${RED}[!] Scripts can execute arbitrary code. Only run it if you trust the source.${NO_COLOR}"
         chmod +x "$file"
-        echo -e "This image includes a script file: $file"
         read -p "Do you want to run $file? [y/n]: " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -227,6 +236,8 @@ handle_php_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
+        echo -e "${YELLOW}[!] WARNING: This image includes a PHP script: $file${NO_COLOR}"
+        echo -e "${YELLOW}[!] PHP files run server-side code. Only install it if you trust the source.${NO_COLOR}"
         cp "$file" $PHP_DIR
     fi
 }

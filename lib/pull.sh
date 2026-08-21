@@ -130,6 +130,16 @@ pull_images() {
         logger debug "filename resolved: $filename"
         logger debug "download_file $url -> $install_path/$filename"
 
+        if is_risky_script "$filename"; then
+            echo -e "${YELLOW}[!] WARNING: \"$filename\" is a script (${filename##*.}) that may execute code on your system.${NO_COLOR}"
+            echo -e "${YELLOW}[!] Only continue if you trust the source.${NO_COLOR}"
+            read -p "[?] Skip downloading \"$filename\"? [y/N]: " -r
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo -e "${YELLOW}[!] Skipped downloading $filename.${NO_COLOR}"
+                continue
+            fi
+        fi
+
         download_file "$url" "$install_path" "$filename"
 
         expected_size=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .size' <<<"$image_data")
@@ -163,7 +173,49 @@ pull_images() {
         handle_zip_files "$image_name"
     fi
 
-    fix_permissions
+    if [[ "$AUTO_FIX_PERMISSIONS" == "true" ]]; then
+        fix_permissions
+    fi
 
     echo -e "${GREEN}[✓] Installation completed successfully! ${NO_COLOR}"
+}
+
+# Function to download all images of a specific type (IOL, DYNAMIPS, QEMU)
+pull_all() {
+    TYPE=${1^^}
+    if [[ $TYPE == "BIN" ]]; then
+        TYPE="IOL"
+    fi
+    if [[ $TYPE == "QEMU" ]]; then
+        echo -e "${YELLOW}[!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
+        # Enter confirmation text
+        CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
+        # Ask the user to enter the confirmation text
+        read -p "[?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
+        # If the confirmation text is incorrect then exit
+        if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
+            echo -e "${RED}[!] Aborting.${NO_COLOR}"
+            exit 1
+        fi
+    fi
+    echo -e "${YELLOW}[+] Pulling all $TYPE images...${NO_COLOR}"
+    # Ask for confirmation
+    read -p "[?] Are you sure you want to pull all $TYPE images? (y/n): " -r
+    # If reply was no Y or y then exit
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED}[!] Aborting.${NO_COLOR}"
+        exit 1
+    fi
+    # Get the list of all images
+    fetch_json
+    # Get all the IDs for the images of the specified type
+    IDS=$(jq -r --arg type "$TYPE" '.[$type][] | .id' "$TEMP_JSON")
+    # Pull all the images
+    i=1
+    total=$(echo "$IDS" | wc -l)
+    for ID in $IDS; do
+        echo -e "${YELLOW}[+] Pulling image $i/$total...${NO_COLOR}"
+        ishare2 pull ${TYPE,,} $ID
+        i=$((i + 1))
+    done
 }

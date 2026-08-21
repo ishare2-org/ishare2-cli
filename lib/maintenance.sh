@@ -1,28 +1,27 @@
 # Function to fix permissions of the downloaded images
 fix_permissions() {
     UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
-    if ! [[ -e $UNL_WRAPPER ]]; then
-        echo -e "${RED}[-] unl_wrapper not found at $UNL_WRAPPER or it is not accessible. ${NO_COLOR}"
-        logger error "unl_wrapper not found at $UNL_WRAPPER or it is not accessible"
-        logger info "Trying to fix permissions manually"
-        if chmod 755 -R /opt/unetlab/addons; then
-            echo -e "${GREEN}[✓] Permissions fixed manually. ${NO_COLOR}"
-        else
-            echo -e "${RED}[-] Failed to fix permissions manually. ${NO_COLOR}"
+    if [[ -e $UNL_WRAPPER ]]; then
+        echo -e "${YELLOW}[-] Fixing permissions... ${NO_COLOR}"
+        chmod +x $UNL_WRAPPER
+        $UNL_WRAPPER -a fixpermissions
+
+        if [ $? -ne 0 ]; then
+            echo -e "\n${RED}[-] Failed to fix permissions ${NO_COLOR}"
+            exit 1
         fi
 
+        echo -e "\n${GREEN}[+] Fix permissions command has been executed correctly ${NO_COLOR}"
         return
     fi
-    echo -e "${YELLOW}[-] Fixing permissions... ${NO_COLOR}"
-    chmod +x $UNL_WRAPPER
-    $UNL_WRAPPER -a fixpermissions
 
-    if [ $? -ne 0 ]; then
-        echo -e "\n${RED}[-] Failed to fix permissions ${NO_COLOR}"
-        exit 1
+    # unl_wrapper not present: fix permissions manually
+    logger info "unl_wrapper not found. Fixing permissions manually."
+    if chmod 755 -R /opt/unetlab/addons; then
+        echo -e "${GREEN}[✓] Permissions fixed manually. ${NO_COLOR}"
+    else
+        echo -e "${RED}[-] Failed to fix permissions manually. ${NO_COLOR}"
     fi
-
-    echo -e "\n${GREEN}[+] Fix permissions command has been executed correctly ${NO_COLOR}"
 }
 
 # Function to run Internet connection tests

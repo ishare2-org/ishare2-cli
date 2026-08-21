@@ -1,29 +1,3 @@
-# Function to get the yaml templates directory based on the server platform
-get_server_platform() {
-    grep -q vmx /proc/cpuinfo && echo -n vmx >/opt/unetlab/platform
-    grep -q svm /proc/cpuinfo && echo -n svm >/opt/unetlab/platform
-
-    platform=$(cat /opt/unetlab/platform)
-
-    if [[ $platform == "vmx" ]]; then YML_DIR="/opt/unetlab/html/templates/intel/"; fi
-    if [[ $platform == "svm" ]]; then YML_DIR="/opt/unetlab/html/templates/amd/"; fi
-}
-
-# Function to set the yaml templates directory based on the PNETLab version
-set_yml_template_folder_location() {
-    data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
-    data_array=("$data")
-    pnetlab_version=${data_array[1]}
-
-    if [[ $pnetlab_version == "4.2.10" ]] || [[ $pnetlab_version == "5.0.1" ]]; then
-        YML_DIR="/opt/unetlab/html/templates/"
-    fi
-
-    if [[ $pnetlab_version == *5.2* ]] || [[ $pnetlab_version == *5.3* ]] || [[ $pnetlab_version == *6.* ]]; then
-        get_server_platform
-    fi
-}
-
 # Function to list the labs available in the default or custom labs directory
 list_labs() {
     # Check if the user passed a custom path for Labs directory
@@ -41,9 +15,9 @@ list_labs() {
         fi
         NOT_FOUND_MESSAGE="Make sure you are passing the correct path to the folder where your labs are located"
         echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
-    else # Use default path for PNETLab Store
-        LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
-        NOT_FOUND_MESSAGE="This folder is automatically created when a lab from PNETLab Store is downloaded"
+    else # Use default path for the labs directory
+        LABS_DIR="/opt/unetlab/labs/"
+        NOT_FOUND_MESSAGE="This folder is automatically created when a lab is downloaded to the server"
     fi
 
     if ! [[ -d $LABS_DIR ]]; then
@@ -124,19 +98,19 @@ install_images_from_lab() {
         NUMBER=$3
         echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
         echo -e "${BLUE}Lab number:${NO_COLOR} ${YELLOW}$NUMBER${NO_COLOR}"
-    else # Use default path for PNETLab Store
-        LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
+    else # Use default path for the labs directory
+        LABS_DIR="/opt/unetlab/labs/"
         NUMBER=$1
     fi
 
     if ! [[ -d $LABS_DIR ]]; then
-        echo "\"Your labs from PNETLab Store\" directory has not been found"
-        echo "This folder is automatically created when a lab from PNETLab Store is downloaded"
+        echo "\"$LABS_DIR\" directory has not been found"
+        echo "This folder is automatically created when a lab is downloaded to the server"
         exit 0
     fi
 
     if [[ -z "$(ls -A "$LABS_DIR")" ]]; then
-        echo "No labs were found at PNETLab Store folder in server"
+        echo "No labs were found in \"$LABS_DIR\""
         exit 0
     fi
 
@@ -221,7 +195,6 @@ install_images_from_lab() {
     done
 
     print_separator "Start downloading DOCKER images for this lab"
-    echo -e "\033[32m$STR_DOCKER\033[0m"
     if [[ DOCKER_FLAG -eq 1 ]]; then
         echo -e "${YELLOW}- Nothing to download${NO_COLOR}"
     else
@@ -252,9 +225,9 @@ install_images_all_labs() {
         fi
         NOT_FOUND_MESSAGE="Make sure you are passing the correct path to the folder where your labs are located"
         echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
-    else # Use default path for PNETLab Store
-        LABS_DIR="/opt/unetlab/labs/Your labs from PNETLab Store/"
-        NOT_FOUND_MESSAGE="This folder is automatically created when a lab from PNETLab Store is downloaded"
+    else # Use default path for the labs directory
+        LABS_DIR="/opt/unetlab/labs/"
+        NOT_FOUND_MESSAGE="This folder is automatically created when a lab is downloaded to the server"
     fi
 
     if ! [[ -d $LABS_DIR ]]; then
@@ -302,50 +275,8 @@ install_images_all_labs() {
     echo -e "\nDone"
 }
 
-# Function to download all images of a specific type (IOL, DYNAMIPS, QEMU, DOCKER)
-pull_all() {
-    TYPE=${1^^}
-    if [[ $TYPE == "BIN" ]]; then
-        TYPE="IOL"
-    fi
-    if [[ $TYPE == "QEMU" ]]; then
-        echo -e "${YELLOW}[!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
-        # Enter confirmation text
-        CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
-        # Ask the user to enter the confirmation text
-        read -p "[?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
-        # If the confirmation text is incorrect then exit
-        if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
-            echo -e "${RED}[!] Aborting.${NO_COLOR}"
-            exit 1
-        fi
-    fi
-    echo -e "${YELLOW}[+] Pulling all $TYPE images...${NO_COLOR}"
-    # Ask for conirmation
-    read -p "[?] Are you sure you want to pull all $TYPE images? (y/n): " -r
-    # If reply was no Y or y then exit
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${RED}[!] Aborting.${NO_COLOR}"
-        exit 1
-    fi
-    # Get the list of all images
-    fetch_json
-    # Get all the IDs for the images of the specified type
-    IDS=$(jq -r --arg type "$TYPE" '.[$type][] | .id' "$TEMP_JSON")
-    # Pull all the images
-    i=1
-    total=$(echo "$IDS" | wc -l)
-    for ID in $IDS; do
-        echo -e "${YELLOW}[+] Pulling image $i/$total...${NO_COLOR}"
-        ishare2 pull ${TYPE,,} $ID
-        i=$((i + 1))
-    done
-}
-
 # Function to pull lab images
 pull_lab_images() {
-    # Pending to implement: corrections_for_bin_images_in_lab_"$IMAGE_NAME" "$LAB_PATH"
-    # Pending to implement: corrections_for_qemu_images_in_lab_"$QEMU_NAME"
     LAB_PATH="$1"
     IMAGE_TYPE="$2"
     IMAGE_TYPE_UPPERCASE=$(echo "$IMAGE_TYPE" | tr '[:lower:]' '[:upper:]')

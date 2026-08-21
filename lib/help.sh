@@ -20,14 +20,6 @@ show_ishare2_help() {
         ISHARE2_VERSION_INFO="$ISHARE2_VERSION_INFO $(echo -e "${GREEN}Up to date${NO_COLOR}")"
     fi
 
-    # For PNETLab
-    data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
-    pnetlab_info=($data)
-    if [[ ${#pnetlab_info[@]} -eq 0 ]]; then
-        PNETLAB_INSTALLED=$(echo -e "${RED}PNETLab is not installed.${NO_COLOR}")
-    else
-        PNETLAB_INSTALLED=$(echo -e "${GREEN}PNETLab v${pnetlab_info[1]} is installed.${NO_COLOR}")
-    fi
     cat <<EOF
 Syntax
 
@@ -40,7 +32,7 @@ action:
     labs        : Show labs on server and download images for those labs
     mylabs      : Same as labs command but using a customized path to labs
     relicense   : Generate a new iourc license for bin images
-    upgrade     : Retrieves a menu that allows users to upgrade ishare2 and PNETLab VM
+    upgrade     : Retrieves a menu that allows users to upgrade ishare2 and ishare2 GUI
     changelog   : Show the latest changes made to ishare2
     gui         : Web app to use ishare2 in browser
     test        : Test internet connectivity to required sites (Github, Google Sheets)
@@ -113,7 +105,6 @@ Examples:
 
 ishare2: $ISHARE2_VERSION_INFO
 ishare2 Channel: $CHANNEL
-$PNETLAB_INSTALLED
 EOF
 }
 
@@ -131,7 +122,7 @@ action:
     labs        : Shows available labs and downloads the images for the selected lab.
     mylabs      : Same as labs command but you can use a customized path.
     relicense   : Generates an iourc license for iol images.
-    upgrade     : Shows a menu to upgrade ishare2 or PNETLab.
+    upgrade     : Shows a menu to upgrade ishare2 or ishare2 GUI.
     test        : Test internet connectivity to required sites.
     help        : Shows full help information.
 

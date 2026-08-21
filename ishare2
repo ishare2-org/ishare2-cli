@@ -10,6 +10,7 @@ USE_ARIA2C=false       # Set to true to use aria2c for faster downloads. Set to 
 SSL_CHECK="true"       # Set to true to check SSL certificate. Set to false to disable SSL certificate check.
 CHANNEL="main"         # Set to main to use the stable channel or dev for development builds.
 JSON_URL=${MIRRORS[0]} # Set to the default mirror
+AUTO_FIX_PERMISSIONS=false # Set to true to automatically fix image permissions after downloading.
 # End of ishare2 configuration
 
 # Initialize variables
@@ -34,8 +35,9 @@ SCR_NAME_EXEC_FP=$(realpath "$0")
 SCR_NAME=$(basename "$SCR_NAME_EXEC")
 SCR_NAME=${SCR_NAME%.*}
 
-# Configuration file
-ISHARE2_CONF_FILE=$ISHARE2_DIR/ishare2.conf
+# Configuration file and drop-in directory
+ISHARE2_CONF_FILE=/etc/ishare2.conf
+ISHARE2_CONF_DIR=/etc/ishare2.d
 
 ISHARE2_SCRIPT_DIR=$(dirname "$SCR_NAME_EXEC_FP")
 ISHARE2_MODULES=(
@@ -98,7 +100,6 @@ main() {
     check_updates
     check_motd
     set_max_log_lines
-    set_yml_template_folder_location
     selector "$1" "$2" "$3" "$4"
 }
 

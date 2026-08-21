@@ -5,7 +5,7 @@ ishare2-cli
 </h1>
 
 <h2 align="center">
-A CLI tool written in Bash to easily download and manage images in your PNetLab server
+A CLI tool written in Bash to easily download and manage images in your network emulator (EVE-NG/UNetLab) server
 </h2>
 
 ## Table of contents
@@ -29,10 +29,12 @@ A CLI tool written in Bash to easily download and manage images in your PNetLab 
   - [ishare2 GUI](#ishare2-gui)
 - [Extra features](#extra-features)
   - [Generate a new iourc license for bin images](#generate-a-new-iourc-license-for-bin-images)
-  - [Upgrade ishare2, ishare2-gui or PNETLab server](#upgrade-ishare2-ishare2-gui-or-pnetlab-server)
+  - [Upgrade ishare2 or ishare2 GUI](#upgrade-ishare2-or-ishare2-gui)
   - [Show the latest changes made to ishare2](#show-the-latest-changes-made-to-ishare2)
   - [Show useful information](#show-useful-information)
   - [Test connectivity](#test-connectivity)
+  - [Fix permissions](#fix-permissions)
+  - [Security](#security)
 - [Useful information](#useful-information)
 - [See the latest changes on ishare2](#see-the-latest-changes-on-ishare2)
 - [Known limitations](#known-limitations)
@@ -42,7 +44,7 @@ A CLI tool written in Bash to easily download and manage images in your PNetLab 
 
 ## Quick start 🚀
 
-ishare2 is a tool that helps you download and manage images in your network emulators easily. ishare2 can download qemu, dynamips, bin/iol and docker images. It can also download images needed for labs automatically. To get started, use the one of the installation methods below.
+ishare2 is a tool that helps you download and manage images in your network emulators easily. ishare2 can download qemu, dynamips, bin/iol and docker images. To get started, use the one of the installation methods below.
 
 ## One-line installation
 
@@ -149,7 +151,7 @@ ishare2 uses the following syntax to execute different actions, each action is e
       labs        : Show labs on server and download images for those labs
       mylabs      : Same as labs command but using a customized path to labs
       relicense   : Generate a new iourc license for bin images
-      upgrade     : Retrieves a menu that allows users to upgrade ishare2 and PNETLab VM
+      upgrade     : Retrieves a menu that allows users to upgrade ishare2 and ishare2 GUI
       changelog   : Show the latest changes made to ishare2
       gui         : Web app to use ishare2 in browser
       help        : Show useful information
@@ -285,7 +287,7 @@ ishare2 installed docker    # Will show all docker images installed
 
 ## Download images for a lab
 
-ishare2 can automatically download all images needed for a lab. This feature is available for .unl labs (usually downloaded from the [PNetLab Store](https://user.pnetlab.com/store/labs/view)).
+ishare2 can automatically download all images needed for a lab. This feature is available for `.unl` labs.
 
 ```bash
 ishare2 labs          # Will show all labs available
@@ -337,9 +339,9 @@ ishare2 relicense
 
 This command will generate a new iourc license and restore the needed files to make it work in case you have accidentally deleted them.
 
-### Upgrade ishare2, ishare2-gui or PNETLab server
+### Upgrade ishare2 or ishare2 GUI
 
-Use the following command to upgrade ishare2, ishare2-gui or your PNETLab server:
+Use the following command to upgrade ishare2 or ishare2 GUI:
 
 ```bash
 ishare2 upgrade
@@ -371,13 +373,33 @@ You can test if ishare2 online dependencies are reachable using the following co
 ishare2 test
 ```
 
+### Fix permissions
+
+By default, ishare2 does not modify permissions automatically after downloading
+images. You can enable this during the setup wizard (run `ishare2 config` to
+reconfigure), or fix permissions manually at any time with:
+
+```bash
+ishare2 fix permissions
+```
+
+When available, ishare2 uses the emulator's `unl_wrapper` to fix permissions and
+falls back to fixing them manually otherwise.
+
+### Security
+
+Some images include shell (`.sh`) or PHP (`.php`) scripts that run on your
+server. ishare2 warns you before downloading such files and lets you skip them.
+When a script is found after extracting an archive, ishare2 warns you to be
+cautious. Only run or install scripts from sources you trust.
+
 ## Useful information
 
-[HELP.md](https://github.com/pnetlabrepo/ishare2/blob/main/HELP.md)
+[HELP.md](https://github.com/ishare2-org/ishare2-cli/blob/main/HELP.md)
 
 ## See the latest changes on ishare2
 
-[CHANGELOG.md](https://github.com/pnetlabrepo/ishare2/blob/main/CHANGELOG.md)
+[CHANGELOG.md](https://github.com/ishare2-org/ishare2-cli/blob/main/CHANGELOG.md)
 
 ## Known limitations
 
@@ -387,7 +409,6 @@ You might encounter quota limits when downloading images. If that happens, you c
 ## Links of interest
 
 - [LabHub](https://labhub.eu.org): Source of images indexed by ishare2. You can also download images from here using your browser.
-- [PNETLab Store](https://user.pnetlab.com/store/labs/view): Download labs for PNETLab.
 
 ## Devices credentials
 
@@ -402,4 +423,3 @@ Visit the following links to see the credentials for devices available in LabHub
 You can get help by contacting us through our Telegram group. Search the link to the group chat in the channel's pinned message or click the chat icon in the channel's description: [@NetLabHub](https://t.me/NetLabHub) (By not sharing the link here, we avoid spam and bots in the group chat)
 
 - LabHub Community: [Telegram](https://t.me/NetLabHub)
-- PNETLab Community: [Telegram](https://t.me/pnetlab)

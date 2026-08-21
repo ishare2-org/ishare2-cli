@@ -155,7 +155,6 @@ download_file() {
     local url="$1"
     local output="$2"
     local options="$3"
-    USE_ARIA2C=$(grep "USE_ARIA2C" $ISHARE2_CONF_FILE | cut -d "=" -f2)
     logger info "Downloading file from $url to $output with options: $options"
 
     if [[ $USE_ARIA2C == "true" ]]; then

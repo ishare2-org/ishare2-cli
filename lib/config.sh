@@ -1,18 +1,3 @@
-# Function to check if PNetLab is installed
-is_pnetlab_installed() {
-    # Check if pnetlab is installed
-    data=$(mysql -uroot -ppnetlab -D pnetlab_db -e "SELECT control_value FROM control WHERE control_value>1;" 2>/dev/null)
-    data_array=("$data")
-    pnetlab_version=${data_array[1]}
-    if [[ -z $pnetlab_version ]]; then
-        echo -e "${YELLOW}[!] WARN: PNetLab was not found.${NO_COLOR}"
-        echo -e "${YELLOW}[!]${NO_COLOR} This script has only been tested on PNetLab. If you are not using PNetLab, you may encounter issues."
-        logger warn "PNetLab is not installed."
-        return 1
-    fi
-    return 0
-}
-
 # Function to initialize the ishare2 directory checks
 check_ishare2_dir() {
     # check if ishare2 directory exists otherwise create it
@@ -47,6 +32,8 @@ create_default_conf() {
     echo "CHANNEL=$CHANNEL" >>$ISHARE2_CONF_FILE
     echo "ROTATE=true" >>$ISHARE2_CONF_FILE
     echo "JSON_URL=${MIRRORS[0]}" >>$ISHARE2_CONF_FILE
+    echo "AUTO_FIX_PERMISSIONS=false" >>$ISHARE2_CONF_FILE
+    mkdir -p "$ISHARE2_CONF_DIR"
 
     # Display values used
     messages=(
@@ -55,6 +42,7 @@ create_default_conf() {
         "SSL_CHECK: true"
         "CHANNEL: $CHANNEL"
         "ROTATE: true"
+        "AUTO_FIX_PERMISSIONS: false"
     )
     print_box "${messages[@]}"
 }
@@ -117,16 +105,6 @@ create_config() {
     print_box "${messages[@]}"
     sleep 3
 
-    is_pnetlab_installed
-
-    if [[ -z $pnetlab_version ]]; then
-        logger warn "PNetLab is not installed."
-    else
-        echo -e "${GREEN}[✓] Detected PNetLab version: $pnetlab_version${NO_COLOR}"
-        fix_repositories
-        check_pnetlab_sources
-    fi
-
     echo -e "${BLUE}[i] Installing iShare2 dependencies...${NO_COLOR}"
     MAX_RETRIES=3
     retry_counter=0
@@ -140,20 +118,6 @@ create_config() {
         retry_counter=$((retry_counter + 1))
         sleep 5
     done
-
-    if [[ $retry_counter -eq $MAX_RETRIES ]]; then
-        MAX_RETRIES=3
-        retry_counter=0
-        while [[ $retry_counter -lt $MAX_RETRIES ]]; do
-            if check_pnetlab_sources; then
-                break
-            fi
-            echo -e "${RED}[✗] Could not update PNetLab sources. Retrying... (${retry_counter}/${MAX_RETRIES})${NO_COLOR}"
-            logger error "Failed to replace PNetLab sources. Retrying..."
-            retry_counter=$((retry_counter + 1))
-            sleep 5
-        done
-    fi
 
     logger info "Launching configuration wizard..."
     clear
@@ -186,6 +150,15 @@ create_config() {
     *) SSL_CHECK=true ;;
     esac
     echo "SSL_CHECK=\"$SSL_CHECK\"" >>"$ISHARE2_CONF_FILE"
+
+    echo -e "${YELLOW}[?] Automatically fix image permissions after downloading? (default: no)${NO_COLOR}"
+    echo -e "${YELLOW}[!] When disabled, you can still run: ishare2 fix permissions${NO_COLOR}"
+    read -p "[y/N]: " -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "AUTO_FIX_PERMISSIONS=true" >>"$ISHARE2_CONF_FILE"
+    else
+        echo "AUTO_FIX_PERMISSIONS=false" >>"$ISHARE2_CONF_FILE"
+    fi
 
     echo -e "${YELLOW}[?] Select update channel (branch).${NO_COLOR}"
     mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
@@ -262,6 +235,8 @@ create_config() {
         exit 1
     fi
 
+    mkdir -p "$ISHARE2_CONF_DIR"
+
     remove_duplicates
     validate_conf_file
 
@@ -310,7 +285,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "ROTATE" "MOTD")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "ROTATE" "MOTD" "AUTO_FIX_PERMISSIONS")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
@@ -343,8 +318,18 @@ validate_conf_file() {
     echo "$filtered_content" >"$ISHARE2_CONF_FILE"
 
     logger info "Validated the configuration file."
-    # shellcheck source=/opt/ishare2/cli/ishare2.conf
+    # shellcheck source=/etc/ishare2.conf
     source "$ISHARE2_CONF_FILE"
+
+    # Source any drop-in configuration files from the drop-in directory
+    if [[ -d "$ISHARE2_CONF_DIR" ]]; then
+        for dropin in "$ISHARE2_CONF_DIR"/*.conf; do
+            [[ -f "$dropin" ]] || continue
+            # shellcheck source=/dev/null
+            source "$dropin"
+        done
+    fi
+
     return 0
 }
 
@@ -386,59 +371,6 @@ check_installed() {
         else # package is installed
             echo -e "${GREEN}[+] $PACKAGE has been installed successfully.${NO_COLOR}"
         fi
-    fi
-}
-
-# Function to check if a site is accessible
-is_site_accessible() {
-    local url=$1
-    if ! curl -s --head --request GET "$url" | grep "200 OK\|301 Moved Permanently" >/dev/null; then
-        return 1 # Site is not accessible
-    else
-        return 0 # Site is accessible
-    fi
-}
-
-# Function to check if the sources.list file is using the correct sources
-fix_repositories() {
-    # Immediately check for http://repo.pnetlab.com and replace it with https if found
-    if grep -q "deb \[trusted=yes\] http://repo.pnetlab.com ./" /etc/apt/sources.list; then
-        echo -e "${YELLOW}[+] Found http://repo.pnetlab.com in sources.list, replacing with https...${NO_COLOR}"
-        sed -i 's|deb \[trusted=yes\] http://repo.pnetlab.com ./|deb [trusted=yes] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-    fi
-
-    # Check if https://repo.pnetlab.com is accessible
-    if ! is_site_accessible "https://repo.pnetlab.com"; then
-        echo -e "${YELLOW}[!] repo.pnetlab.com is not accessible.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Checking alternative...${NO_COLOR}"
-        # The script previously modified any http to https if necessary, so just check for https existence now
-        if grep -q "deb \[trusted=yes\] https://repo.pnetlab.com ./" /etc/apt/sources.list; then
-            echo -e "${YELLOW}[!] Your sources.list is already using https for repo.pnetlab.com.${NO_COLOR}"
-        fi
-        # Check if https://pnetlab.labhub.eu.org is accessible
-        if ! is_site_accessible "https://pnetlab.labhub.eu.org"; then
-            echo -e "${RED}[-] Both repo.pnetlab.com and the alternative pnetlab.labhub.eu.org are inaccessible.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
-            # Ask the user if they want to continue anyway
-            echo -e "${YELLOW}[?] Do you want to continue anyway?${NO_COLOR}"
-            read -p "[?] (y/n): " -r
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                exit 1
-            fi
-        fi
-        # Ask the user if they want to replace the sources
-        echo -e "${YELLOW}[!] The official pnetlab.com repository is not accessible.${NO_COLOR}"
-        echo -e "${YELLOW}[?] Do you want to replace the pnetlab sources with the LabHub mirror?${NO_COLOR}"
-        read -p "[?] (y/n): " -r
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            # Comment out "deb [trusted=yes] https://repo.pnetlab.com ./" and add "deb [trusted=yes] https://pnetlab.labhub.eu.org ./"
-            echo -e "${YELLOW}[+] Replacing pnetlab sources with labhub mirror...${NO_COLOR}"
-            sed -i 's|deb \[trusted=yes\] https://repo.pnetlab.com ./|#deb \[trusted=yes\] https://repo.pnetlab.com ./|g' /etc/apt/sources.list
-            echo "deb [trusted=yes] https://pnetlab.labhub.eu.org ./" >>/etc/apt/sources.list
-        fi
-    else
-        echo -e "${GREEN}[+] repo.pnetlab.com is accessible.${NO_COLOR}"
-        # No further action needed if the site is accessible, assuming the earlier check already ensured https is used
     fi
 }
 

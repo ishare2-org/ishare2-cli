@@ -40,7 +40,7 @@ count_dockers() {
     fi
 }
 
-# Function to download lab docker images using the correct docker image name
+# Function to correct the docker image name referenced inside a lab file
 corrections_for_docker_images_in_lab_function() {
     DOCKER_NAME=$1
     LAB_PATH=$2
@@ -92,11 +92,11 @@ corrections_for_docker_images_in_lab_function() {
     done
 }
 
-# Function to download lab docker images
+# Function to download the docker images referenced by a lab
 download_lab_docker_images() {
     filename1=/opt/unetlab/labs/docker_images.txt
 
-    # Checking docker service status before pull any docker image
+    # Check docker service status before pulling any docker image
     if check_docker_service_status; then # When 0 is returned
         while read -r line; do
             DOCKER_NAME=$line
