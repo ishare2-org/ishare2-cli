@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lab name="ishare2-test" id="a1b2c3d4-e5f6-4a7b-8c9d-000000000000" version="1" author="ishare2">
+    <description>Sample lab for testing ishare2</description>
+    <topology>
+        <nodes>
+            <node id="1" name="R1" type="iol" template="c2600" image="c2600-advsecurityk9-mz.124-15.t14.bin" left="100" top="100"/>
+        </nodes>
+        <networks>
+            <network id="1" name="net1" left="300" top="100"/>
+        </networks>
+    </topology>
+</lab>

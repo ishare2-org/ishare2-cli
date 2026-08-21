@@ -1,0 +1,9 @@
+FROM fedora:latest
+
+RUN dnf install -y sudo util-linux && dnf clean all
+
+RUN useradd -ms /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser

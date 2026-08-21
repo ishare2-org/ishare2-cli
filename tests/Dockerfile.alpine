@@ -1,0 +1,9 @@
+FROM alpine:latest
+
+RUN apk add --no-cache bash sudo coreutils util-linux curl wget tree
+
+RUN adduser -D -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser

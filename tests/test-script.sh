@@ -91,6 +91,17 @@ pull_image() {
     fi
 }
 
+assert_contains() {
+    local haystack="$1"
+    local needle="$2"
+    if echo "$haystack" | grep -qF "$needle"; then
+        log INFO "OK: found '$needle'"
+    else
+        log ERROR "MISSING: expected to find '$needle'"
+        exit 1
+    fi
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Main Execution
 # ─────────────────────────────────────────────────────────────────────────────
@@ -129,10 +140,61 @@ for scope in "${TYPES[@]}"; do
 
 done
 
-# Step 6: Success
+# Step 6: Version and help output
+log INFO "Step 6: Version and help output"
+assert_contains "$(sudo ishare2 --version 2>&1)" "ishare2 version"
+assert_contains "$(sudo ishare2 help 2>&1)" "ishare2 [action]"
+assert_contains "$(sudo ishare2 2>&1)" "ishare2 [action]"
+
+# Step 7: Config location and defaults
+log INFO "Step 7: Config location and defaults"
+[[ -f /etc/ishare2.conf ]] || { log ERROR "/etc/ishare2.conf missing"; exit 1; }
+[[ -d /etc/ishare2.d ]] || { log ERROR "/etc/ishare2.d missing"; exit 1; }
+assert_contains "$(sudo cat /etc/ishare2.conf)" "AUTO_FIX_PERMISSIONS=false"
+
+# Step 8: Drop-in config sourcing
+log INFO "Step 8: Drop-in config sourcing"
+sudo mkdir -p /etc/ishare2.d
+echo "CHANNEL=dropintest" | sudo tee /etc/ishare2.d/dropin.conf >/dev/null
+assert_contains "$(sudo ishare2 help 2>&1)" "dropintest"
+sudo rm -f /etc/ishare2.d/dropin.conf
+
+# Step 9: Fix permissions (silent fallback when unl_wrapper is absent)
+log INFO "Step 9: Fix permissions fallback"
+perm_out=$(sudo ishare2 fix permissions 2>&1)
+if echo "$perm_out" | grep -q "unl_wrapper not found"; then
+    log ERROR "unl_wrapper absence should fall back silently"
+    exit 1
+fi
+log INFO "fix permissions completed without unl_wrapper warning"
+
+# Step 10: Logs commands
+log INFO "Step 10: Logs commands"
+sudo ishare2 logs show >/dev/null 2>&1 && log INFO "logs show OK" || { log ERROR "logs show failed"; exit 1; }
+sudo ishare2 logs clear >/dev/null 2>&1 && log INFO "logs clear OK" || { log ERROR "logs clear failed"; exit 1; }
+
+# Step 11: Labs feature
+log INFO "Step 11: Labs feature"
+sudo mkdir -p /opt/unetlab/labs
+sudo cp fixtures/sample-lab.unl /opt/unetlab/labs/sample-lab.unl
+assert_contains "$(sudo ishare2 labs 2>&1)" "sample-lab.unl"
+
+if sudo ishare2 labs 1 >/tmp/lab_install.log 2>&1; then
+    log INFO "ishare2 labs 1 completed successfully"
+else
+    log ERROR "ishare2 labs 1 failed"
+    tail -n 20 /tmp/lab_install.log >&2
+    exit 1
+fi
+
+sudo mkdir -p /tmp/mylabs
+sudo cp fixtures/sample-lab.unl /tmp/mylabs/sample-lab.unl
+assert_contains "$(sudo ishare2 mylabs /tmp/mylabs 2>&1)" "sample-lab.unl"
+
+# Step 12: Success
 log RESULT "✅ ALL TESTS PASSED"
 
-# Step 7: Cleanup
+# Step 13: Cleanup
 log INFO "Cleanup"
 sudo rm /usr/sbin/ishare2
 sudo rm -rf /opt/ishare2/cli/lib

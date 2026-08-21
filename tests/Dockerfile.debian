@@ -1,7 +1,7 @@
-FROM ubuntu:18.04
+FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y \
-    curl wget sudo bash bsdmainutils \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash testuser && \
