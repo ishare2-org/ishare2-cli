@@ -46,35 +46,52 @@ ishare2 is a tool that helps you download and manage images in your network emul
 
 ## One-line installation
 
-### wget
-
-```bash
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
-```
+The installer downloads the latest release bundle from GitHub Releases. By default it
+uses the stable `main` branch. Set `DEV=true` to install the development `dev` branch.
 
 ### curl
 
 ```bash
-curl -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2 && chmod +x /usr/sbin/ishare2 && ishare2
+curl https://ishare2.sh/install | sh
+```
+
+### curl (dev branch)
+
+```bash
+curl https://ishare2.sh/install | DEV=true sh
+```
+
+### wget
+
+```bash
+wget -qO- https://ishare2.sh/install | sh
 ```
 
 > Note: Run the command as root or using sudo
 >
 ## Line by line installation
 
-1. Download ishare2
+1. Download the latest release bundle
 
 ```bash
-wget -O /usr/sbin/ishare2 https://raw.githubusercontent.com/ishare2-org/ishare2-cli/main/ishare2
+curl -fsSL https://github.com/ishare2-org/ishare2-cli/releases/latest/download/ishare2-4.0.1-main.zip -o /tmp/ishare2.zip
 ```
 
-2. Make ishare2 executable
+2. Extract it
 
 ```bash
-chmod +x /usr/sbin/ishare2
+unzip -o /tmp/ishare2.zip -d /tmp/ishare2
 ```
 
-3. Run ishare2
+3. Install the binary and modules
+
+```bash
+install -m 755 /tmp/ishare2/ishare2 /usr/sbin/ishare2
+mkdir -p /opt/ishare2/cli/lib
+cp /tmp/ishare2/lib/*.sh /opt/ishare2/cli/lib/
+```
+
+4. Run ishare2
 
 ```bash
 ishare2
@@ -90,7 +107,7 @@ ishare2
   git clone https://github.com/ishare2-org/ishare2-cli.git
   ```
 
-- Copy the file to /usr/sbin/ishare2
+- Copy the entrypoint to /usr/sbin/ishare2
   
   ```bash
   cp ishare2-cli/ishare2 /usr/sbin/ishare2
@@ -100,6 +117,13 @@ ishare2
   
     ```bash
     chmod +x /usr/sbin/ishare2
+    ```
+
+- Copy the modules
+
+    ```bash
+    mkdir -p /opt/ishare2/cli/lib
+    cp ishare2-cli/lib/*.sh /opt/ishare2/cli/lib/
     ```
 
 - Run `ishare2` to start using it

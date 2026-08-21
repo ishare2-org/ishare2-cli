@@ -94,6 +94,11 @@ sed -i "s/^VERSION=\".*\"/VERSION=\"${FULL_VERSION}\"/" "$ISHARE_FILE"
 echo "[*] Updating version file..."
 echo "$FULL_VERSION" >"$VERSION_FILE"
 
+if ! grep -q "^VERSION=\"${FULL_VERSION}\"" "$ISHARE_FILE"; then
+  echo "Version metadata is out of sync."
+  exit 1
+fi
+
 # === Update MOTD ===
 echo "[*] Updating $MOTD_FILE..."
 jq --arg msg "$RELEASE_BODY" --arg date "$TODAY" '
@@ -104,7 +109,7 @@ jq --arg msg "$RELEASE_BODY" --arg date "$TODAY" '
 
 # === Git commit ===
 echo "[*] Committing changes..."
-git add "$ISHARE_FILE" "$VERSION_FILE" "$MOTD_FILE"
+git add "$ISHARE_FILE" "$VERSION_FILE" "$MOTD_FILE" lib
 git commit -m "Release $FULL_VERSION"
 
 # === Git tag ===
@@ -127,6 +132,22 @@ git tag -a "$RELEASE_NAME" -m "Release $FULL_VERSION"
 git push origin "$BRANCH"
 git push origin "$RELEASE_NAME"
 
+# === Build release archive ===
+if ! command -v zip >/dev/null 2>&1; then
+  echo "❌ 'zip' is required to build the release archive."
+  exit 1
+fi
+
+echo "[*] Building $RELEASE_NAME.zip..."
+STAGE_DIR=$(mktemp -d)
+mkdir -p "$STAGE_DIR/lib"
+cp "$ISHARE_FILE" "$STAGE_DIR/ishare2"
+cp lib/*.sh "$STAGE_DIR/lib/"
+ARCHIVE_DIR=$(mktemp -d)
+ARCHIVE="$ARCHIVE_DIR/$RELEASE_NAME.zip"
+(cd "$STAGE_DIR" && zip -qr "$ARCHIVE" ishare2 lib)
+rm -rf "$STAGE_DIR"
+
 # === GitHub release ===
 echo "[*] Creating GitHub release..."
 
@@ -136,13 +157,15 @@ echo -e "$RELEASE_BODY" >"$RELEASE_BODY_FILE"
 gh release create "$RELEASE_NAME" \
   -t "$RELEASE_TITLE" \
   -F "$RELEASE_BODY_FILE" \
-  ./ishare2 || {
+  "$ARCHIVE" || {
   echo "❌ Failed to create GitHub release. Please check your GitHub CLI setup."
   rm -f "$RELEASE_BODY_FILE"
+  rm -rf "$ARCHIVE_DIR"
   exit 1
 }
 
 rm -f "$RELEASE_BODY_FILE"
+rm -rf "$ARCHIVE_DIR"
 
 echo
 echo "🔗 Visit release page: https://github.com/ishare2-org/ishare2-cli/releases/latest"
