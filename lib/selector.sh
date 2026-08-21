@@ -120,10 +120,12 @@ selector() {
             if [[ "$2" = "all" ]]; then
                 install_images_all_labs "$1"
                 exit 0
-            else
+            elif [[ "$3" ]]; then
                 install_images_from_lab "$1" "$2" "$3"
                 exit 0
             fi
+            list_labs "$1" "$2"
+            exit 0
         fi
         list_labs "$1"
         ;;

@@ -8,10 +8,10 @@ list_labs() {
         if [[ ! "$LABS_DIR" == /* ]]; then # If the path is not absolute
             # Convert the path to absolute
             LABS_DIR=$(realpath "$LABS_DIR")
-            # Check if the path is a directory and add '/' if it's missing
-            if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
-                LABS_DIR="$LABS_DIR/"
-            fi
+        fi
+        # Check if the path is a directory and add '/' if it's missing
+        if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
+            LABS_DIR="$LABS_DIR/"
         fi
         NOT_FOUND_MESSAGE="Make sure you are passing the correct path to the folder where your labs are located"
         echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
@@ -42,11 +42,9 @@ list_labs() {
     declare -a authorLabsArray=()
 
     for file in "$LABS_DIR"*; do
-        check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        SUB="encoding"
-        if [[ $check == *"$SUB"* ]]; then
+        if grep -q 'encoding="UTF-8"' "$file"; then
             readableLabsArray+=("$file")
-            author_lab_name=$(grep -Pio '.*author="\K[^"]*' "$file" | sort -u)
+            author_lab_name=$(sed -n 's/.*author="\([^"]*\)".*/\1/p' "$file" | sort -u)
             if [[ -z $author_lab_name ]]; then # Author name not specified
                 author_lab_name=N/A
             fi
@@ -71,10 +69,10 @@ list_labs() {
         echo -e "$counter_for_readable_labs) ${f##*/} - ${authorLabsArray[$((counter_for_readable_labs - 1))]}"
     done
     if [[ $CUSTOM_PATH_FLAG -eq 1 ]]; then
-        CMD_TO_EXECUTE="ishare2 mylabs $RELATIVE_PATH <number>"
+        CMD_TO_EXECUTE="ishare2 mylabs $RELATIVE_PATH"
         CMD_TO_EXECUTE_ALL="ishare2 mylabs $RELATIVE_PATH all"
     else
-        CMD_TO_EXECUTE="ishare2 labs <number>"
+        CMD_TO_EXECUTE="ishare2 labs"
         CMD_TO_EXECUTE_ALL="ishare2 labs all"
     fi
     echo -e "\nTo install images for a specific lab, use the following command:\n\033[32m$CMD_TO_EXECUTE <number>\033[0m"
@@ -90,10 +88,10 @@ install_images_from_lab() {
         if [[ ! "$LABS_DIR" == /* ]]; then # If the path is not absolute
             # Convert the path to absolute
             LABS_DIR=$(realpath "$LABS_DIR")
-            # Check if the path is a directory and add '/' if it's missing
-            if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
-                LABS_DIR="$LABS_DIR/"
-            fi
+        fi
+        # Check if the path is a directory and add '/' if it's missing
+        if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
+            LABS_DIR="$LABS_DIR/"
         fi
         NUMBER=$3
         echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
@@ -116,9 +114,7 @@ install_images_from_lab() {
 
     declare -a readableLabsArray=()
     for file in "$LABS_DIR"*; do
-        check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        SUB="encoding"
-        if [[ $check == *"$SUB"* ]]; then
+        if grep -q 'encoding="UTF-8"' "$file"; then
             readableLabsArray+=("$file")
         fi
     done
@@ -152,7 +148,7 @@ install_images_from_lab() {
     echo -e "File selected: $file"
     TYPES=(iol dynamips qemu docker)
     for type in "${TYPES[@]}"; do
-        images=$(grep -Pio "type=\"$type\".*image=\"\K[^\"]*" "$file" | sort -u)
+        images=$(sed -n "s/.*type=\"$type\".*image=\"\([^\"]*\)\".*/\1/p" "$file" | sort -u)
         echo "$images" >/opt/unetlab/labs/"$type"_images.txt
     done
 
@@ -218,10 +214,10 @@ install_images_all_labs() {
         if [[ ! "$LABS_DIR" == /* ]]; then # If the path is not absolute
             # Convert the path to absolute
             LABS_DIR=$(realpath "$LABS_DIR")
-            # Check if the path is a directory and add '/' if it's missing
-            if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
-                LABS_DIR="$LABS_DIR/"
-            fi
+        fi
+        # Check if the path is a directory and add '/' if it's missing
+        if [[ -d "$LABS_DIR" && "$LABS_DIR" != */ ]]; then
+            LABS_DIR="$LABS_DIR/"
         fi
         NOT_FOUND_MESSAGE="Make sure you are passing the correct path to the folder where your labs are located"
         echo -e "${BLUE}Custom path for Labs directory:${NO_COLOR} ${YELLOW}$LABS_DIR${NO_COLOR}"
@@ -243,9 +239,7 @@ install_images_all_labs() {
 
     declare -a readableLabsArray=()
     for file in "$LABS_DIR"*; do
-        check=$(grep -Pio 'encoding="UTF-8"' "$file")
-        SUB="encoding"
-        if [[ $check == *"$SUB"* ]]; then
+        if grep -q 'encoding="UTF-8"' "$file"; then
             readableLabsArray+=("$file")
         fi
     done
