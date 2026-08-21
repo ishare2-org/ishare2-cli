@@ -16,6 +16,7 @@ fi
 
 # Prepare
 REMOTE_BINARY_NAME=$(basename "$ISHARE2_PATH")
+ISHARE2_SOURCE_DIR=$(dirname "$ISHARE2_PATH")
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 LOG_DIR="./logs"
 LOG_FILE="$LOG_DIR/test_$TIMESTAMP.log"
@@ -23,6 +24,7 @@ mkdir -p "$LOG_DIR"
 
 # Copy binary to remote
 scp "$ISHARE2_PATH" "$VM_IP:~/$REMOTE_BINARY_NAME"
+scp -r "$ISHARE2_SOURCE_DIR/lib" "$VM_IP:~/ishare2-lib"
 
 # Run remote test
 ssh "$VM_IP" bash <<EOF
@@ -34,6 +36,8 @@ fi
 
 sudo cp "$REMOTE_BINARY_NAME" /usr/sbin/ishare2
 sudo chmod 755 /usr/sbin/ishare2
+sudo mkdir -p /opt/ishare2/cli/lib
+sudo cp ishare2-lib/*.sh /opt/ishare2/cli/lib/
 
 if [ ! -f /usr/sbin/ishare2 ]; then
     echo "[ERROR] ishare2 not found in /usr/sbin"
@@ -56,6 +60,7 @@ fi
 
 echo "[INFO] Cleaning up /usr/sbin/ishare2"
 sudo rm /usr/sbin/ishare2
+sudo rm -rf /opt/ishare2/cli/lib ishare2-lib
 EOF
 
 # Exit summary

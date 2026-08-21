@@ -1,0 +1,169 @@
+# Function to pull images passed as parameters
+pull_images() {
+    local IMAGE_TYPE=$1
+    local IMAGE_ID=$2
+    local OVERWRITE=$3
+
+    # Validate parameters
+    [[ -z "$IMAGE_TYPE" ]] && {
+        echo "Usage: $0 pull <type> <id>"
+        exit 1
+    }
+    [[ -z "$IMAGE_ID" || ! "$IMAGE_ID" =~ ^[0-9]+$ ]] && {
+        echo "Invalid ID"
+        exit 1
+    }
+
+    IMAGE_TYPE=${IMAGE_TYPE^^}
+    [[ "$IMAGE_TYPE" == "BIN" ]] && IMAGE_TYPE="IOL"
+    [[ ! "$IMAGE_TYPE" =~ ^(QEMU|IOL|DYNAMIPS)$ ]] && {
+        echo "Invalid type"
+        exit 1
+    }
+
+    logger debug "Image type: $IMAGE_TYPE"
+    logger debug "Image ID: $IMAGE_ID"
+
+    fetch_json || {
+        echo "Failed to fetch index"
+        exit 1
+    }
+
+    local image_data image_name mirror install_path protocol hostname prefix download_path
+
+    image_data=$(jq -r --arg type "$IMAGE_TYPE" --argjson id "$IMAGE_ID" \
+        '.[$type][] | select(.id == $id)' "$TEMP_JSON")
+    [[ -z "$image_data" ]] && {
+        echo "Image not found"
+        exit 1
+    }
+
+    image_name=$(jq -r '.name' <<<"$image_data")
+    install_path=$(jq -r '.metadata.install_path' <<<"$image_data")
+    protocol=$(jq -r '.url_properties.protocol' "$TEMP_JSON")
+
+    # Mirror selection logic
+    local state_file="$ISHARE2_DIR/last_mirror"
+    local available_mirrors=("drive" "main")
+
+    if [[ "$ROTATE" == "true" ]]; then
+        # Read last used mirror or default to first available
+        if [[ -f "$state_file" ]]; then
+            last_mirror=$(<"$state_file")
+            # Find next mirror in rotation
+            for i in "${!available_mirrors[@]}"; do
+                if [[ "${available_mirrors[$i]}" == "$last_mirror" ]]; then
+                    next_index=$(((i + 1) % ${#available_mirrors[@]}))
+                    mirror="${available_mirrors[$next_index]}"
+                    break
+                fi
+            done
+        else
+            mirror="${available_mirrors[0]}"
+        fi
+        # Save selected mirror for next rotation
+        mkdir -p "$(dirname "$state_file")"
+        echo "$mirror" >"$state_file"
+    else
+        # Use MIRROR environment variable if set and valid
+        if [[ -n "$MIRROR" ]]; then
+            # Check if MIRROR value is valid
+            if [[ " ${available_mirrors[*]} " == *" $MIRROR "* ]]; then
+                mirror="$MIRROR"
+            else
+                mirror="main" # Default to main if invalid
+                logger warn "Invalid MIRROR value '$MIRROR'. Defaulting to 'main'"
+            fi
+        else
+            mirror="main" # Default to main if MIRROR not set
+        fi
+    fi
+
+    hostname=$(jq -r --arg mirror "$mirror" '.url_properties.hostnames[$mirror]' "$TEMP_JSON")
+    prefix=$(jq -r --arg mirror "$mirror" '.url_properties.prefixes[$mirror]' "$TEMP_JSON")
+    download_path="$install_path"
+
+    logger debug "Using mirror: $mirror"
+    logger debug "image_name: $image_name"
+    logger debug "install_path (raw): $install_path"
+    logger debug "URL base: $protocol://$hostname$prefix"
+    logger debug "download_path: $download_path"
+
+    # Check if file exists
+    if [ -e "$download_path/$image_name" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+        echo "File exists. Use --overwrite"
+        exit 0
+    fi
+
+    # Build download URLs
+    download_urls=()
+    while IFS= read -r url; do
+        full_url="$protocol://$hostname$prefix$url"
+        download_urls+=("$full_url")
+    done < <(jq -r '.files[].path' <<<"$image_data")
+
+    echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
+    printf "%-20s: %s\n" "Name" "$image_name"
+    printf "%-20s: %s\n" "Size" "$(jq -r '.metadata.total_human_size' <<<"$image_data")"
+    printf "%-20s: %s\n" "Type" "$IMAGE_TYPE"
+    printf "%-20s: %s\n" "Path" "$install_path"
+    printf "%-20s: %s\n" "Host" "$hostname"
+    printf "%-20s: %s\n" "Mirror" "$mirror"
+
+    logger debug "mkdir -p $install_path"
+    if [ -e "$install_path" ]; then
+        if [ ! -d "$install_path" ]; then
+            echo -e "${RED}[-] Error: $install_path exists but is not a directory.${NO_COLOR}"
+            logger error "$install_path exists but is not a directory"
+            exit 1
+        else
+            logger debug "Directory already exists, continuing."
+        fi
+    else
+        mkdir -p "$install_path"
+    fi
+
+    for url in "${download_urls[@]}"; do
+        filename=$(basename "$url")
+
+        logger debug "Remote URL: $url"
+        logger debug "filename resolved: $filename"
+        logger debug "download_file $url -> $install_path/$filename"
+
+        download_file "$url" "$install_path" "$filename"
+
+        expected_size=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .size' <<<"$image_data")
+        expected_sha1=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.sha1' <<<"$image_data")
+        expected_md5=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.md5' <<<"$image_data")
+
+        echo -e "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        logger info "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        check_image_size "$install_path" "$filename" "$expected_size"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] Size check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        check_image_hash "$install_path" "$filename" "$expected_sha1" "sha1"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] SHA1 check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        check_image_hash "$install_path" "$filename" "$expected_md5" "md5"
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}[-] MD5 check failed for $filename. ${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+        fi
+        echo -e "${GREEN}[✓] Downloaded and verified: $filename!${NO_COLOR}"
+    done
+
+    # Post-processing for QEMU
+    if [ "$IMAGE_TYPE" = "QEMU" ]; then
+        handle_tgz_files "$image_name"
+        handle_tar_gz_files "$image_name"
+        handle_zip_files "$image_name"
+    fi
+
+    fix_permissions
+
+    echo -e "${GREEN}[✓] Installation completed successfully! ${NO_COLOR}"
+}

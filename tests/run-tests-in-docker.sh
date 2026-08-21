@@ -18,6 +18,7 @@ CID=$(docker run -d --rm -it ishare2-test-env sleep infinity)
 
 # Copy test binary and script
 docker cp "$ISHARE2_BIN" "$CID:/home/testuser/ishare2"
+docker cp ../lib "$CID:/home/testuser/lib"
 docker cp ./test-script.sh "$CID:/home/testuser/test-script.sh"
 
 # Run test inside container

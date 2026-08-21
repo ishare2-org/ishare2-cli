@@ -25,6 +25,9 @@ copy_binary() {
     sudo cp ishare2 /usr/sbin/ishare2
     log INFO "Setting permissions for /usr/sbin/ishare2"
     sudo chmod 755 /usr/sbin/ishare2
+    log INFO "Copying ishare2 modules to /opt/ishare2/cli/lib"
+    sudo mkdir -p /opt/ishare2/cli/lib
+    sudo cp lib/*.sh /opt/ishare2/cli/lib/
 }
 
 init_ishare2() {
@@ -132,4 +135,5 @@ log RESULT "✅ ALL TESTS PASSED"
 # Step 7: Cleanup
 log INFO "Cleanup"
 sudo rm /usr/sbin/ishare2
+sudo rm -rf /opt/ishare2/cli/lib
 rm -f ishare2
