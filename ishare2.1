@@ -1,103 +1,188 @@
-.TH ISHARE2 1 "July 2023" "Version 2.1.7" "User Commands"
+.TH ISHARE2 1 "August 2026" "ishare2 4.0.1" "User Commands"
 .SH NAME
-ishare2 \- Download and manage network device images
+ishare2 \- download and manage network device images
 .SH SYNOPSIS
 .B ishare2
-[\fIaction\fR] [\fIparam1\fR] [\fIparam2\fR]
+.RI [ action ]
+.RI [ param1 ]
+.RI [ param2 ]
+.RI [ \-\-overwrite ]
 .SH DESCRIPTION
-The \fBishare2\fR utility allows users to search for, download, and manage network device images for use in network simulations and labs.
+.B ishare2
+is a command line tool that downloads and manages network device images (QEMU,
+IOL/BIN, DYNAMIPS and DOCKER) for network emulators such as EVE-NG and UNetLab.
+Images are fetched from the LabHub index and verified against their expected
+size and SHA1/MD5 checksums after download.
+.PP
+Most actions require root privileges.
 .SH ACTIONS
 .TP
-\fBsearch\fR
-Search for images by type or name.
+.B search
+Search the image index for images by type or name.
 .TP
-\fBpull\fR
-Download an image by type and number.
+.B pull
+Download an image by type and id, or download all images of a type.
 .TP
-\fBinstalled\fR
-Show installed images on the server.
+.B installed
+List the images currently installed on the server.
 .TP
-\fBlabs\fR
-Show labs on the server and download images for those labs.
+.B labs
+List the \fB.unl\fR labs in the default labs directory and download the images
+they require.
 .TP
-\fBmylabs\fR
-Same as \fBlabs\fR command but using a customized path to labs.
+.B mylabs
+Like \fBlabs\fR, but using a custom labs directory.
 .TP
-\fBrelicense\fR
-Generate a new \fBiourc\fR license for bin images.
+.B relicense
+(alias: \fBlicense\fR) Generate a new \fBiourc\fR license for IOL (bin) images.
 .TP
-\fBupgrade\fR
-Retrieve a menu that allows users to upgrade \fBishare2\fR or the \fBishare2\fR GUI.
+.B upgrade
+Display a menu to upgrade \fBishare2\fR or the \fBishare2\fR GUI.
 .TP
-\fBchangelog\fR
+.B changelog
 Show the latest changes made to \fBishare2\fR.
 .TP
-\fBgui\fR
-Start or stop the \fBishare2\fR web app for use in a browser.
+.B fix
+Fix common issues: \fBpermissions\fR, \fBdns\fR or \fBblock_cisco\fR.
 .TP
-\fBhelp\fR
-Show useful information and usage instructions.
+.B logs
+Show or clear the \fBishare2\fR log file using \fBshow\fR or \fBclear\fR.
 .TP
-\fBtest\fR
-Test if \fBishare2\fR dependencies are reachable (GitHub, Google Spreadsheets).
-.SH PARAMETERS
+.B gui
+Install, start, stop or restart the \fBishare2\fR web interface.
 .TP
-\fIparam1\fR
-Specify the image type or name for certain actions.
+.B config
+Run the interactive configuration wizard.
 .TP
-\fIparam2\fR
-Specify the image number, which can be obtained using \fBishare2 search\fR command for certain actions.
+.B test
+Test connectivity to the services \fBishare2\fR depends on.
+.TP
+.B help
+Show usage information.
+.TP
+.B \-\-version
+Print the installed and latest \fBishare2\fR versions.
+.SH IMAGE TYPES
+The \fBsearch\fR, \fBpull\fR and \fBinstalled\fR actions use the following
+image types:
+.TP
+.B qemu
+QEMU virtual machine images.
+.TP
+.B iol
+(alias: \fBbin\fR) Cisco IOS on Linux (IOL) images.
+.TP
+.B dynamips
+Dynamips (Cisco IOS) images.
+.TP
+.B docker
+Docker images (the \fBinstalled\fR action only).
+.TP
+.B all
+Every type; with \fBpull\fR it downloads every image of the given type.
+.SH OPTIONS
+.TP
+.B \-\-overwrite
+Replace an existing image instead of reporting that it already exists.
 .SH EXAMPLES
-.B ishare2 search
-.B ishare2 search all
-.B ishare2 search bin
-.B ishare2 search qemu
-.B ishare2 search dynamips
-
-.B ishare2 search vios
-.B ishare2 search win-
-.B ishare2 search winserver
-.B ishare2 search kali
-.B ishare2 search mikro
-.B ishare2 search forti
-.B ishare2 search nxos
-.B ishare2 search vmx
-.B ishare2 search esxi
-.B ishare2 search palo
-.B ishare2 search Licensed
-
-.B ishare2 pull bin <number>
-.B ishare2 pull qemu <number>
-.B ishare2 pull dynamips <number>
-
-.B ishare2 pull bin all
-.B ishare2 pull qemu all (Not available for qemu type due to its large size)
-.B ishare2 pull dynamips all
-
-.B ishare2 installed all
-.B ishare2 installed bin
-.B ishare2 installed qemu
-.B ishare2 installed dynamips
-.B ishare2 installed docker
-
-.B ishare2 labs
-.B ishare2 labs <number>
-
-.B ishare2 mylabs <path>
-.B ishare2 mylabs <path> <number>
-.B ishare2 mylabs <path> all
-
-.B ishare2 gui install
-.B ishare2 gui start
-.B ishare2 gui stop
-.B ishare2 gui restart
-
-.B ishare2 relicense
-.B ishare2 upgrade
-.B ishare2 changelog
-.B ishare2 help
-.B ishare2 test
+Search for images:
+.PP
+.nf
+.RS
+ishare2 search all
+ishare2 search qemu
+ishare2 search bin
+ishare2 search vios
+ishare2 search qemu vios
+.RE
+.fi
+.PP
+Download an image:
+.PP
+.nf
+.RS
+ishare2 pull qemu 242
+ishare2 pull bin 5
+ishare2 pull dynamips 2
+ishare2 pull dynamips all
+ishare2 pull qemu 242 \-\-overwrite
+.RE
+.fi
+.PP
+List installed images:
+.PP
+.nf
+.RS
+ishare2 installed all
+ishare2 installed qemu
+ishare2 installed docker
+.RE
+.fi
+.PP
+Download images for a lab:
+.PP
+.nf
+.RS
+ishare2 labs
+ishare2 labs 1
+ishare2 labs all
+ishare2 mylabs /path/to/labs
+ishare2 mylabs /path/to/labs 1
+ishare2 mylabs /path/to/labs all
+.RE
+.fi
+.PP
+Other actions:
+.PP
+.nf
+.RS
+ishare2 relicense
+ishare2 upgrade
+ishare2 changelog
+ishare2 fix permissions
+ishare2 logs show
+ishare2 gui install
+ishare2 config
+ishare2 test
+ishare2 help
+ishare2 \-\-version
+.RE
+.fi
+.SH CONFIGURATION
+Configuration is stored in
+.B /etc/ishare2.conf
+. Additional settings can be placed in drop-in files under
+.B /etc/ishare2.d/
+(matching \fB*.conf\fR), which are sourced after the main configuration. Run
+.B ishare2 config
+to configure interactively.
+.TP
+.B AUTO_FIX_PERMISSIONS
+When \fBtrue\fR, fix image permissions automatically after a download. It
+defaults to \fBfalse\fR; set it in the wizard or run
+.B ishare2 fix permissions
+manually.
+.SH SECURITY
+Some images include shell (\fB.sh\fR) or PHP (\fB.php\fR) scripts. \fBishare2\fR
+warns before downloading such files and lets you skip them, and warns when one
+is found inside an extracted archive. Only run or install scripts from sources
+you trust.
+.SH FILES
+.TP
+.B /etc/ishare2.conf
+Main configuration file.
+.TP
+.B /etc/ishare2.d/
+Drop-in configuration directory.
+.TP
+.B /opt/ishare2/cli/
+State directory (log, image index, modules).
+.SH ENVIRONMENT
+.TP
+.B DEV
+Set \fBDEV=true\fR when running the installer to install the \fBdev\fR branch
+instead of \fBmain\fR.
 .SH AUTHOR
 Alex <alex@alex-dev.me>
-.SH TELEGRAM
-https://t.me/NetLabHub
+.SH SEE ALSO
+.BR https://github.com/ishare2-org/ishare2-cli

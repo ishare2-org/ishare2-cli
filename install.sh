@@ -105,6 +105,16 @@ fi
 mkdir -p "$ISHARE2_LIB_DIR"
 cp "$TMPDIR/root/lib/"*.sh "$ISHARE2_LIB_DIR/"
 
+# Install the man page
+if [ -f "$TMPDIR/root/ishare2.1" ]; then
+    mkdir -p /usr/share/man/man1
+    if command -v gzip >/dev/null 2>&1; then
+        gzip -c "$TMPDIR/root/ishare2.1" > /usr/share/man/man1/ishare2.1.gz
+    else
+        cp "$TMPDIR/root/ishare2.1" /usr/share/man/man1/ishare2.1
+    fi
+fi
+
 echo "[*] ishare2 installed successfully."
 echo "[*] Launching ishare2..."
 exec "$ISHARE2_PATH"

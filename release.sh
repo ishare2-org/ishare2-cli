@@ -143,9 +143,10 @@ STAGE_DIR=$(mktemp -d)
 mkdir -p "$STAGE_DIR/lib"
 cp "$ISHARE_FILE" "$STAGE_DIR/ishare2"
 cp lib/*.sh "$STAGE_DIR/lib/"
+cp ishare2.1 "$STAGE_DIR/ishare2.1"
 ARCHIVE_DIR=$(mktemp -d)
 ARCHIVE="$ARCHIVE_DIR/$RELEASE_NAME.zip"
-(cd "$STAGE_DIR" && zip -qr "$ARCHIVE" ishare2 lib)
+(cd "$STAGE_DIR" && zip -qr "$ARCHIVE" ishare2 lib ishare2.1)
 rm -rf "$STAGE_DIR"
 
 # === GitHub release ===
