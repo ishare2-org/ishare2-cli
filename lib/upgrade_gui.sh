@@ -1,19 +1,19 @@
 # Function to get the version of ishare2
 ishare2_version() {
-    # Check if file is empty or not exists or different from installed $VERSION
-    echo $VERSION >$ISHARE2_DIR/ishare2_version
-    # Set CHANNEL on ishare2.conf
-    sed -i "s/CHANNEL=.*/CHANNEL=$CHANNEL/" $ISHARE2_CONF_FILE
+    printf '%s\n' "$VERSION" >"$ISHARE2_DIR/ishare2_version"
     if [[ $1 == "show" ]]; then
-        echo -e "ishare2 version: $(cat $ISHARE2_DIR/ishare2_version)"
-        echo -e "Latest version: $(curl -s --insecure "$URL_VERSION")"
+        echo -e "ishare2 version: $VERSION"
+        echo -e "Latest version: $(curl -fsSL "$URL_VERSION")"
     fi
 }
 
 # Function to upgrade ishare2
 upgrade_ishare2() {
-    LOCAL_VALUE=$(cat $ISHARE2_DIR/ishare2_version)
-    UPSTREAM_VERSION=$(curl -s --insecure "$URL_VERSION")
+    LOCAL_VALUE=$VERSION
+    UPSTREAM_VERSION=$(curl -fsSL "$URL_VERSION") || {
+        echo -e "${RED}[-] Failed to fetch the latest version information.${NO_COLOR}"
+        return 1
+    }
 
     if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
         echo -e "${YELLOW}[+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
@@ -34,6 +34,7 @@ upgrade_ishare2() {
     for module in "${ISHARE2_MODULES[@]}"; do
         download_file_wget "$module_base_url/$module" "$ISHARE2_DIR/lib" "$module"
     done
+    printf '%s\n' "$UPSTREAM_VERSION" >"$ISHARE2_DIR/ishare2_version"
 
     echo -e "${GREEN}[+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
     # Make ishare2 executable

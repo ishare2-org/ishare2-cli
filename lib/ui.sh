@@ -1,20 +1,23 @@
 # Function to check if there is a new version of ishare2 available
 check_updates() {
-    LATEST_VERSION=$(curl -sL https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/version)
+    local latest_version
+    latest_version=$(curl -fsSL "$URL_VERSION") || {
+        logger warn "Failed to fetch the latest version information from: $URL_VERSION"
+        return
+    }
 
     # Check if the version file could be fetched successfully
-    if [ -z "$LATEST_VERSION" ]; then
-        echo -e "${RED}[-] Failed to fetch the latest version information. Please check your internet connection.${NO_COLOR}"
-        logger error "Failed to fetch the latest version information from: $LATEST_VERSION"
+    if [[ -z "$latest_version" ]]; then
+        logger error "The latest version file from $URL_VERSION is empty."
         return
     fi
 
-    if [[ $LATEST_VERSION != $VERSION ]]; then
+    if [[ $latest_version != "$VERSION" ]]; then
         # Make an array of messages
         messages=(
             "A newer version of ishare2 is available."
             "Current version: $VERSION"
-            "Latest version: $LATEST_VERSION"
+            "Latest version: $latest_version"
             "Run: ishare2 upgrade to update to the latest version."
             "See more methods to update on GitHub:"
             "https://github.com/ishare2-org/ishare2-cli"
