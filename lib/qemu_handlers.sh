@@ -85,9 +85,7 @@ handle_rar_files() {
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
 
-        if ! [[ -e /usr/bin/unrar ]]; then
-            apt -qq update >/dev/null 2>&1 && apt -qq install --assume-yes unrar >/dev/null 2>&1
-        fi
+        install_suggested_package "unrar"
 
         echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
         unrar e "$file" "$DIR" >/dev/null 2>&1
@@ -129,9 +127,9 @@ handle_iso_files() {
             echo -e "${GREEN}[+] ISO file saved as: $DIR/cdrom.iso ${NO_COLOR}"
         fi
 
-        if ! [[ -e /usr/bin/qemu-img ]]; then
-            echo -e "${YELLOW}[!] qemu-img is not installed. Attempting to install it... ${NO_COLOR}"
-            install_packages "qemu-utils"
+        if ! command -v qemu-img &>/dev/null; then
+            echo -e "${YELLOW}[!] qemu-img is not installed.${NO_COLOR}"
+            install_suggested_package "qemu-utils" "qemu-img"
         fi
 
         if [[ $FILES_COUNTER -eq 1 ]]; then
@@ -263,10 +261,8 @@ handle_vmdk_files() {
 
 # Function to install qemu-utils
 install_qemu_tools() {
-    apt update
-    apt install -y qemu-utils
-    # check if qemu-img is installed
-    if ! [[ -e /opt/qemu/bin/qemu-img ]]; then
+    install_suggested_package "qemu-utils" "qemu-img"
+    if ! command -v qemu-img &>/dev/null && ! [[ -e /opt/qemu/bin/qemu-img ]]; then
         echo -e "${RED}[-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
     fi
 }

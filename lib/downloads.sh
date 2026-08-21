@@ -72,8 +72,9 @@ check_image_size() {
 
     # Check if the image size matches the size from the JSON file
     if [[ -z "$image_size_from_json" || ! "$image_size_from_json" =~ ^[0-9]+$ ]]; then
-        echo -e "${RED}[-] Error: Invalid or missing expected size from JSON for $image_name.${NO_COLOR}"
-        logger error "Missing or non-numeric image_size_from_json: $image_size_from_json"
+        echo -e "${YELLOW}[!] Warning: Missing or invalid expected size from JSON for $image_name. Skipping size comparison.${NO_COLOR}"
+        logger warn "Missing or non-numeric image_size_from_json: $image_size_from_json"
+        return 0
     fi
 
     if [ "$image_size" -ne "$image_size_from_json" ]; then
@@ -83,6 +84,7 @@ check_image_size() {
         echo -e "${YELLOW} Actual size: $image_size${NO_COLOR}"
         echo -e "${YELLOW} JSON file URL: $JSON_URL${NO_COLOR}"
         logger error "Mismatch: expected $image_size_from_json, got $image_size ($image_path/$image_name)"
+        return 1
     fi
 
     echo -e "${GREEN}[✓] The downloaded image is the expected size.${NO_COLOR}"
@@ -157,19 +159,9 @@ download_file() {
     local options="$3"
     logger info "Downloading file from $url to $output with options: $options"
 
-    if [[ $USE_ARIA2C == "true" ]]; then
-        # Check if aria2c is installed
-        if ! command -v aria2c &>/dev/null; then
-            echo -e "${RED}[-] Error: aria2c is not installed. Attempting to install it...${NO_COLOR}"
-            install_package "aria2" >/dev/null
-            # Check if aria2c is installed
-            if ! command -v aria2c &>/dev/null; then
-                echo -e "${RED}[-] Error: aria2c is not installed. Please install it manually and try again.${NO_COLOR}"
-                exit 1
-            else # aria2c is installed
-                echo -e "${GREEN}[+] aria2c has been installed successfully.${NO_COLOR}"
-            fi
-        fi
+    if [[ $USE_ARIA2C == "true" ]] && ! command -v aria2c &>/dev/null; then
+        echo -e "${YELLOW}[!] aria2c is not installed.${NO_COLOR}"
+        install_suggested_package "aria2" "aria2c"
     fi
 
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
@@ -275,9 +267,9 @@ download_file_wget() {
     logger info "Downloading file from $url..."
 
     if [ "$SSL_CHECK" = true ]; then
-        wget -O "$output" "$url" -q --show-progress --content-disposition -T 300
+        wget -O "$output" "$url" -q --show-progress -T 300
     else
-        wget -O "$output" "$url" -q --show-progress --content-disposition --no-check-certificate -T 300
+        wget -O "$output" "$url" -q --show-progress --no-check-certificate -T 300
     fi
 
     # Check if wget command failed

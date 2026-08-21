@@ -137,7 +137,7 @@ create_config() {
         echo -e "${YELLOW}[!] aria2c can improve download speeds, but may cause issues for some users."
         echo "To disable later, run: ishare2 config and answer no to this question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >"$ISHARE2_CONF_FILE"
-        install_package "aria2"
+        install_package "aria2" "aria2c"
         read -n 1
     else
         echo "USE_ARIA2C=false" >"$ISHARE2_CONF_FILE"
@@ -333,8 +333,58 @@ validate_conf_file() {
     return 0
 }
 
-# Function to remove i-share.top apt sources.list
+# Detect the available package manager for the current distribution
+detect_package_manager() {
+    if command -v apt-get >/dev/null 2>&1; then
+        PKG_MANAGER="apt"
+    elif command -v dnf >/dev/null 2>&1; then
+        PKG_MANAGER="dnf"
+    elif command -v yum >/dev/null 2>&1; then
+        PKG_MANAGER="yum"
+    elif command -v apk >/dev/null 2>&1; then
+        PKG_MANAGER="apk"
+    elif command -v pacman >/dev/null 2>&1; then
+        PKG_MANAGER="pacman"
+    elif command -v zypper >/dev/null 2>&1; then
+        PKG_MANAGER="zypper"
+    else
+        PKG_MANAGER=""
+    fi
+}
+
+# Refresh package lists using the detected package manager
+pkg_update() {
+    [[ -n "${PKG_MANAGER:-}" ]] || detect_package_manager
+    case "$PKG_MANAGER" in
+    apt) apt-get update -y -qq ;;
+    dnf) dnf makecache -y -q ;;
+    yum) yum makecache -y -q ;;
+    apk) apk update ;;
+    pacman) pacman -Sy --noconfirm ;;
+    zypper) zypper --non-interactive refresh ;;
+    *) return 1 ;;
+    esac
+}
+
+# Install a package using the detected package manager
+pkg_install() {
+    local package=$1
+    [[ -n "${PKG_MANAGER:-}" ]] || detect_package_manager
+    case "$PKG_MANAGER" in
+    apt) apt-get install -qq -y "$package" ;;
+    dnf) dnf install -y -q "$package" ;;
+    yum) yum install -y -q "$package" ;;
+    apk) apk add "$package" ;;
+    pacman) pacman -S --noconfirm --needed "$package" ;;
+    zypper) zypper --non-interactive install "$package" ;;
+    *) return 1 ;;
+    esac
+}
+
+# Function to remove i-share.top apt sources.list (apt-based systems only)
 remove_ishare_sources() {
+    [[ -n "${PKG_MANAGER:-}" ]] || detect_package_manager
+    [[ "$PKG_MANAGER" == "apt" ]] || return 0
     # Remove i-share.top line from sources.list
     sed -i '/i-share.top/d' /etc/apt/sources.list
 }
@@ -343,16 +393,18 @@ remove_ishare_sources() {
 install_dependencies() {
     remove_ishare_sources
     echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
-    local packages=("curl" "wget" "jq" "unrar" "tree" "unzip")
-    echo -e "${YELLOW}[+] List of packages to be installed: ${NO_COLOR}"
-    for package in "${packages[@]}"; do
-        echo -e "${YELLOW} -${NO_COLOR} $package"
-    done
+    local required=("curl" "wget" "jq" "unzip" "tree")
+    local suggested=("unrar")
+    echo -e "${YELLOW}[+] Required packages: ${NO_COLOR}${required[*]}"
+    echo -e "${YELLOW}[+] Suggested packages: ${NO_COLOR}${suggested[*]}"
     echo -e "${YELLOW}[+] Starting to install dependencies in 5 seconds... This may take a while. Press Ctrl+C to cancel.${NO_COLOR}"
     sleep 5
 
-    for package in "${packages[@]}"; do
+    for package in "${required[@]}"; do
         install_package "$package"
+    done
+    for package in "${suggested[@]}"; do
+        install_suggested_package "$package"
     done
 }
 
@@ -363,52 +415,58 @@ check_installed() {
     if ! command -v "$PACKAGE" &>/dev/null; then
         echo -e "${YELLOW}[!] WARN: $PACKAGE is not installed.${NO_COLOR}"
         install_package "$PACKAGE"
-        # Check success of package installation
-        if ! command -v "$PACKAGE" &>/dev/null; then
-            echo -e "${RED}[-] Error: Failed to install $PACKAGE.${NO_COLOR}"
-            logger error "Failed to install $PACKAGE."
-            exit 1
-        else # package is installed
-            echo -e "${GREEN}[+] $PACKAGE has been installed successfully.${NO_COLOR}"
-        fi
+        echo -e "${GREEN}[+] $PACKAGE has been installed successfully.${NO_COLOR}"
     fi
 }
 
-# Function to run apt-get update
-apt_get_update() {
-    echo -e "${YELLOW}[+] Updating package lists...${NO_COLOR}"
-    if ! apt-get update -y -qq; then
-        return 1
-    fi
-}
-
-# Function to install a package
+# Install a required package (no prompt); exits on failure.
 install_package() {
     local package_name=$1
-    # check if $package_name is installed otherwise install it
-    if ! command -v "$package_name" &>/dev/null; then
-        echo -e "${YELLOW}[+] $package_name is not installed.${NO_COLOR}"
-        if ! apt_get_update; then
-            echo -e "${RED}[-] Failed to update package lists.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Please check your internet connection and try again or fix your repositories.${NO_COLOR}"
-            logger error "Failed to update package lists."
-        fi
+    local command_name=${2:-$package_name}
 
-        echo -e "${YELLOW}[+] Installing $package_name...${NO_COLOR}"
-        if ! apt-get install -qq -y "$package_name"; then
-            echo -e "${RED}[-] Failed to install $package_name. Please install it manually or you will likely encounter issues in the future.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Run: apt-get install -y $package_name${NO_COLOR}"
-            logger error "Failed to install $package_name."
-            exit 1
-        fi
-    else
+    if command -v "$command_name" &>/dev/null; then
         echo -e "${GREEN}[+] $package_name is already installed.${NO_COLOR}"
         logger info "Package $package_name is already installed."
-        logger info "Updating $package_name..."
-        if ! apt-get install --only-upgrade -qq "$package_name"; then
-            logger error "Failed to update $package_name."
-            exit 1
-        fi
+        return 0
+    fi
+
+    [[ -n "${PKG_MANAGER:-}" ]] || detect_package_manager
+    if [[ -z "$PKG_MANAGER" ]]; then
+        echo -e "${RED}[-] No supported package manager found. Please install '$package_name' manually.${NO_COLOR}"
+        logger error "No supported package manager found to install $package_name."
+        exit 1
+    fi
+
+    echo -e "${YELLOW}[+] Installing $package_name...${NO_COLOR}"
+    pkg_update || {
+        echo -e "${RED}[-] Failed to update package lists.${NO_COLOR}"
+        echo -e "${YELLOW}[!] Please check your internet connection and try again or fix your repositories.${NO_COLOR}"
+        logger error "Failed to update package lists."
+    }
+
+    if ! pkg_install "$package_name"; then
+        echo -e "${RED}[-] Failed to install $package_name. Please install it manually or you will likely encounter issues.${NO_COLOR}"
+        logger error "Failed to install $package_name."
+        exit 1
+    fi
+}
+
+# Install a suggested (optional) package, prompting first and allowing skip.
+install_suggested_package() {
+    local package_name=$1
+    local command_name=${2:-$package_name}
+
+    if command -v "$command_name" &>/dev/null; then
+        return 0
+    fi
+
+    echo -e "${YELLOW}[?] ishare2 suggests installing the optional package: $package_name${NO_COLOR}"
+    read -p "[?] Install it now? [y/N]: " -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        install_package "$package_name" "$command_name"
+    else
+        echo -e "${YELLOW}[!] Skipped $package_name. Some features may not work, but ishare2 will do its best.${NO_COLOR}"
+        logger warn "Skipped installing suggested package $package_name."
     fi
 }
 

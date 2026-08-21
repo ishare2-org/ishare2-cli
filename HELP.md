@@ -31,3 +31,7 @@ By default ishare2 does not fix image permissions automatically after downloadin
 ## 8
 
 Some images ship shell (`.sh`) or PHP (`.php`) scripts that run on your server. ishare2 warns you before downloading such files and lets you skip them, and warns you when one is found inside an extracted archive. Only run or install scripts from sources you trust.
+
+## 9
+
+ishare2 detects your distribution's package manager (`apt`, `dnf`, `yum`, `apk`, `pacman`, or `zypper`) when installing dependencies. Required packages are installed automatically, while suggested (optional) packages ask for confirmation and can be skipped — ishare2 will keep working on a best-effort basis if you skip them.
