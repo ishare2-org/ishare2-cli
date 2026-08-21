@@ -83,11 +83,16 @@ connection_tests() {
 # Function to fix DNS (common issue with resolv.conf)
 fix_dns() {
     echo -e "${YELLOW}[-] Attempting to fix DNS... ${NO_COLOR}"
-    echo -e "${YELLOW}[-] Running: systemctl restart systemd-resolved.service ${NO_COLOR}"
-    systemctl restart systemd-resolved.service
+
+    if command -v systemctl >/dev/null 2>&1; then
+        echo -e "${YELLOW}[-] Running: systemctl restart systemd-resolved.service ${NO_COLOR}"
+        systemctl restart systemd-resolved.service 2>/dev/null
+    fi
+
     echo -e "${YELLOW}[-] Attempting to fix DNS by setting nameserver to 8.8.8.8... ${NO_COLOR}"
-    echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null
-    if [ $? -eq 0 ]; then
+    if echo "nameserver 8.8.8.8" >/etc/resolv.conf 2>/dev/null; then
+        echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
+    elif echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null 2>&1; then
         echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
     else
         echo -e "${RED}[-] Failed to update DNS settings. ${NO_COLOR}"

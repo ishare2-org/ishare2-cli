@@ -1,3 +1,32 @@
+# Display installed images for a given type without recursing through ishare2.
+show_installed_images() {
+    local type=$1
+    case "$type" in
+    "qemu")
+        echo -e
+        print_separator "Showing installed QEMU images"
+        tree -hp /opt/unetlab/addons/qemu/
+        echo -e
+        ;;
+    "dynamips")
+        echo -e
+        print_separator "Showing installed DYNAMIPS images"
+        tree -hp /opt/unetlab/addons/dynamips/
+        echo -e
+        ;;
+    "iol")
+        echo -e
+        print_separator "Showing installed IOL images"
+        tree -hp /opt/unetlab/addons/iol/bin/
+        echo -e
+        ;;
+    "docker")
+        list_dockers
+        count_dockers
+        ;;
+    esac
+}
+
 # Function to handle parameters passed to ishare2
 selector() {
     case "$1" in
@@ -64,32 +93,16 @@ selector() {
         if [[ "$2" ]]; then
             case "$2" in
             "all")
-                ishare2 installed qemu
-                ishare2 installed dynamips
-                ishare2 installed iol
-                ishare2 installed docker
+                show_installed_images "qemu"
+                show_installed_images "dynamips"
+                show_installed_images "iol"
+                show_installed_images "docker"
                 ;;
-            "qemu")
-                echo -e
-                print_separator "Showing installed ${2^^} images"
-                tree -hp /opt/unetlab/addons/qemu/
-                echo -e
-                ;;
-            "dynamips")
-                echo -e
-                print_separator "Showing installed ${2^^} images"
-                tree -hp /opt/unetlab/addons/dynamips/
-                echo -e
+            "qemu" | "dynamips" | "docker")
+                show_installed_images "$2"
                 ;;
             "bin" | "iol")
-                echo -e
-                print_separator "Showing installed ${2^^} images"
-                tree -hp /opt/unetlab/addons/iol/bin/
-                echo -e
-                ;;
-            "docker")
-                list_dockers
-                count_dockers
+                show_installed_images "iol"
                 ;;
             *)
                 echo "Usage: $SCR_NAME installed <type>"

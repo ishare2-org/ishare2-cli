@@ -88,7 +88,7 @@ get_available_mirrors() {
     # Return default mirrors if none found
     if [ ${#mirrors[@]} -eq 0 ]; then
         logger error "No mirrors found in index."
-        exit 1
+        return 1
     else
         echo "${mirrors[@]}"
     fi
@@ -285,7 +285,7 @@ validate_conf_file() {
     fi
 
     # Array of allowed variables
-    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "ROTATE" "MOTD" "AUTO_FIX_PERMISSIONS")
+    local allowed_vars=("USE_ARIA2C" "CHANNEL" "SSL_CHECK" "ROTATE" "MOTD" "AUTO_FIX_PERMISSIONS" "MIRROR" "JSON_URL")
 
     # Read the configuration file line by line and filter out invalid variables
     local filtered_content=""
@@ -385,6 +385,7 @@ pkg_install() {
 remove_ishare_sources() {
     [[ -n "${PKG_MANAGER:-}" ]] || detect_package_manager
     [[ "$PKG_MANAGER" == "apt" ]] || return 0
+    [[ -f /etc/apt/sources.list ]] || return 0
     # Remove i-share.top line from sources.list
     sed -i '/i-share.top/d' /etc/apt/sources.list
 }
@@ -467,49 +468,6 @@ install_suggested_package() {
     else
         echo -e "${YELLOW}[!] Skipped $package_name. Some features may not work, but ishare2 will do its best.${NO_COLOR}"
         logger warn "Skipped installing suggested package $package_name."
-    fi
-}
-
-# Function to check if APT or dpkg is running and unlock dpkg
-unlock_dpkg() {
-    # Check if APT or dpkg is running
-    if pgrep -f '^[/]usr[/]bin[/](apt|dpkg)' >/dev/null 2>&1; then
-        echo "APT or dpkg seems to be running in the background."
-        echo -e "${YELLOW}[?] Do you want to unlock dpkg?${NO_COLOR}"
-
-        # Confirm with the user
-        echo -e "${YELLOW}[!] Warning: Unlocking dpkg while APT or dpkg processes are active can lead to a broken system.${NO_COLOR}"
-        echo "Proceed with caution. It's recommended to try this only if you're sure that no APT or dpkg processes are running."
-        echo "Proceed? (y/n)"
-        read -r answer
-
-        if [[ $answer != "y" && $answer != "Y" ]]; then
-            echo "Operation cancelled by the user."
-        fi
-
-        # Attempt to remove lock files
-        echo "Attempting to remove lock files..."
-        local lock_files=(
-            "/var/lib/dpkg/lock"
-            "/var/cache/apt/archives/lock"
-            "/var/lib/apt/lists/lock"
-            "/var/lib/dpkg/lock-frontend"
-        )
-
-        for file in "${lock_files[@]}"; do
-            if [ -f "$file" ]; then
-                sudo rm "$file" >/dev/null 2>&1
-                echo "Removed $file"
-            else
-                echo "$file does not exist or has already been removed."
-            fi
-        done
-
-        # Attempt to reconfigure dpkg
-        echo "Reconfiguring dpkg..."
-        sudo dpkg --configure -a
-
-        echo "Operation completed. Please try running your APT or dpkg command again."
     fi
 }
 

@@ -1,3 +1,13 @@
+# Return the size of a file in bytes, portably across GNU and BSD stat.
+file_size() {
+    local file=$1
+    local size
+    size=$(stat -c%s "$file" 2>/dev/null) \
+        || size=$(stat -f%z "$file" 2>/dev/null) \
+        || size=$(wc -c <"$file" 2>/dev/null)
+    printf '%s' "${size:-0}"
+}
+
 check_image_hash() {
     local image_path=$1
     local image_name=$2
@@ -54,7 +64,7 @@ check_image_size() {
     fi
 
     local image_size
-    image_size=$(stat -c%s "$image_path/$image_name" 2>/dev/null)
+    image_size=$(file_size "$image_path/$image_name")
 
     # Validate image_size is numeric
     if [[ -z "$image_size" || ! "$image_size" =~ ^[0-9]+$ ]]; then
@@ -167,7 +177,7 @@ download_file() {
     if command -v aria2c &>/dev/null && [[ $USE_ARIA2C == "true" ]]; then
         download_file_aria2 "$url" "$output" "$options"
     else
-        download_file_wget "$url" "$output"
+        download_file_wget "$url" "$output" "$options"
     fi
 }
 
@@ -177,27 +187,29 @@ download_file_aria2() {
     local output_dir="$2"
     local output_name="$3"
 
+    local error_log="$ISHARE2_DIR/tmp/aria2_error.log"
+    mkdir -p "$ISHARE2_DIR/tmp"
     logger info "Downloading file from $url..."
-    rm -f error.log
+    rm -f "$error_log"
     if [ "$SSL_CHECK" = true ]; then
-        aria2c --console-log-level=warn -j 2 -c --split=4 --min-split-size=20M --max-connection-per-server=4 --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"
+        aria2c --console-log-level=warn -j 2 -c --split=4 --min-split-size=20M --max-connection-per-server=4 --download-result=hide --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="$error_log" "$url"
     else
-        aria2c --console-log-level=warn -j 2 -c --split=4 --min-split-size=20M --max-connection-per-server=4 --download-result=hide --check-certificate=false --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="error.log" "$url"
+        aria2c --console-log-level=warn -j 2 -c --split=4 --min-split-size=20M --max-connection-per-server=4 --download-result=hide --check-certificate=false --allow-overwrite=true --dir="$output_dir" --out="$output_name" --log="$error_log" "$url"
     fi
 
     if [ $? -eq 0 ]; then
         # line break
         echo
-        echo -e "${YELLOW}[+] ${GREEN}The file has been downloaded successfully to $output_dir$output_name ${NO_COLOR}"
-        rm -f error.log
+        echo -e "${YELLOW}[+] ${GREEN}The file has been downloaded successfully to $output_dir/$output_name ${NO_COLOR}"
+        rm -f "$error_log"
     else
-        echo -e "${RED}[-] Error: Unable to download the file. Check the error.log file for more information.${NO_COLOR}"
+        echo -e "${RED}[-] Error: Unable to download the file. Check $error_log for more information.${NO_COLOR}"
         exit 1
     fi
     # Check if file size is less than 20KB and its extension is not excluded
-    local excluded_extensions=("html" "txt" "php" "yml" "md" "json" "sh" "yaml" "txt")
+    local excluded_extensions=("html" "txt" "php" "yml" "md" "json" "sh" "yaml")
 
-    if [ -f "$output_dir$output_name" ] && [ $(stat -c%s "$output_dir$output_name") -lt 20000 ]; then
+    if [ -f "$output_dir/$output_name" ] && [ "$(file_size "$output_dir/$output_name")" -lt 20000 ]; then
         is_excluded=false
         for ext in "${excluded_extensions[@]}"; do
             if [ "${output_name##*.}" = "$ext" ]; then
@@ -209,7 +221,7 @@ download_file_aria2() {
         if [ "$is_excluded" = false ]; then
             echo -e "${RED}[-] The file size is too small. The file may be corrupted.${NO_COLOR}"
             # Check if html file is downloaded instead of the actual file, key words: "DOCTYPE", "<html>", Bhadoo
-            if grep -q "DOCTYPE" "$output_dir$output_name" || grep -q "<html>" "$output_dir$output_name" || grep -q "Bhadoo" "$output_dir$output_name"; then
+            if grep -q "DOCTYPE" "$output_dir/$output_name" || grep -q "<html>" "$output_dir/$output_name" || grep -q "Bhadoo" "$output_dir/$output_name"; then
                 echo -e "${RED}[-] The file may be corrupted. The file may be an HTML file instead of the actual file.${NO_COLOR}"
             fi
             # Show troubleshooting steps

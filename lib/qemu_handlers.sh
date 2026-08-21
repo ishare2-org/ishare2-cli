@@ -132,7 +132,7 @@ handle_iso_files() {
             install_suggested_package "qemu-utils" "qemu-img"
         fi
 
-        if [[ $FILES_COUNTER -eq 1 ]]; then
+        if [[ $(ls -1 "$DIR" | wc -l) -eq 1 ]]; then
             qemu-img create -f qcow2 "$DIR"/virtioa.qcow2 20G
         fi
     fi

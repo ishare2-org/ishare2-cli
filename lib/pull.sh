@@ -89,8 +89,14 @@ pull_images() {
     logger debug "URL base: $protocol://$hostname$prefix"
     logger debug "download_path: $download_path"
 
-    # Check if file exists
-    if [ -e "$download_path/$image_name" ] && [ "$OVERWRITE" != "--overwrite" ]; then
+    # Check if the image is already downloaded (QEMU images live in a directory,
+    # other types are single files).
+    if [[ "$IMAGE_TYPE" == "QEMU" ]]; then
+        local already_downloaded="$download_path"
+    else
+        local already_downloaded="$download_path/$image_name"
+    fi
+    if [ -e "$already_downloaded" ] && [ "$OVERWRITE" != "--overwrite" ]; then
         echo "File exists. Use --overwrite"
         exit 0
     fi

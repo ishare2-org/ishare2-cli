@@ -1,5 +1,13 @@
 # Function to check if there is a new version of ishare2 available
 check_updates() {
+    local last_check_file="$ISHARE2_DIR/last_update_check"
+
+    # Check for updates at most once per day
+    if [[ -f "$last_check_file" ]] && [[ -z "$(find "$last_check_file" -mtime +1 -print 2>/dev/null)" ]]; then
+        return
+    fi
+    touch "$last_check_file"
+
     local latest_version
     latest_version=$(curl -fsSL "$URL_VERSION") || {
         logger warn "Failed to fetch the latest version information from: $URL_VERSION"
@@ -28,7 +36,7 @@ check_updates() {
 
 # Function to print a box-like component with adjusted width
 print_box() {
-    messages=("$@")
+    local messages=("$@")
 
     # Split messages on line breaks and find the length of the longest line
     max_length=0

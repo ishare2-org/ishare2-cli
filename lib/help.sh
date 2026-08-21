@@ -1,14 +1,3 @@
-# Function to show information about ishare2
-show_info() {
-    echo -e "- For documentation about ishare2, visit: https://github.com/ishare2-org/ishare2-cli"
-    echo -e "- If you face any issues with ishare2, please report them at @NetLabHub Telegram Group. Attach screenshots and relevant information."
-    echo -e "- You can use ${YELLOW}ishare2 config${NO_COLOR} to change the chosen downloader."
-    echo -e "- If you cancel a download, use the flag: --overwrite to first delete the existing image and then download it again."
-    echo -e "- To submit new images, please use the following Google Form: https://forms.gle/SotrznrN3CmZdg8M8"
-    echo -e "- Telegram Channel: https://t.me/NetLabHub (For announcements and updates)"
-    echo -e "- Email: contact@labhub.eu.org"
-}
-
 # Function to show help for ishare2
 show_ishare2_help() {
     # For ishare2

@@ -10,7 +10,7 @@ block_cisco() {
     # Add the iptables rule to block cisco xml requests to ovfstartup
     echo 'iptables -I OUTPUT -p udp --dport 53 -m string --hex-string "|03|xml|05|cisco|03|com" --algo bm -j DROP' >>/opt/ovf/ovfstartup || {
         echo -e "${RED}[-] Failed to add iptables rule to block cisco xml requests${NO_COLOR}"
-        logger "error Failed to add iptables rule to block cisco xml requests"
+        logger error "Failed to add iptables rule to block cisco xml requests"
         exit 1
     }
 

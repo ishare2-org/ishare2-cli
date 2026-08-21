@@ -2,21 +2,23 @@ logger() {
     local log_level=${1^^} # Convert log level to uppercase
     shift                  # Remove log level from arguments
 
-    # Create LOG_FILE if it does not exist
-    if [[ ! -f "$LOG_FILE" ]]; then
-        touch "$LOG_FILE"
-    fi
-
-    # Ensure LOG_FILE is set and writable
+    # Ensure LOG_FILE is set
     if [[ -z "$LOG_FILE" ]]; then
         echo "LOG_FILE is not set" >&2
         return 1
-    elif [[ ! -w "$LOG_FILE" && ! -e "$LOG_FILE" ]]; then
+    fi
+
+    # Create LOG_FILE if it does not exist
+    if [[ ! -f "$LOG_FILE" ]]; then
+        touch "$LOG_FILE" 2>/dev/null || {
+            echo "Cannot create LOG_FILE: $LOG_FILE" >&2
+            return 1
+        }
+    fi
+
+    # Ensure LOG_FILE is writable
+    if [[ ! -w "$LOG_FILE" ]]; then
         echo "Cannot write to LOG_FILE: $LOG_FILE" >&2
-        # Attempt to create the log file
-        touch "$LOG_FILE" || return 1
-        # Attempt to fix the permissions
-        chmod 644 "$LOG_FILE" || return 1
         return 1
     fi
 

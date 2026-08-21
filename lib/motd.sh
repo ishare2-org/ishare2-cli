@@ -1,21 +1,21 @@
 # Function to initialize motd checks
 check_motd() {
-    # Fetch the latest MOTD from the remote source
-    fetch_latest_motd
-
-    # Check if the fetched MOTD is different from the current one
-    if motds_are_different; then
-        # Display the updated MOTD
-        show_motd
-
-        # Update the MOTD information
-        update_motd_info
-    else
-        logger info "MOTD is up to date. No changes were made."
-        if should_show_motd; then
-            # Display the current MOTD
+    if fetch_latest_motd; then
+        # A fresh MOTD was fetched; compare it with the current one
+        if motds_are_different; then
             show_motd
-            # Update the MOTD information
+            update_motd_info
+        else
+            logger info "MOTD is up to date. No changes were made."
+            if should_show_motd; then
+                show_motd
+                update_motd_info
+            fi
+        fi
+    else
+        # Cached fetch; honor the show-frequency limit
+        if should_show_motd; then
+            show_motd
             update_motd_info
         fi
     fi
@@ -60,16 +60,23 @@ update_motd_info() {
 
 # Function to fetch the latest MOTD from a remote source
 fetch_latest_motd() {
+    # Refresh the MOTD at most once per day
+    if [[ -f "$MOTD_FILE" ]] && [[ -z "$(find "$MOTD_FILE" -mtime +1 -print 2>/dev/null)" ]]; then
+        return 1
+    fi
+
     if [ ! -f "$MOTD_FILE" ]; then
         logger info "MOTD file does not exist. Fetching the latest MOTD from the remote source."
-        curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.json
-        return
+        curl -s "$REMOTE_MOTD_URL" >"$MOTD_FILE"
+        return 0
     fi
-    curl -s "$REMOTE_MOTD_URL" >$ISHARE2_DIR/motd.tmp.json
+
+    curl -s "$REMOTE_MOTD_URL" >"$ISHARE2_DIR/motd.tmp.json"
     # if curl failed then write custom message to motd file
     if [ $? -ne 0 ]; then
-        echo -e "{\"message\":\"Failed to fetch the latest MOTD. Please check your internet connection.\"}" >$ISHARE2_DIR/motd.tmp.json
+        echo -e '{"message":"Failed to fetch the latest MOTD. Please check your internet connection."}' >"$ISHARE2_DIR/motd.tmp.json"
     fi
+    return 0
 }
 
 # Function to compare the current MOTD with the fetched MOTD
