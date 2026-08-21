@@ -148,22 +148,30 @@ pull_images() {
 
         echo -e "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
         logger info "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        local verification_failed=0
         check_image_size "$install_path" "$filename" "$expected_size"
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}[-] Size check failed for $filename. ${NO_COLOR}"
-            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+            verification_failed=1
         fi
         check_image_hash "$install_path" "$filename" "$expected_sha1" "sha1"
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}[-] SHA1 check failed for $filename. ${NO_COLOR}"
-            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+            verification_failed=1
         fi
         check_image_hash "$install_path" "$filename" "$expected_md5" "md5"
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}[-] MD5 check failed for $filename. ${NO_COLOR}"
-            echo -e "${RED}[-] Please try downloading the image again. ${NO_COLOR}"
+            verification_failed=1
         fi
-        echo -e "${GREEN}[✓] Downloaded and verified: $filename!${NO_COLOR}"
+
+        if [[ $verification_failed -eq 0 ]]; then
+            echo -e "${GREEN}[✓] Downloaded and verified: $filename!${NO_COLOR}"
+        else
+            echo -e "${RED}[-] Integrity checks failed for $filename. The downloaded file may be corrupted.${NO_COLOR}"
+            echo -e "${RED}[-] Please try downloading the image again (use --overwrite to replace the existing file).${NO_COLOR}"
+            exit 1
+        fi
     done
 
     # Post-processing for QEMU
