@@ -43,6 +43,8 @@ done
 # shellcheck source=/dev/null
 source "$LIB_DIR/logger.sh"
 # shellcheck source=/dev/null
+source "$LIB_DIR/ui.sh"
+# shellcheck source=/dev/null
 source "$LIB_DIR/qemu_handlers.sh"
 # shellcheck source=/dev/null
 source "$LIB_DIR/config.sh"

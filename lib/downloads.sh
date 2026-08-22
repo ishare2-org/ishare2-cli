@@ -35,19 +35,19 @@ check_image_hash() {
         actual_hash=$(md5sum "$image_path/$image_name" | awk '{print $1}')
         ;;
     *)
-        echo -e "${RED}[-] Unsupported hash type: $hash_type${NO_COLOR}"
+        print_error "Unsupported hash type: $hash_type"
         return 1
         ;;
     esac
 
     if [[ "$actual_hash" != "$expected_hash" ]]; then
-        echo -e "${RED}[-] ${hash_type^^} mismatch for $image_name${NO_COLOR}"
+        print_error "${hash_type^^} mismatch for $image_name"
         echo -e "${YELLOW} Expected: $expected_hash${NO_COLOR}"
         echo -e "${YELLOW} Actual  : $actual_hash${NO_COLOR}"
         return 1
     fi
 
-    echo -e "${GREEN}[✓] ${hash_type^^} hash is valid.${NO_COLOR}"
+    print_ok "${hash_type^^} hash is valid."
 }
 
 # Function to check image size against the downloaded image
@@ -58,7 +58,7 @@ check_image_size() {
 
     # Check if the image file exists
     if [ ! -f "$image_path/$image_name" ]; then
-        echo -e "${RED}[-] Error: The image file was not found at $image_path/$image_name while checking its size.${NO_COLOR}"
+        print_error "Error: The image file was not found at $image_path/$image_name while checking its size."
         logger error "The image file was not found: $image_path/$image_name"
         return 1
     fi
@@ -68,28 +68,28 @@ check_image_size() {
 
     # Validate image_size is numeric
     if [[ -z "$image_size" || ! "$image_size" =~ ^[0-9]+$ ]]; then
-        echo -e "${RED}[-] Error: Unable to determine image size for $image_path/$image_name.${NO_COLOR}"
+        print_error "Error: Unable to determine image size for $image_path/$image_name."
         logger error "Invalid or missing image size for: $image_path/$image_name"
         return 1
     fi
 
     # Check if the image size is less than 20KB
     if [ $image_size -lt 20000 ]; then
-        echo -e "${RED}[-] Error: The image file size is too small. The file may be corrupted.${NO_COLOR}"
+        print_error "Error: The image file size is too small. The file may be corrupted."
         logger error "The image file size is too small: $image_path/$image_name. Expected size: $image_size_from_json. Actual size: $image_size"
         return 1
     fi
 
     # Check if the image size matches the size from the JSON file
     if [[ -z "$image_size_from_json" || ! "$image_size_from_json" =~ ^[0-9]+$ ]]; then
-        echo -e "${YELLOW}[!] Warning: Missing or invalid expected size from JSON for $image_name. Skipping size comparison.${NO_COLOR}"
+        print_warn "Warning: Missing or invalid expected size from JSON for $image_name. Skipping size comparison."
         logger warn "Missing or non-numeric image_size_from_json: $image_size_from_json"
         return 0
     fi
 
     if [ "$image_size" -ne "$image_size_from_json" ]; then
-        echo -e "${RED}[-] Error: The image file size does not match the size expected by the index.${NO_COLOR}"
-        echo -e "${RED}[!] Debug information:${NO_COLOR}"
+        print_error "Error: The image file size does not match the size expected by the index."
+        print_error "Debug information:"
         echo -e "${YELLOW} Expected size: $image_size_from_json${NO_COLOR}"
         echo -e "${YELLOW} Actual size: $image_size${NO_COLOR}"
         echo -e "${YELLOW} JSON file URL: $JSON_URL${NO_COLOR}"
@@ -97,7 +97,7 @@ check_image_size() {
         return 1
     fi
 
-    echo -e "${GREEN}[✓] The downloaded image is the expected size.${NO_COLOR}"
+    print_ok "The downloaded image is the expected size."
 }
 
 fetch_json() {
@@ -119,7 +119,7 @@ fetch_json() {
 
     if [[ -z "$labhub_url" ]]; then
         logger error "labhub.json not found in release metadata from: $REPO_URL"
-        echo -e "${RED}[-] Error: Failed to get image index URL from the LabHub repository.${NO_COLOR}"
+        print_error "Error: Failed to get image index URL from the LabHub repository."
         exit 1
     fi
 
@@ -128,25 +128,25 @@ fetch_json() {
         logger info "labhub.json downloaded successfully."
     else
         logger error "Failed to download labhub.json from: $labhub_url"
-        echo -e "${RED}[-] Failed to download the JSON index file. Check your internet connection.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Running connection test...${NO_COLOR}"
+        print_error "Failed to download the JSON index file. Check your internet connection."
+        print_warn "Running connection test..."
 
         connection_tests
         local connection_test_result=$?
 
         if [[ $connection_test_result -eq 0 ]]; then
-            echo -e "${GREEN}[+] Internet connection is working.${NO_COLOR}"
-            echo -e "${YELLOW}[?] Do you want to reconfigure ishare2?${NO_COLOR}"
+            print_success "Internet connection is working."
+            print_question "Do you want to reconfigure ishare2?"
             read -p "[?] (y/n): " -r
             if [[ $REPLY =~ ^[Yy]$ ]]; then
-                echo -e "${YELLOW}[+] Reconfiguring ishare2...${NO_COLOR}"
+                print_info "Reconfiguring ishare2..."
                 create_config
             else
-                echo -e "${RED}[-] Check the log file for more information.${NO_COLOR}"
-                echo -e "${YELLOW}[!] Log file: $LOG_FILE${NO_COLOR}"
+                print_error "Check the log file for more information."
+                print_warn "Log file: $LOG_FILE"
             fi
         else
-            echo -e "${RED}[-] Connection test failed. Please check your internet connection.${NO_COLOR}"
+            print_error "Connection test failed. Please check your internet connection."
         fi
         exit 1
     fi
@@ -154,7 +154,7 @@ fetch_json() {
     # Validate downloaded JSON
     if ! jq -e . <"$TEMP_JSON" >/dev/null 2>&1; then
         logger error "Invalid JSON structure in: $TEMP_JSON"
-        echo -e "${RED}[-] Error: Invalid JSON index file.${NO_COLOR}"
+        print_error "Error: Invalid JSON index file."
         logger info "Debug information: The downloaded JSON file is not valid. Please check the file at: $TEMP_JSON"
         exit 1
     else
@@ -170,7 +170,7 @@ download_file() {
     logger info "Downloading file from $url to $output with options: $options"
 
     if [[ $USE_ARIA2C == "true" ]] && ! command -v aria2c &>/dev/null; then
-        echo -e "${YELLOW}[!] aria2c is not installed.${NO_COLOR}"
+        print_warn "aria2c is not installed."
         install_suggested_package "aria2" "aria2c"
     fi
 
@@ -200,10 +200,10 @@ download_file_aria2() {
     if [ $? -eq 0 ]; then
         # line break
         echo
-        echo -e "${YELLOW}[+] ${GREEN}The file has been downloaded successfully to $output_dir/$output_name ${NO_COLOR}"
+        print_info "${GREEN}The file has been downloaded successfully to $output_dir/$output_name "
         rm -f "$error_log"
     else
-        echo -e "${RED}[-] Error: Unable to download the file. Check $error_log for more information.${NO_COLOR}"
+        print_error "Error: Unable to download the file. Check $error_log for more information."
         exit 1
     fi
     # Check if file size is less than 20KB and its extension is not excluded
@@ -219,16 +219,16 @@ download_file_aria2() {
         done
 
         if [ "$is_excluded" = false ]; then
-            echo -e "${RED}[-] The file size is too small. The file may be corrupted.${NO_COLOR}"
+            print_error "The file size is too small. The file may be corrupted."
             # Check if html file is downloaded instead of the actual file, key words: "DOCTYPE", "<html>", Bhadoo
             if grep -q "DOCTYPE" "$output_dir/$output_name" || grep -q "<html>" "$output_dir/$output_name" || grep -q "Bhadoo" "$output_dir/$output_name"; then
-                echo -e "${RED}[-] The file may be corrupted. The file may be an HTML file instead of the actual file.${NO_COLOR}"
+                print_error "The file may be corrupted. The file may be an HTML file instead of the actual file."
             fi
             # Show troubleshooting steps
-            echo -e "${YELLOW}[!] Troubleshooting:${NO_COLOR}"
-            echo -e "${YELLOW}[!] 1) Switch mirrors, if you have mirrors rotation enabled then run the command again using the --overwrite flag.${NO_COLOR}"
-            echo -e "${YELLOW}[!] 2) If the issue persists, visit the live repository through your web browser and download the file manually.${NO_COLOR}"
-            echo -e "${YELLOW}[!] 3) If the issue persists, report the issue to the ishare2 team on Telegram.${NO_COLOR}"
+            print_warn "Troubleshooting:"
+            print_warn "1) Switch mirrors, if you have mirrors rotation enabled then run the command again using the --overwrite flag."
+            print_warn "2) If the issue persists, visit the live repository through your web browser and download the file manually."
+            print_warn "3) If the issue persists, report the issue to the ishare2 team on Telegram."
         fi
     fi
 
@@ -253,11 +253,11 @@ download_file_curl() { # $1 = url, $2 = output
         logger info "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/curl_error
     else
-        echo -e "${RED}[-] Error: Unable to download the file. ${NO_COLOR}"
+        print_error "Error: Unable to download the file. "
         # Read the error message from the curl_error file
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/curl_error)
         # Print the error message
-        echo -e "${RED}[-] Logs:\n $ERROR_MESSAGE ${NO_COLOR}"
+        print_error "Logs:\n $ERROR_MESSAGE "
         exit 1
     fi
 }
@@ -289,11 +289,11 @@ download_file_wget() {
         logger info "The file has been downloaded successfully to $output."
         rm -f $ISHARE2_DIR/tmp/wget_error
     else
-        echo -e "${RED}[-] Error: Unable to download the file. ${NO_COLOR}"
+        print_error "Error: Unable to download the file. "
         # Read the error message from the wget_error file
         ERROR_MESSAGE=$(cat $ISHARE2_DIR/tmp/wget_error)
         # Print the error message
-        echo -e "${RED}[-] Read the logs above for more information. ${NO_COLOR}"
+        print_error "Read the logs above for more information. "
         logger error "Failed to download the file. Error: $ERROR_MESSAGE"
         exit 1
     fi

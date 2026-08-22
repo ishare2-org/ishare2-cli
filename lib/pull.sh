@@ -108,7 +108,7 @@ pull_images() {
         download_urls+=("$full_url")
     done < <(jq -r '.files[].path' <<<"$image_data")
 
-    echo -e "${YELLOW}[!] IMAGE INFO ${NO_COLOR}"
+    print_warn "IMAGE INFO "
     printf "%-20s: %s\n" "Name" "$image_name"
     printf "%-20s: %s\n" "Size" "$(jq -r '.metadata.total_human_size' <<<"$image_data")"
     printf "%-20s: %s\n" "Type" "$IMAGE_TYPE"
@@ -119,7 +119,7 @@ pull_images() {
     logger debug "mkdir -p $install_path"
     if [ -e "$install_path" ]; then
         if [ ! -d "$install_path" ]; then
-            echo -e "${RED}[-] Error: $install_path exists but is not a directory.${NO_COLOR}"
+            print_error "Error: $install_path exists but is not a directory."
             logger error "$install_path exists but is not a directory"
             exit 1
         else
@@ -137,11 +137,11 @@ pull_images() {
         logger debug "download_file $url -> $install_path/$filename"
 
         if is_risky_script "$filename"; then
-            echo -e "${YELLOW}[!] WARNING: \"$filename\" is a script (${filename##*.}) that may execute code on your system.${NO_COLOR}"
-            echo -e "${YELLOW}[!] Only continue if you trust the source.${NO_COLOR}"
+            print_warn "WARNING: \"$filename\" is a script (${filename##*.}) that may execute code on your system."
+            print_warn "Only continue if you trust the source."
             read -p "[?] Skip downloading \"$filename\"? [y/N]: " -r
             if [[ $REPLY =~ ^[Yy]$ ]]; then
-                echo -e "${YELLOW}[!] Skipped downloading $filename.${NO_COLOR}"
+                print_warn "Skipped downloading $filename."
                 continue
             fi
         fi
@@ -152,30 +152,30 @@ pull_images() {
         expected_sha1=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.sha1' <<<"$image_data")
         expected_md5=$(jq -r --arg name "$filename" '.files[] | select(.filename == $name) | .checksum.md5' <<<"$image_data")
 
-        echo -e "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
+        print_info "Running integrity checks for $filename... "
         logger info "${YELLOW}[-] Running integrity checks for $filename... ${NO_COLOR}"
         local verification_failed=0
         check_image_size "$install_path" "$filename" "$expected_size"
         if [[ $? -ne 0 ]]; then
-            echo -e "${RED}[-] Size check failed for $filename. ${NO_COLOR}"
+            print_error "Size check failed for $filename. "
             verification_failed=1
         fi
         check_image_hash "$install_path" "$filename" "$expected_sha1" "sha1"
         if [[ $? -ne 0 ]]; then
-            echo -e "${RED}[-] SHA1 check failed for $filename. ${NO_COLOR}"
+            print_error "SHA1 check failed for $filename. "
             verification_failed=1
         fi
         check_image_hash "$install_path" "$filename" "$expected_md5" "md5"
         if [[ $? -ne 0 ]]; then
-            echo -e "${RED}[-] MD5 check failed for $filename. ${NO_COLOR}"
+            print_error "MD5 check failed for $filename. "
             verification_failed=1
         fi
 
         if [[ $verification_failed -eq 0 ]]; then
-            echo -e "${GREEN}[✓] Downloaded and verified: $filename!${NO_COLOR}"
+            print_ok "Downloaded and verified: $filename!"
         else
-            echo -e "${RED}[-] Integrity checks failed for $filename. The downloaded file may be corrupted.${NO_COLOR}"
-            echo -e "${RED}[-] Please try downloading the image again (use --overwrite to replace the existing file).${NO_COLOR}"
+            print_error "Integrity checks failed for $filename. The downloaded file may be corrupted."
+            print_error "Please try downloading the image again (use --overwrite to replace the existing file)."
             exit 1
         fi
     done
@@ -191,7 +191,7 @@ pull_images() {
         fix_permissions
     fi
 
-    echo -e "${GREEN}[✓] Installation completed successfully! ${NO_COLOR}"
+    print_ok "Installation completed successfully! "
 }
 
 # Function to download all images of a specific type (IOL, DYNAMIPS, QEMU)
@@ -201,23 +201,23 @@ pull_all() {
         TYPE="IOL"
     fi
     if [[ $TYPE == "QEMU" ]]; then
-        echo -e "${YELLOW}[!] WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!${NO_COLOR}"
+        print_warn "WARNING: Pulling all QEMU images will take a long time.\n [!] Make sure you have enough disk space and bandwidth!"
         # Enter confirmation text
         CONFIRMATION="I understand that pulling all QEMU images will take a long time. I have enough disk space and bandwidth."
         # Ask the user to enter the confirmation text
         read -p "[?] Please enter the following text to confirm: \"$CONFIRMATION\" (case sensitive): " -r
         # If the confirmation text is incorrect then exit
         if [[ ! $REPLY =~ ^$CONFIRMATION$ ]]; then
-            echo -e "${RED}[!] Aborting.${NO_COLOR}"
+            print_error "Aborting."
             exit 1
         fi
     fi
-    echo -e "${YELLOW}[+] Pulling all $TYPE images...${NO_COLOR}"
+    print_info "Pulling all $TYPE images..."
     # Ask for confirmation
     read -p "[?] Are you sure you want to pull all $TYPE images? (y/n): " -r
     # If reply was no Y or y then exit
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${RED}[!] Aborting.${NO_COLOR}"
+        print_error "Aborting."
         exit 1
     fi
     # Get the list of all images
@@ -228,7 +228,7 @@ pull_all() {
     i=1
     total=$(echo "$IDS" | wc -l)
     for ID in $IDS; do
-        echo -e "${YELLOW}[+] Pulling image $i/$total...${NO_COLOR}"
+        print_info "Pulling image $i/$total..."
         ishare2 pull ${TYPE,,} $ID
         i=$((i + 1))
     done

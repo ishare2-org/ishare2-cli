@@ -11,16 +11,16 @@ ishare2_version() {
 upgrade_ishare2() {
     LOCAL_VALUE=$VERSION
     UPSTREAM_VERSION=$(curl -fsSL "$URL_VERSION") || {
-        echo -e "${RED}[-] Failed to fetch the latest version information.${NO_COLOR}"
+        print_error "Failed to fetch the latest version information."
         return 1
     }
 
     if [[ $LOCAL_VALUE == "$UPSTREAM_VERSION" ]]; then
-        echo -e "${YELLOW}[+] ishare2 $UPSTREAM_VERSION is already in the newest version available. ${NO_COLOR}"
-        echo -e "${YELLOW}[+] Do you want to reinstall it? (y/n) ${NO_COLOR}"
+        print_info "ishare2 $UPSTREAM_VERSION is already in the newest version available. "
+        print_info "Do you want to reinstall it? (y/n) "
         read -r answer
         if [[ $answer == "y" || $answer == "Y" ]]; then
-            echo -e "${YELLOW}[+] Reinstalling ishare2... ${NO_COLOR}"
+            print_info "Reinstalling ishare2... "
         else
             exit 0
         fi
@@ -36,12 +36,12 @@ upgrade_ishare2() {
     done
     printf '%s\n' "$UPSTREAM_VERSION" >"$ISHARE2_DIR/ishare2_version"
 
-    echo -e "${GREEN}[+] Successfully downloaded the latest version of ishare2!${NO_COLOR}"
+    print_success "Successfully downloaded the latest version of ishare2!"
     # Make ishare2 executable
-    echo -e "${YELLOW}[+] Setting ishare2 permissions${NO_COLOR}"
+    print_info "Setting ishare2 permissions"
     chmod +x /usr/sbin/ishare2
     # Show success message
-    echo -e "${GREEN}[+] ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION ${NO_COLOR}"
+    print_success "ishare2 was upgraded from $LOCAL_VALUE to $UPSTREAM_VERSION "
 }
 
 # Function to show the ishare2 upgrade menu
@@ -94,8 +94,8 @@ ishare2_gui_install() {
 ishare2_gui_start() {
     systemctl start ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}[-] Error starting ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        print_error "Error starting ishare2 GUI service. "
+        print_error "Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service "
         exit 1
     fi
 }
@@ -104,8 +104,8 @@ ishare2_gui_start() {
 ishare2_gui_stop() {
     systemctl stop ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}[-] Error stopping ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        print_error "Error stopping ishare2 GUI service. "
+        print_error "Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service "
         exit 1
     fi
 }
@@ -114,8 +114,8 @@ ishare2_gui_stop() {
 ishare2_gui_restart() {
     systemctl restart ishare2_gui.service
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}[-] Error restarting ishare2 GUI service. ${NO_COLOR}"
-        echo -e "${RED}[-] Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service ${NO_COLOR}"
+        print_error "Error restarting ishare2 GUI service. "
+        print_error "Please see the logs for troubleshooting. Run: systemctl status ishare2_gui.service "
         exit 1
     fi
 }

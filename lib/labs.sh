@@ -56,7 +56,7 @@ list_labs() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs were found, so images cannot be downloaded for any lab"
-        echo -e "${RED}[-]$STR\033[0m"
+        print_error "$STR"
         exit 0
     fi
 
@@ -126,7 +126,7 @@ install_images_from_lab() {
 
     if [[ ${#readableLabsArray[@]} -eq 0 ]]; then
         STR="No readable labs were found so we cannot download images for any lab"
-        echo -e "${RED}[-]$STR\033[0m"
+        print_error "$STR"
         exit 0
     fi
 
@@ -248,7 +248,7 @@ install_images_all_labs() {
 
     if [[ $N -eq 0 ]]; then
         STR="No readable labs have been found so there is no way to continue with this command"
-        echo -e "${RED}[-]$STR\033[0m"
+        print_error "$STR"
         exit 0
     fi
 

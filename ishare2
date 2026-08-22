@@ -15,7 +15,15 @@ AUTO_FIX_PERMISSIONS=false # Set to true to automatically fix image permissions 
 
 # Initialize variables
 ISHARE2_DIR="/opt/ishare2/cli"                                                                 # ishare2 directory
-LOG_FILE="$ISHARE2_DIR/ishare2.log"                                                            # Log file
+# Log file. Prefer the standard /var/log when available and writable, otherwise
+# fall back to the ishare2 state directory. Override with ISHARE2_LOG_FILE.
+if [[ -n "${ISHARE2_LOG_FILE:-}" ]]; then
+    LOG_FILE="$ISHARE2_LOG_FILE"
+elif [[ -d /var/log && -w /var/log ]]; then
+    LOG_FILE="/var/log/ishare2.log"
+else
+    LOG_FILE="$ISHARE2_DIR/ishare2.log"
+fi
 TEMP_JSON="$ISHARE2_DIR/labhub.json"                                                           # Temporary JSON file
 VERSION="4.0.1-main"                                                                     # Current version of ishare2
 SOURCES_URL="https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/sources.list"  # Sources.list URL

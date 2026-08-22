@@ -154,7 +154,7 @@ selector() {
     "fix")
         # if $2 is not passed
         if [[ -z "$2" ]]; then
-            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            print_error "Invalid action: $2 "
             echo -e "Usage: $SCR_NAME fix <action>"
             echo -e "Actions: permissions, dns, block_cisco"
             exit 1
@@ -170,7 +170,7 @@ selector() {
             block_cisco
             ;;
         *) # If the action is not specified, print the usage
-            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            print_error "Invalid action: $2 "
             echo -e "Usage: $SCR_NAME fix <action>"
             echo -e "Actions: permissions, dns"
             exit 1
@@ -187,21 +187,21 @@ selector() {
                 clear_logs
                 ;;
             *)
-                echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+                print_error "Invalid action: $2 "
                 echo -e "Usage: $SCR_NAME logs <action>"
                 echo -e "Actions: show, clear"
                 exit 1
                 ;;
             esac
         else
-            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            print_error "Invalid action: $2 "
             echo -e "Usage: $SCR_NAME logs <action>"
             echo -e "Actions: show, clear"
             exit 1
         fi
         ;;
     "gui")
-        echo -e "${RED}[-] This feature won't work most of the time. ${NO_COLOR}"
+        print_error "This feature won't work most of the time. "
         if [[ "$2" ]]; then
             case "$2" in
             "install")
@@ -217,13 +217,13 @@ selector() {
                 ishare2_gui_restart
                 ;;
             *)
-                echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+                print_error "Invalid action: $2 "
                 echo -e "Usage: $SCR_NAME gui <action>"
                 echo -e "Actions: install, start, stop, restart"
                 ;;
             esac
         else
-            echo -e "${RED}[-] Invalid action: $2 ${NO_COLOR}"
+            print_error "Invalid action: $2 "
             echo -e "Usage: $SCR_NAME gui <action>"
             echo -e "Actions: install, start, stop, restart"
         fi

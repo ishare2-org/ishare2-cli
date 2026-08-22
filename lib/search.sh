@@ -61,5 +61,5 @@ search_images() {
             echo -e "\n${GREEN}$total_count $TYPE image(s) found${NO_COLOR}"
         fi
     fi
-    echo -e "${YELLOW}[!] ${NO_COLOR}You can use the command \033[32mishare2 pull <type> <id>\033[0m to download the image"
+    print_info "You can use the command ${GREEN}ishare2 pull <type> <id>${NO_COLOR} to download the image"
 }

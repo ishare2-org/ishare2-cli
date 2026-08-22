@@ -175,9 +175,15 @@ Main configuration file.
 .B /etc/ishare2.d/
 Drop-in configuration directory.
 .TP
+.B /var/log/ishare2.log
+Log file.
+.TP
 .B /opt/ishare2/cli/
-State directory (log, image index, modules).
+State directory (image index, modules).
 .SH ENVIRONMENT
+.TP
+.B ISHARE2_LOG_FILE
+Override the log file location (default: \fB/var/log/ishare2.log\fR).
 .TP
 .B DEV
 Set \fBDEV=true\fR when running the installer to install the \fBdev\fR branch

@@ -16,10 +16,10 @@ handle_tgz_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        print_info "Extracting: $FOLDERNAME$EXTENSION file... "
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        print_success "Extracted: $DIR. Image ready to use. "
     fi
 }
 
@@ -33,10 +33,10 @@ handle_tar_gz_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        print_info "Extracting: $FOLDERNAME$EXTENSION file... "
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR."
+        print_success "Extracted: $DIR."
     fi
 }
 
@@ -50,10 +50,10 @@ handle_tar_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        print_info "Extracting: $FOLDERNAME$EXTENSION file... "
         tar -xf "$file" --strip-components 1 -C "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        print_success "Extracted: $DIR. Image ready to use. "
     fi
 }
 
@@ -67,10 +67,10 @@ handle_zip_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        print_info "Extracting: $FOLDERNAME$EXTENSION file... "
         unzip -a -j "$file" -d "$DIR"
         rm "$file"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        print_success "Extracted: $DIR. Image ready to use. "
     fi
 }
 
@@ -87,9 +87,9 @@ handle_rar_files() {
 
         install_suggested_package "unrar"
 
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        print_info "Extracting: $FOLDERNAME$EXTENSION file... "
         unrar e "$file" "$DIR" >/dev/null 2>&1
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        print_success "Extracted: $DIR. Image ready to use. "
         rm "$file"
     fi
 }
@@ -104,10 +104,10 @@ handle_ova_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         COMPRESSED_FILE=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[-] Extracting: $FOLDERNAME$EXTENSION file... ${NO_COLOR}"
+        print_info "Extracting: $FOLDERNAME$EXTENSION file... "
         tar -xvf "$COMPRESSED_FILE" -C "$DIR"
         rm "$COMPRESSED_FILE"
-        echo -e "${GREEN}[+] Extracted: $DIR. Image ready to use. ${NO_COLOR}"
+        print_success "Extracted: $DIR. Image ready to use. "
     fi
 }
 
@@ -124,11 +124,11 @@ handle_iso_files() {
 
         if ! [[ "${ISO_FILE: -9}" == "cdrom.iso" ]]; then
             mv "$ISO_FILE" "$DIR"/cdrom.iso # Rename file
-            echo -e "${GREEN}[+] ISO file saved as: $DIR/cdrom.iso ${NO_COLOR}"
+            print_success "ISO file saved as: $DIR/cdrom.iso "
         fi
 
         if ! command -v qemu-img &>/dev/null; then
-            echo -e "${YELLOW}[!] qemu-img is not installed.${NO_COLOR}"
+            print_warn "qemu-img is not installed."
             install_suggested_package "qemu-utils" "qemu-img"
         fi
 
@@ -186,16 +186,16 @@ handle_sh_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${RED}[!] WARNING: This image includes a shell script: $file${NO_COLOR}"
-        echo -e "${RED}[!] Scripts can execute arbitrary code. Only run it if you trust the source.${NO_COLOR}"
+        print_error "WARNING: This image includes a shell script: $file"
+        print_error "Scripts can execute arbitrary code. Only run it if you trust the source."
         chmod +x "$file"
         read -p "Do you want to run $file? [y/n]: " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             bash "$file"
         else
-            echo -e "${YELLOW}[!] $file was not executed. ${NO_COLOR}"
-            echo -e "${YELLOW}[!] WARN: This script file might be needed for the image to work properly. ${NO_COLOR}"
+            print_warn "$file was not executed. "
+            print_warn "WARN: This script file might be needed for the image to work properly. "
         fi
     fi
 }
@@ -234,8 +234,8 @@ handle_php_files() {
 
     if ls "${DIR}"/*"$EXTENSION" &>/dev/null; then
         file=$(ls "${DIR}"/*"$EXTENSION")
-        echo -e "${YELLOW}[!] WARNING: This image includes a PHP script: $file${NO_COLOR}"
-        echo -e "${YELLOW}[!] PHP files run server-side code. Only install it if you trust the source.${NO_COLOR}"
+        print_warn "WARNING: This image includes a PHP script: $file"
+        print_warn "PHP files run server-side code. Only install it if you trust the source."
         cp "$file" $PHP_DIR
     fi
 }
@@ -263,6 +263,6 @@ handle_vmdk_files() {
 install_qemu_tools() {
     install_suggested_package "qemu-utils" "qemu-img"
     if ! command -v qemu-img &>/dev/null && ! [[ -e /opt/qemu/bin/qemu-img ]]; then
-        echo -e "${RED}[-] qemu-img is not installed. Please install it manually. ${NO_COLOR}"
+        print_error "qemu-img is not installed. Please install it manually. "
     fi
 }

@@ -14,12 +14,12 @@ ishare2_sources() {
             rm -f "$temporary_file"
             logger error "Failed to download the sources.list file from the $CHANNEL channel."
             if [[ ! -f "$sources_file" ]]; then
-                echo -e "${RED}[-] Failed to download the sources.list file.${NO_COLOR}"
-                echo -e "${YELLOW}[!] Please check your internet connection and try again.${NO_COLOR}"
+                print_error "Failed to download the sources.list file."
+                print_warn "Please check your internet connection and try again."
                 exit 1
             fi
 
-            echo -e "${YELLOW}[!] Failed to refresh sources.list. Using the existing file.${NO_COLOR}"
+            print_warn "Failed to refresh sources.list. Using the existing file."
         fi
     fi
 

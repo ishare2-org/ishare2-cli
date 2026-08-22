@@ -10,8 +10,10 @@ check_ishare2_dir() {
 set_max_log_lines() {
     if [[ -f $LOG_FILE ]]; then
         if [[ $(wc -l <"$LOG_FILE") -gt 1000 ]]; then
-            tail -n 1000 $LOG_FILE >$ISHARE2_DIR/tmp.txt
-            mv $ISHARE2_DIR/tmp.txt $LOG_FILE
+            local tmp_file
+            tmp_file=$(mktemp)
+            tail -n 1000 "$LOG_FILE" >"$tmp_file"
+            mv "$tmp_file" "$LOG_FILE"
         fi
     fi
 }
@@ -65,7 +67,7 @@ check_config() {
     fi
     # check if config file is empty
     if [[ ! -s $ISHARE2_CONF_FILE ]]; then
-        echo -e "${RED}[!] Configuration file is empty. Please configure ishare2.${NO_COLOR}"
+        print_error "Configuration file is empty. Please configure ishare2."
         create_config
     fi
     # check if config file is valid
@@ -105,7 +107,7 @@ create_config() {
     print_box "${messages[@]}"
     sleep 3
 
-    echo -e "${BLUE}[i] Installing iShare2 dependencies...${NO_COLOR}"
+    print_info "Installing iShare2 dependencies..."
     MAX_RETRIES=3
     retry_counter=0
 
@@ -113,7 +115,7 @@ create_config() {
         if install_dependencies; then
             break
         fi
-        echo -e "${RED}[✗] Dependency installation failed. Retrying... (${retry_counter}/${MAX_RETRIES})${NO_COLOR}"
+        print_error "Dependency installation failed. Retrying... (${retry_counter}/${MAX_RETRIES})"
         logger error "Failed to install dependencies. Retrying..."
         retry_counter=$((retry_counter + 1))
         sleep 5
@@ -131,10 +133,10 @@ create_config() {
     print_box "${messages[@]}"
     sleep 3
 
-    echo -e "${YELLOW}[?] Enable aria2c for accelerated downloads? (default: no)${NO_COLOR}"
+    print_question "Enable aria2c for accelerated downloads? (default: no)"
     read -p "[y/N]: " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW}[!] aria2c can improve download speeds, but may cause issues for some users."
+        print_warn "aria2c can improve download speeds, but may cause issues for some users."
         echo "To disable later, run: ishare2 config and answer no to this question.${NO_COLOR}"
         echo "USE_ARIA2C=true" >"$ISHARE2_CONF_FILE"
         install_package "aria2" "aria2c"
@@ -143,7 +145,7 @@ create_config() {
         echo "USE_ARIA2C=false" >"$ISHARE2_CONF_FILE"
     fi
 
-    echo -e "${YELLOW}[?] Perform SSL certificate validation for downloads? (default: yes)${NO_COLOR}"
+    print_question "Perform SSL certificate validation for downloads? (default: yes)"
     read -p "[y/N]: " -r
     case $REPLY in
     [Nn]) SSL_CHECK=false ;;
@@ -151,8 +153,8 @@ create_config() {
     esac
     echo "SSL_CHECK=\"$SSL_CHECK\"" >>"$ISHARE2_CONF_FILE"
 
-    echo -e "${YELLOW}[?] Automatically fix image permissions after downloading? (default: no)${NO_COLOR}"
-    echo -e "${YELLOW}[!] When disabled, you can still run: ishare2 fix permissions${NO_COLOR}"
+    print_question "Automatically fix image permissions after downloading? (default: no)"
+    print_warn "When disabled, you can still run: ishare2 fix permissions"
     read -p "[y/N]: " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "AUTO_FIX_PERMISSIONS=true" >>"$ISHARE2_CONF_FILE"
@@ -160,7 +162,7 @@ create_config() {
         echo "AUTO_FIX_PERMISSIONS=false" >>"$ISHARE2_CONF_FILE"
     fi
 
-    echo -e "${YELLOW}[?] Select update channel (branch).${NO_COLOR}"
+    print_question "Select update channel (branch)."
     mapfile -t branches < <(curl -sL https://api.github.com/repos/ishare2-org/ishare2-cli/branches | jq -r '.[].name')
     for ((i = 0; i < ${#branches[@]}; i++)); do
         echo " $((i + 1))) ${branches[i]}"
@@ -170,13 +172,13 @@ create_config() {
     read -p "[*] Enter the number of the desired branch (default: $CHANNEL): " -r
 
     if [[ -z $REPLY ]]; then
-        echo -e "${YELLOW}[i] Default branch selected: $CHANNEL${NO_COLOR}"
+        print_info "Default branch selected: $CHANNEL"
     elif ! [[ $REPLY =~ ^[0-9]+$ ]] || ((REPLY < 1 || REPLY > ${#branches[@]})); then
-        echo -e "${RED}[✗] Invalid input. Falling back to default branch: $CHANNEL${NO_COLOR}"
+        print_error "Invalid input. Falling back to default branch: $CHANNEL"
     else
         CHANNEL=${branches[REPLY - 1]}
-        echo -e "${GREEN}[✓] Branch selected: $CHANNEL${NO_COLOR}"
-        echo -e "${BLUE}[i] Running 'ishare2 upgrade' to switch to this branch.${NO_COLOR}"
+        print_ok "Branch selected: $CHANNEL"
+        print_info "Running 'ishare2 upgrade' to switch to this branch."
     fi
     echo "CHANNEL=\"$CHANNEL\"" >>"$ISHARE2_CONF_FILE"
 
@@ -210,18 +212,18 @@ create_config() {
 
     case $choice in
     1)
-        echo -e "${GREEN}[✓] Mirror rotation enabled (${#available_mirrors[@]} sources).${NO_COLOR}"
+        print_ok "Mirror rotation enabled (${#available_mirrors[@]} sources)."
         echo "ROTATE=true" >>"$ISHARE2_CONF_FILE"
         ;;
     *)
         if [[ -n "${mirror_options[$choice]}" ]]; then
             local selected_mirror="${mirror_options[$choice]}"
             local selected_desc="${mirror_descriptions[$selected_mirror]:-$selected_mirror mirror}"
-            echo -e "${GREEN}[✓] Mirror locked to: $selected_desc${NO_COLOR}"
+            print_ok "Mirror locked to: $selected_desc"
             echo "ROTATE=false" >>"$ISHARE2_CONF_FILE"
             echo "MIRROR=\"$selected_mirror\"" >>"$ISHARE2_CONF_FILE"
         else
-            echo -e "${RED}[✗] Invalid choice. Mirror rotation will be used.${NO_COLOR}"
+            print_error "Invalid choice. Mirror rotation will be used."
             echo "ROTATE=true" >>"$ISHARE2_CONF_FILE"
         fi
         ;;
@@ -230,7 +232,7 @@ create_config() {
     echo >>"$ISHARE2_CONF_FILE"
 
     if [[ ! -f "$ISHARE2_CONF_FILE" ]]; then
-        echo -e "${RED}[✗] Failed to create configuration file.${NO_COLOR}"
+        print_error "Failed to create configuration file."
         logger error "Configuration file creation failed."
         exit 1
     fi
@@ -250,10 +252,10 @@ create_config() {
     print_box "${messages[@]}"
 
     if [[ $current_channel != $CHANNEL ]]; then
-        echo -e "${YELLOW}[i] Updating ishare2 to the selected '$CHANNEL' branch...${NO_COLOR}"
+        print_info "Updating ishare2 to the selected '$CHANNEL' branch..."
         curl -sL "https://raw.githubusercontent.com/ishare2-org/ishare2-cli/$CHANNEL/ishare2" >/usr/sbin/ishare2
         chmod +x /usr/sbin/ishare2
-        echo -e "${GREEN}[✓] iShare2 has been updated to the latest version from the '$CHANNEL' branch.${NO_COLOR}"
+        print_ok "iShare2 has been updated to the latest version from the '$CHANNEL' branch."
     fi
 }
 
@@ -263,7 +265,7 @@ remove_duplicates() {
 
     # Check if the configuration file exists
     if [ ! -f "$config_file" ]; then
-        echo -e "${RED}[!] Configuration file does not exist.${NO_COLOR}"
+        print_error "Configuration file does not exist."
         logger error "Configuration file does not exist."
         return
     fi
@@ -279,7 +281,7 @@ validate_conf_file() {
 
     # Check if the configuration file exists
     if [ ! -f "$ISHARE2_CONF_FILE" ]; then
-        echo -e "${RED}[!] Configuration file does not exist.${NO_COLOR}"
+        print_error "Configuration file does not exist."
         logger error "Configuration file does not exist."
         return 1
     fi
@@ -393,12 +395,12 @@ remove_ishare_sources() {
 # Function to install dependencies required for ishare2
 install_dependencies() {
     remove_ishare_sources
-    echo -e "${YELLOW}[+] ishare2 needs to install some dependencies to work properly.${NO_COLOR}"
+    print_info "ishare2 needs to install some dependencies to work properly."
     local required=("curl" "wget" "jq" "unzip" "tree")
     local suggested=("unrar")
-    echo -e "${YELLOW}[+] Required packages: ${NO_COLOR}${required[*]}"
-    echo -e "${YELLOW}[+] Suggested packages: ${NO_COLOR}${suggested[*]}"
-    echo -e "${YELLOW}[+] Starting to install dependencies in 5 seconds... This may take a while. Press Ctrl+C to cancel.${NO_COLOR}"
+    print_info "Required packages: ${required[*]}"
+    print_info "Suggested packages: ${suggested[*]}"
+    print_info "Starting to install dependencies in 5 seconds... This may take a while. Press Ctrl+C to cancel."
     sleep 5
 
     for package in "${required[@]}"; do
@@ -414,9 +416,9 @@ check_installed() {
     PACKAGE=$1
     # Check if package is installed
     if ! command -v "$PACKAGE" &>/dev/null; then
-        echo -e "${YELLOW}[!] WARN: $PACKAGE is not installed.${NO_COLOR}"
+        print_warn "WARN: $PACKAGE is not installed."
         install_package "$PACKAGE"
-        echo -e "${GREEN}[+] $PACKAGE has been installed successfully.${NO_COLOR}"
+        print_success "$PACKAGE has been installed successfully."
     fi
 }
 
@@ -426,27 +428,27 @@ install_package() {
     local command_name=${2:-$package_name}
 
     if command -v "$command_name" &>/dev/null; then
-        echo -e "${GREEN}[+] $package_name is already installed.${NO_COLOR}"
+        print_success "$package_name is already installed."
         logger info "Package $package_name is already installed."
         return 0
     fi
 
     [[ -n "${PKG_MANAGER:-}" ]] || detect_package_manager
     if [[ -z "$PKG_MANAGER" ]]; then
-        echo -e "${RED}[-] No supported package manager found. Please install '$package_name' manually.${NO_COLOR}"
+        print_error "No supported package manager found. Please install '$package_name' manually."
         logger error "No supported package manager found to install $package_name."
         exit 1
     fi
 
-    echo -e "${YELLOW}[+] Installing $package_name...${NO_COLOR}"
+    print_info "Installing $package_name..."
     pkg_update || {
-        echo -e "${RED}[-] Failed to update package lists.${NO_COLOR}"
-        echo -e "${YELLOW}[!] Please check your internet connection and try again or fix your repositories.${NO_COLOR}"
+        print_error "Failed to update package lists."
+        print_warn "Please check your internet connection and try again or fix your repositories."
         logger error "Failed to update package lists."
     }
 
     if ! pkg_install "$package_name"; then
-        echo -e "${RED}[-] Failed to install $package_name. Please install it manually or you will likely encounter issues.${NO_COLOR}"
+        print_error "Failed to install $package_name. Please install it manually or you will likely encounter issues."
         logger error "Failed to install $package_name."
         exit 1
     fi
@@ -461,25 +463,25 @@ install_suggested_package() {
         return 0
     fi
 
-    echo -e "${YELLOW}[?] ishare2 suggests installing the optional package: $package_name${NO_COLOR}"
+    print_question "ishare2 suggests installing the optional package: $package_name"
     read -p "[?] Install it now? [y/N]: " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         install_package "$package_name" "$command_name"
     else
-        echo -e "${YELLOW}[!] Skipped $package_name. Some features may not work, but ishare2 will do its best.${NO_COLOR}"
+        print_warn "Skipped $package_name. Some features may not work, but ishare2 will do its best."
         logger warn "Skipped installing suggested package $package_name."
     fi
 }
 
 # Function to create the ishare2 directory
 create_ishare2_dir() {
-    echo -e "${YELLOW}[!] Creating ishare2 directory...${NO_COLOR}"
+    print_warn "Creating ishare2 directory..."
     if ! mkdir -p $ISHARE2_DIR 2>/dev/null; then
         error_message=$(mkdir -p $ISHARE2_DIR 2>&1 >/dev/null)
         if [[ $error_message == *"Permission denied"* ]]; then
-            echo -e "${RED}[-] Failed to create ishare2 directory: Permission denied.${NO_COLOR}"
+            print_error "Failed to create ishare2 directory: Permission denied."
         else
-            echo -e "${RED}[-] Failed to create ishare2 directory. Error: $error_message${NO_COLOR}"
+            print_error "Failed to create ishare2 directory. Error: $error_message"
         fi
         exit 1
     fi

@@ -1,3 +1,33 @@
+# Print a success message (green [+])
+print_success() {
+    echo -e "${GREEN}[+] $*${NO_COLOR}"
+}
+
+# Print a success check (green [✓])
+print_ok() {
+    echo -e "${GREEN}[✓] $*${NO_COLOR}"
+}
+
+# Print an error message (red [-])
+print_error() {
+    echo -e "${RED}[-] $*${NO_COLOR}"
+}
+
+# Print a warning message (yellow [!])
+print_warn() {
+    echo -e "${YELLOW}[!] $*${NO_COLOR}"
+}
+
+# Print an informational message (blue [i])
+print_info() {
+    echo -e "${BLUE}[i] $*${NO_COLOR}"
+}
+
+# Print a question (yellow [?])
+print_question() {
+    echo -e "${YELLOW}[?] $*${NO_COLOR}"
+}
+
 # Function to check if there is a new version of ishare2 available
 check_updates() {
     local last_check_file="$ISHARE2_DIR/last_update_check"

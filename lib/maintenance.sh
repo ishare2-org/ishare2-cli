@@ -2,7 +2,7 @@
 fix_permissions() {
     UNL_WRAPPER="/opt/unetlab/wrappers/unl_wrapper"
     if [[ -e $UNL_WRAPPER ]]; then
-        echo -e "${YELLOW}[-] Fixing permissions... ${NO_COLOR}"
+        print_info "Fixing permissions... "
         chmod +x $UNL_WRAPPER
         $UNL_WRAPPER -a fixpermissions
 
@@ -18,9 +18,9 @@ fix_permissions() {
     # unl_wrapper not present: fix permissions manually
     logger info "unl_wrapper not found. Fixing permissions manually."
     if chmod 755 -R /opt/unetlab/addons; then
-        echo -e "${GREEN}[✓] Permissions fixed manually. ${NO_COLOR}"
+        print_ok "Permissions fixed manually. "
     else
-        echo -e "${RED}[-] Failed to fix permissions manually. ${NO_COLOR}"
+        print_error "Failed to fix permissions manually. "
     fi
 }
 
@@ -39,22 +39,22 @@ connection_tests() {
     local all_services_reachable=true
 
     # Header
-    echo -e "${YELLOW}[-] Running connection tests... ${NO_COLOR}"
+    print_info "Running connection tests... "
 
     # Loop through the services and check their reachability
     for service in "${!SERVICES[@]}"; do
-        echo -e "${YELLOW}[-] Checking if $service is reachable... ${NO_COLOR}"
+        print_info "Checking if $service is reachable... "
         if ping -q -c 5 -W 5 "${SERVICES[$service]}" >/dev/null; then
-            echo -e "${GREEN}[+] $service is reachable. ${NO_COLOR}"
+            print_success "$service is reachable. "
         else
-            echo -e "${RED}[-] $service is not reachable. ${NO_COLOR}"
+            print_error "$service is not reachable. "
             all_services_reachable=false
         fi
     done
 
     # If any service is not reachable, attempt to fix DNS
     if [ "$all_services_reachable" = false ]; then
-        echo -e "${YELLOW}[?] Some services are not reachable. Do you want to attempt to fix DNS? [y/n] ${NO_COLOR}"
+        print_question "Some services are not reachable. Do you want to attempt to fix DNS? [y/n] "
         read -r -n 1 -p "Choice: " choice
         echo
         case $choice in
@@ -62,39 +62,39 @@ connection_tests() {
             fix_dns
             ;;
         n | N)
-            echo -e "${YELLOW}[-] DNS was not fixed. ${NO_COLOR}"
+            print_info "DNS was not fixed. "
             ;;
         *)
-            echo -e "${RED}[-] Invalid choice. DNS was not fixed. ${NO_COLOR}"
+            print_error "Invalid choice. DNS was not fixed. "
             ;;
         esac
     fi
 
     # Report the overall status
     if [ "$all_services_reachable" = true ]; then
-        echo -e "${GREEN}[+] All services are reachable. ${NO_COLOR}"
+        print_success "All services are reachable. "
         return 0
     else
-        echo -e "${RED}[-] Some services are not reachable. ${NO_COLOR}"
+        print_error "Some services are not reachable. "
         return 1
     fi
 }
 
 # Function to fix DNS (common issue with resolv.conf)
 fix_dns() {
-    echo -e "${YELLOW}[-] Attempting to fix DNS... ${NO_COLOR}"
+    print_info "Attempting to fix DNS... "
 
     if command -v systemctl >/dev/null 2>&1; then
-        echo -e "${YELLOW}[-] Running: systemctl restart systemd-resolved.service ${NO_COLOR}"
+        print_info "Running: systemctl restart systemd-resolved.service "
         systemctl restart systemd-resolved.service 2>/dev/null
     fi
 
-    echo -e "${YELLOW}[-] Attempting to fix DNS by setting nameserver to 8.8.8.8... ${NO_COLOR}"
+    print_info "Attempting to fix DNS by setting nameserver to 8.8.8.8... "
     if echo "nameserver 8.8.8.8" >/etc/resolv.conf 2>/dev/null; then
-        echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
+        print_success "DNS fix applied successfully. "
     elif echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null 2>&1; then
-        echo -e "${GREEN}[+] DNS fix applied successfully. ${NO_COLOR}"
+        print_success "DNS fix applied successfully. "
     else
-        echo -e "${RED}[-] Failed to update DNS settings. ${NO_COLOR}"
+        print_error "Failed to update DNS settings. "
     fi
 }
